@@ -4,3 +4,6 @@
 [submodule "source/main/plugins/pagedgeometry"]
 	path = source/main/plugins/pagedgeometry
 	url = https://github.com/RigsOfRods/ogre-pagedgeometry.git
+[submodule "source/main/plugins/caelum"]
+	path = source/main/plugins/caelum
+	url = https://github.com/OGRECave/ogre-caelum.git

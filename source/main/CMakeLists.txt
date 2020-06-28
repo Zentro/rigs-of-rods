@@ -1,6 +1,10 @@
 project(RoR_Main)
 
 
+# Remove broken Caelum header 
+file(REMOVE  plugins/caelum/main/include/CaelumPrerequisites.h)
+
+
 ####################################################################################################
 #  SOURCE FILES
 ####################################################################################################
@@ -182,6 +186,52 @@ set(SOURCE_FILES
         physics/flex/Locator_t.h
         physics/water/Buoyance.{h,cpp}
         physics/water/ScrewProp.{h,cpp}
+        CaelumConfig.h
+        CaelumPrerequisites.h
+        plugins/caelum/main/include/Astronomy.h
+        plugins/caelum/main/src/Astronomy.cpp
+        plugins/caelum/main/src/BrightStarCatalogue.cpp
+        plugins/caelum/main/include/Caelum.h
+        plugins/caelum/main/src/CaelumDefaultTypeDescriptorData.cpp
+        plugins/caelum/main/include/CaelumPlugin.h
+        plugins/caelum/main/src/CaelumPlugin.cpp
+        plugins/caelum/main/src/CaelumPrecompiled.cpp
+        plugins/caelum/main/include/CaelumScriptTranslator.h
+        plugins/caelum/main/src/CaelumScriptTranslator.cpp
+        plugins/caelum/main/include/CaelumSystem.h
+        plugins/caelum/main/src/CaelumSystem.cpp
+        plugins/caelum/main/include/CameraBoundElement.h
+        plugins/caelum/main/src/CameraBoundElement.cpp
+        plugins/caelum/main/include/CloudSystem.h
+        plugins/caelum/main/src/CloudSystem.cpp
+        plugins/caelum/main/include/DepthComposer.h
+        plugins/caelum/main/src/DepthComposer.cpp
+        plugins/caelum/main/include/FastGpuParamRef.h
+        plugins/caelum/main/src/FastGpuParamRef.cpp
+        plugins/caelum/main/include/FlatCloudLayer.h
+        plugins/caelum/main/src/FlatCloudLayer.cpp
+        plugins/caelum/main/include/GroundFog.h
+        plugins/caelum/main/src/GroundFog.cpp
+        plugins/caelum/main/include/ImageStarfield.h
+        plugins/caelum/main/src/ImageStarfield.cpp
+        plugins/caelum/main/include/InternalUtilities.h
+        plugins/caelum/main/src/InternalUtilities.cpp
+        plugins/caelum/main/include/Moon.h
+        plugins/caelum/main/src/Moon.cpp
+        plugins/caelum/main/include/PointStarfield.h
+        plugins/caelum/main/src/PointStarfield.cpp
+        plugins/caelum/main/include/PrecipitationController.h
+        plugins/caelum/main/src/PrecipitationController.cpp
+        plugins/caelum/main/include/SkyDome.h
+        plugins/caelum/main/src/SkyDome.cpp
+        plugins/caelum/main/include/SkyLight.h
+        plugins/caelum/main/src/SkyLight.cpp
+        plugins/caelum/main/include/Sun.h
+        plugins/caelum/main/src/Sun.cpp
+        plugins/caelum/main/include/TypeDescriptor.h
+        plugins/caelum/main/src/TypeDescriptor.cpp
+        plugins/caelum/main/include/UniversalClock.h
+        plugins/caelum/main/src/UniversalClock.cpp
         plugins/pagedgeometry/include/BatchPage.h
         plugins/pagedgeometry/source/BatchPage.cpp
         plugins/pagedgeometry/include/BatchedGeometry.h
@@ -347,6 +397,7 @@ target_include_directories(${BINNAME} PRIVATE
         physics/threading
         physics/utils
         physics/water
+        plugins/caelum/main/include
         plugins/pagedgeometry/include
         resources
         resources/odef_fileformat/
@@ -419,7 +470,6 @@ if (USE_PACKAGE_MANAGER)
             CONAN_PKG::SocketW
             CONAN_PKG::openal
             CONAN_PKG::rapidjson
-            CONAN_PKG::ogre-caelum
             CONAN_PKG::openssl
             CONAN_PKG::OGRE
             CONAN_PKG::OIS
@@ -443,12 +493,6 @@ if (USE_PACKAGE_MANAGER)
             USE_CAELUM
             USE_DISCORD_RPC
             )
-
-    if (UNIX)
-        set(CFG_OGRE_PLUGIN_CAELUM   "Plugin=libCaelum.so")
-    else ()
-        set(CFG_OGRE_PLUGIN_CAELUM   "Plugin=Caelum")
-    endif ()
 
 else (USE_PACKAGE_MANAGER)
 
@@ -504,11 +548,7 @@ else (USE_PACKAGE_MANAGER)
         endif ()
     endif ()
 
-    if (TARGET Caelum::Caelum)
-        set(CFG_OGRE_PLUGIN_CAELUM   "Plugin=../libCaelum.so")
-        target_link_libraries(${BINNAME} PRIVATE Caelum::Caelum)
-        target_compile_definitions(${BINNAME} PRIVATE USE_CAELUM)
-    endif ()
+    target_compile_definitions(${BINNAME} PRIVATE USE_CAELUM)
 
 endif (USE_PACKAGE_MANAGER)
 
