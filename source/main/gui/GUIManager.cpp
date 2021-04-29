@@ -42,6 +42,7 @@
 //Managed GUI panels
 #include "GUI_ConsoleWindow.h"
 #include "GUI_FrictionSettings.h"
+#include "GUI_RepositorySelector.h"
 #include "GUI_GameMainMenu.h"
 #include "GUI_GameAbout.h"
 #include "GUI_GameChatBox.h"
@@ -88,6 +89,7 @@ struct GuiManagerImpl
     GUI::FrictionSettings       panel_FrictionSettings;
     GUI::TextureToolWindow      panel_TextureToolWindow;
     GUI::GameControls           panel_GameControls;
+	GUI::RepositorySelector		panel_RepositorySelector;
     GUI::NodeBeamUtils          panel_NodeBeamUtils;
     GUI::LoadingWindow          panel_LoadingWindow;
     GUI::TopMenubar             panel_TopMenubar;
@@ -108,6 +110,7 @@ void GUIManager::SetVisible_VehicleDescription  (bool v) { m_impl->panel_Vehicle
 void GUIManager::SetVisible_FrictionSettings    (bool v) { m_impl->panel_FrictionSettings   .SetVisible(v); }
 void GUIManager::SetVisible_TextureToolWindow   (bool v) { m_impl->panel_TextureToolWindow  .SetVisible(v); }
 void GUIManager::SetVisible_GameControls        (bool v) { m_impl->panel_GameControls       .SetVisible(v); }
+void GUIManager::SetVisible_RepositorySelector	(bool v) { m_impl->panel_RepositorySelector .SetVisible(v); }
 void GUIManager::SetVisible_LoadingWindow       (bool v) { m_impl->panel_LoadingWindow      .SetVisible(v); }
 void GUIManager::SetVisible_Console             (bool v) { m_impl->panel_ConsoleWindow      .SetVisible(v); }
 void GUIManager::SetVisible_GameSettings        (bool v) { m_impl->panel_GameSettings       .SetVisible(v); }
@@ -124,6 +127,7 @@ bool GUIManager::IsVisible_VehicleDescription   () { return m_impl->panel_Vehicl
 bool GUIManager::IsVisible_FrictionSettings     () { return m_impl->panel_FrictionSettings   .IsVisible(); }
 bool GUIManager::IsVisible_TextureToolWindow    () { return m_impl->panel_TextureToolWindow  .IsVisible(); }
 bool GUIManager::IsVisible_GameControls         () { return m_impl->panel_GameControls       .IsVisible(); }
+bool GUIManager::IsVisible_RepositorySelector	() { return m_impl->panel_RepositorySelector .IsVisible(); }
 bool GUIManager::IsVisible_LoadingWindow        () { return m_impl->panel_LoadingWindow      .IsVisible(); }
 bool GUIManager::IsVisible_Console              () { return m_impl->panel_ConsoleWindow      .IsVisible(); }
 bool GUIManager::IsVisible_GameSettings         () { return m_impl->panel_GameSettings       .IsVisible(); }
@@ -282,6 +286,11 @@ void GUIManager::DrawSimGuiBuffered(GfxActor* player_gfx_actor)
     {
         m_impl->panel_GameControls.Draw();
     }
+
+	if (this->IsVisible_RepositorySelector())
+	{
+		m_impl->panel_RepositorySelector.Draw();
+	}
 
     if (this->IsVisible_SurveyMap())
     {
@@ -523,6 +532,11 @@ void GUIManager::DrawMainMenuGui()
     {
         m_impl->panel_GameAbout.Draw();
     }
+
+	if (m_impl->panel_RepositorySelector.IsVisible())
+	{
+		m_impl->panel_RepositorySelector.Draw();
+	}
 }
 
 void GUIManager::ShowMessageBox(const char* title, const char* text, bool allow_close, const char* btn1_text, const char* btn2_text)

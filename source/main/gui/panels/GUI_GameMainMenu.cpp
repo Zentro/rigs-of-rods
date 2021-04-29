@@ -162,6 +162,12 @@ void GameMainMenu::DrawMenuPanel()
                 this->SetVisible(false);
             }
 
+			if (HighlightButton(_LC("MainMenu", "Repository"), btn_size, button_index++))
+			{
+				App::GetGuiManager()->SetVisible_RepositorySelector(true);
+				this->SetVisible(false);
+			}
+
             if (HighlightButton(_LC("MainMenu", "Settings"), btn_size, button_index++))
             {
                 App::GetGuiManager()->SetVisible_GameSettings(true);
