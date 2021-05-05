@@ -114,6 +114,7 @@ public:
     GUI::GameMainMenu* GetMainMenu();
     GUI::LoadingWindow* GetLoadingWindow();
     GUI::MultiplayerSelector* GetMpSelector();
+	GUI::RepositorySelector* GetRepoSelector();
     GUI::FrictionSettings* GetFrictionSettings();
     GUI::TopMenubar* GetTopMenubar();
     GUI::SurveyMap* GetSurveyMap();

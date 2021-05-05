@@ -151,6 +151,7 @@ namespace RoR
         class  MainSelector;
         class  MpClientList;
         class  MultiplayerSelector;
+		class  RepositorySelector;
         class  DirectionArrow;
         class  SceneMouse;
         class  SimActorStats;

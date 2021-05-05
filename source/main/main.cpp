@@ -38,6 +38,7 @@
 #include "GUI_MainSelector.h"
 #include "GUI_MultiplayerSelector.h"
 #include "GUI_MultiplayerClientList.h"
+#include "GUI_RepositorySelector.h"
 #include "GUI_SimActorStats.h"
 #include "InputEngine.h"
 #include "Language.h"
@@ -451,6 +452,14 @@ int main(int argc, char *argv[])
                 case MSG_NET_REFRESH_SERVERLIST_FAILURE:
                     App::GetGuiManager()->GetMpSelector()->DisplayRefreshFailed(m.description);
                     break;
+
+				case MSG_NET_REFRESH_REPOLIST_SUCCESS:
+					App::GetGuiManager()->GetRepoSelector()->Update((GUI::ResourcesCollection*)m.payload);
+					break;
+
+				case MSG_NET_REFRESH_REPOLIST_FAILURE:
+					App::GetGuiManager()->GetRepoSelector()->ShowError(m.description);
+					break;
 
                 // -- Gameplay events --
 

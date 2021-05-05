@@ -26,46 +26,70 @@
 
 #pragma once
 
+#include "Application.h"
+#include "OgreImGui.h" // ImVec4
+
+#include <future>
+#include <memory>
+#include <thread>
 #include <vector>
 
 namespace RoR {
 namespace GUI {
 
-struct RepositoryCat
+struct ResourcesCategories
 {
-	int				cid;
+	int				category_id;
 	std::string		title;
 	std::string		description;
 	int				resource_count;
-	int				dorder;
+	int				display_order;
 };
 
-struct RepositoryItem
+struct ResourceItem
 {
-	int				rid;
+	int				resource_id;
 	std::string		title;
 	std::string		tag_line;
-	int				uid;
+	int				user_id;
 	int				download_count;
+	int				pub_date;
 	int				last_update;
+	int				resource_category_id;
 };
 
-typedef std::vector<RepositoryCat> RepoCatVec;
-typedef std::vector<RepositoryItem> RepoItemVec;
+struct ResourcePagination {
+	int				current_page;
+	int				last_page;
+	int				per_page;
+	int				shown;
+	int				total;
+};
+
+struct ResourcesCollection {
+	std::vector<ResourceItem>			items;
+	//std::vector<ResourcesCategories>	categories;
+	//struct ResourcePagination			pagination;
+};
 
 class RepositorySelector
 {
 public:
-	void SetVisible(bool v);
-	bool IsVisible() const { return m_is_visible; }
+	RepositorySelector();
+	~RepositorySelector();
 
-	void Draw();
-
+	void					SetVisible(bool v);
+	bool					IsVisible() const { return m_is_visible; }
+	void					Draw();
+	void					Refresh();
+	void					Update(ResourcesCollection* data);
+	void					ShowError(std::string const& msg);
 private:
-	bool m_is_visible = false;
-
-	RepoCatVec		m_repocat;
-	RepoItemVec		m_repolist;
+	bool					m_is_visible = false;
+	bool					m_draw = false;
+	std::string				m_repolist_msg;
+	ImVec4					m_repolist_msg_color;
+	ResourcesCollection		m_data;
 
 };
 

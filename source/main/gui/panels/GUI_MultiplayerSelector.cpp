@@ -50,7 +50,7 @@ using namespace GUI;
 #if defined(USE_CURL)
 
 // From example: https://gist.github.com/whoshuu/2dc858b8730079602044
-size_t CurlWriteFunc(void *ptr, size_t size, size_t nmemb, std::string* data)
+static size_t CurlWriteFunc(void *ptr, size_t size, size_t nmemb, std::string* data)
 {
     data->append((char*) ptr, size * nmemb);
     return size * nmemb;
@@ -259,7 +259,7 @@ void MultiplayerSelector::MultiplayerSelector::Draw()
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + TABLE_PADDING_LEFT);
             DrawTableHeader(_LC("MultiplayerSelector", "Passwd?"));
             DrawTableHeader(_LC("MultiplayerSelector", "Name"));
-            DrawTableHeader(_LC("MultiplayerSelector", "Terrain"));
+            DrawTableHeader(_LC("MultiplayerSele	ctor", "Terrain"));
             DrawTableHeader(_LC("MultiplayerSelector", "Users"));
             DrawTableHeader(_LC("MultiplayerSelector", "Version"));
             DrawTableHeader(_LC("MultiplayerSelector", "Host/Port"));
