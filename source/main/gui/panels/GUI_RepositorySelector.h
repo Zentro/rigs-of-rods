@@ -37,9 +37,9 @@
 namespace RoR {
 namespace GUI {
 
-struct ResourcesCategories
+struct ResourceCategories
 {
-	int				category_id;
+	int				resource_category_id;
 	std::string		title;
 	std::string		description;
 	int				resource_count;
@@ -68,7 +68,7 @@ struct ResourcePagination {
 
 struct ResourcesCollection {
 	std::vector<ResourceItem>			items;
-	//std::vector<ResourcesCategories>	categories;
+	std::vector<ResourceCategories>		categories;
 	//struct ResourcePagination			pagination;
 };
 

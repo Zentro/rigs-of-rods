@@ -57,6 +57,49 @@ static size_t CurlWriteFunc(void *ptr, size_t size, size_t nmemb, std::string* d
 	return size * nmemb;
 }
 
+std::vector<GUI::ResourceCategories> GetResourceCategories(std::string portal_url)
+{
+	// seperate into seperate thread?
+
+	std::string repolist_url = portal_url + "/resource-categories";
+	std::string response_payload;
+	std::string response_header;
+	long        response_code = 0;
+
+	CURL *curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, repolist_url.c_str());
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteFunc);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_payload);
+	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &response_header);
+
+	curl_easy_perform(curl);
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+
+	curl_easy_cleanup(curl);
+	curl = nullptr;
+
+	rapidjson::Document j_data_doc;
+	j_data_doc.Parse(response_payload.c_str());
+	// make a http helper func ^^^
+
+	std::vector<GUI::ResourceCategories> cat;
+	rapidjson::Value& j_resp_body = j_data_doc["data"];
+	size_t num_rows = j_resp_body.GetArray().Size();
+	cat.resize(num_rows);
+	for (size_t i = 0; i < num_rows; i++)
+	{
+		rapidjson::Value& j_row = j_resp_body[static_cast<rapidjson::SizeType>(i)];
+
+		cat[i].title = j_row["title"].GetString();
+		cat[i].resource_category_id = j_row["resource_category_id"].GetInt();
+		cat[i].resource_count = j_row["resource_count"].GetInt();
+		cat[i].description = j_row["description"].GetString();
+		cat[i].display_order = j_row["display_order"].GetInt();
+	}
+
+	return cat;
+}
+
 void GetResources(std::string portal_url)
 {
 	std::string repolist_url = portal_url + "/resources";
@@ -110,39 +153,18 @@ void GetResources(std::string portal_url)
 		resc[i].title = j_row["title"].GetString();
 		resc[i].tag_line = j_row["tag_line"].GetString();
 		resc[i].resource_id = j_row["resource_id"].GetInt();
-		resc[i].resource_id = j_row["user_id"].GetInt();
-		resc[i].resource_id = j_row["download_count"].GetInt();
-		resc[i].resource_id = j_row["pub_date"].GetInt();
-		resc[i].resource_id = j_row["last_update"].GetInt();
-		resc[i].resource_id = j_row["resource_category_id"].GetInt();
+		resc[i].user_id = j_row["user_id"].GetInt();
+		resc[i].download_count = j_row["download_count"].GetInt();
+		resc[i].pub_date = j_row["pub_date"].GetInt();
+		resc[i].last_update = j_row["last_update"].GetInt();
+		resc[i].resource_category_id = j_row["resource_category_id"].GetInt();
 	}
 
 	cdata.items = resc;
+	cdata.categories = GetResourceCategories(App::mp_api_url->GetStr()); // this should be fucking illegal
 
 	App::GetGameContext()->PushMessage(
 		Message(MSG_NET_REFRESH_REPOLIST_SUCCESS, (void*)cdata_ptr));
-}
-
-GUI::ResourcesCategories GetResourceCategories(std::string portal_url)
-{
-	std::string repolist_url = portal_url + "/resource-categories";
-	std::string response_payload;
-	std::string response_header;
-	long        response_code = 0;
-
-	CURL *curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, repolist_url.c_str());
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteFunc);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_payload);
-	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &response_header);
-
-	curl_easy_perform(curl);
-	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-
-	curl_easy_cleanup(curl);
-	curl = nullptr;
-
-	// todo: finish later..
 }
 #endif // defined(USE_CURL)
 
@@ -179,6 +201,23 @@ void RepositorySelector::RepositorySelector::Draw()
 	if (m_draw)
 	{
 		// Category dropdown
+		static const char* current_item = m_data.categories.front().title.c_str();
+		if (ImGui::BeginCombo("##repo-selector-cat", current_item))
+		{
+			for (int i = 0; i < m_data.categories.size(); i++)
+			{
+				bool is_selected = (current_item == m_data.categories[i].title);
+				if (ImGui::Selectable(m_data.categories[i].title.c_str(), is_selected))
+				{
+					current_item = m_data.categories[i].title.c_str();
+				}
+				if (is_selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
 
 		// Space
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + TABS_BOTTOM_PADDING);
