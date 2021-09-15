@@ -108,12 +108,15 @@ If you want to get going quickly have a look at the content packs which can be f
 ## Compiling
 For instructions refer to [BUILDING.md](BUILDING.md)
 
+## Sponsors
+
+<a href="https://www.digitalocean.com/?utm_medium=opensource&utm_source=Rigs-of-Rods" target="_blank"><img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PNG/DO_Logo_Vertical_Blue.png" height="100" width="100"></a>
 
 ## License of Rigs of Rods
 
 Copyright (c) 2005-2013 Pierre-Michel Ricordel  
 Copyright (c) 2007-2013 Thomas Fischer  
-Copyright (c) 2009-2020 Rigs of Rods Contributors
+Copyright (c) 2009-2021 Petr Ohlidal
 
 Rigs of Rods went open source under GPLv2 or later on the 8th of February, 2009.
 
