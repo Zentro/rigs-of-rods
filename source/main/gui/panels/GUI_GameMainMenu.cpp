@@ -170,6 +170,12 @@ void GameMainMenu::DrawMenuPanel()
                 this->SetVisible(false);
             }
 
+            if (HighlightButton(_LC("MainMenu", "Login (tmp)"), btn_size, button_index++))
+            {
+                App::GetGuiManager()->SetVisible_LoginBox(true);
+                this->SetVisible(false);
+            }
+
             if (HighlightButton(_LC("MainMenu", "About"), btn_size, button_index++))
             {
                 App::GetGuiManager()->SetVisible_GameAbout(true);

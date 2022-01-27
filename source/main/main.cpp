@@ -827,7 +827,7 @@ int main(int argc, char *argv[])
                 {
                     if (!App::GetGuiManager()->IsVisible_MainSelector() && !App::GetGuiManager()->IsVisible_MultiplayerSelector() &&
                         !App::GetGuiManager()->IsVisible_GameSettings() && !App::GetGuiManager()->IsVisible_GameControls() &&
-                        !App::GetGuiManager()->IsVisible_GameAbout())
+                        !App::GetGuiManager()->IsVisible_GameAbout() && !App::GetGuiManager()->IsVisible_LoginBox())
                     {
                         App::GetGameContext()->HandleSavegameHotkeys();
                     }

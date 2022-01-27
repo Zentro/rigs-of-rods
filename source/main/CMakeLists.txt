@@ -142,6 +142,7 @@ set(SOURCE_FILES
         gui/panels/GUI_SimPerfStats.{h,cpp}
         gui/panels/GUI_SurveyMap.{h,cpp}
         gui/panels/GUI_VehicleDescription.{h,cpp}
+        gui/panels/GUI_LoginBox.{h,cpp}
         network/DiscordRpc.{h,cpp}
         network/Network.{h,cpp}
         network/OutGauge.{h,cpp}

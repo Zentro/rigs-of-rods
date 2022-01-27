@@ -88,6 +88,7 @@ public:
     void SetVisible_SimActorStats       (bool visible);
     void SetVisible_SimPerfStats        (bool visible);
     void SetVisible_MenuWallpaper       (bool visible);
+    void SetVisible_LoginBox            (bool visible);
 
     // GUI IsVisible*()
     bool IsVisible_GameMainMenu         ();
@@ -108,6 +109,7 @@ public:
     bool IsVisible_SimPerfStats         ();
     bool IsVisible_SurveyMap            ();
     bool IsVisible_DirectionArrow       ();
+    bool IsVisible_LoginBox             ();
 
     // GUI GetInstance*()
     GUI::MainSelector* GetMainSelector();
