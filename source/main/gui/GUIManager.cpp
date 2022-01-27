@@ -61,6 +61,7 @@
 #include "GUI_GameControls.h"
 #include "GUI_TopMenubar.h"
 #include "GUI_VehicleDescription.h"
+#include "GUI_LoginBox.h"
 
 #include <MyGUI.h>
 #include <MyGUI_OgrePlatform.h>
@@ -96,6 +97,7 @@ struct GuiManagerImpl
     GUI::ConsoleWindow          panel_ConsoleWindow;
     GUI::SurveyMap              panel_SurveyMap;
     GUI::DirectionArrow         panel_DirectionArrow;
+    GUI::LoginBox               panel_LoginBox;
     Ogre::Overlay*              overlay_Wallpaper = nullptr;
 
     MyGUI::Gui*                 mygui = nullptr;
@@ -117,6 +119,7 @@ void GUIManager::SetVisible_GameSettings        (bool v) { m_impl->panel_GameSet
 void GUIManager::SetVisible_NodeBeamUtils       (bool v) { m_impl->panel_NodeBeamUtils      .SetVisible(v); }
 void GUIManager::SetVisible_SimActorStats       (bool v) { m_impl->panel_SimActorStats      .SetVisible(v); }
 void GUIManager::SetVisible_SimPerfStats        (bool v) { m_impl->panel_SimPerfStats       .SetVisible(v); }
+void GUIManager::SetVisible_LoginBox            (bool v) { m_impl->panel_LoginBox           .SetVisible(v); }
 
 void GUIManager::SetVisible_MenuWallpaper(bool v)
 {
@@ -145,6 +148,7 @@ bool GUIManager::IsVisible_SimActorStats        () { return m_impl->panel_SimAct
 bool GUIManager::IsVisible_SimPerfStats         () { return m_impl->panel_SimPerfStats       .IsVisible(); }
 bool GUIManager::IsVisible_SurveyMap            () { return m_impl->panel_SurveyMap          .IsVisible(); }
 bool GUIManager::IsVisible_DirectionArrow       () { return m_impl->panel_DirectionArrow     .IsVisible(); }
+bool GUIManager::IsVisible_LoginBox             () { return m_impl->panel_LoginBox           .IsVisible(); }
 
 // GUI GetInstance*()
 GUI::MainSelector*          GUIManager::GetMainSelector()      { return &m_impl->panel_MainSelector        ; }
@@ -159,6 +163,7 @@ GUI::SurveyMap*             GUIManager::GetSurveyMap()         { return &m_impl-
 GUI::SimActorStats*         GUIManager::GetSimActorStats()     { return &m_impl->panel_SimActorStats       ; }
 GUI::DirectionArrow*        GUIManager::GetDirectionArrow()    { return &m_impl->panel_DirectionArrow      ; }
 GUI::MpClientList*          GUIManager::GetMpClientList()      { return &m_impl->panel_MpClientList        ; }
+GUI::LoginBox*              GUIManager::GetLoginBox()          { return &m_impl->panel_LoginBox            ; }
 
 GUIManager::GUIManager()
 {
@@ -519,6 +524,11 @@ void GUIManager::DrawMainMenuGui()
     if (m_impl->panel_RepositorySelector.IsVisible())
     {
         m_impl->panel_RepositorySelector.Draw();
+    }
+
+    if (m_impl->panel_LoginBox.IsVisible())
+    {
+        m_impl->panel_LoginBox.Draw();
     }
 }
 
