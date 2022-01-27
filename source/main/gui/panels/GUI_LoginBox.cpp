@@ -147,7 +147,7 @@ void LoginBox::Draw()
 {
     GUIManager::GuiTheme const& theme = App::GetGuiManager()->GetTheme();
 
-    ImGui::SetNextWindowContentWidth(300.f);
+    ImGui::SetNextWindowContentWidth(300.f); // todo find better sizing
     ImGui::SetNextWindowPosCenter(ImGuiCond_Appearing);
     ImGuiWindowFlags win_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
     bool keep_open = true;
@@ -174,7 +174,10 @@ void LoginBox::Draw()
             ImGui::Text(_LC("Login", "Password"));
             ImGui::InputText("##password", m_passwd.GetBuffer(), m_passwd.GetCapacity(), ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
             ImGui::Checkbox("Remember me", &m_remember);
-            ImGui::Button("Login");
+            if (ImGui::Button("Login"))
+            {
+                this->Login();
+            }
         }
     }
     else

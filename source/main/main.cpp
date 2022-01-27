@@ -40,6 +40,7 @@
 #include "GUI_MessageBox.h"
 #include "GUI_MultiplayerSelector.h"
 #include "GUI_MultiplayerClientList.h"
+#include "GUI_LoginBox.h"
 #include "GUI_SimActorStats.h"
 #include "InputEngine.h"
 #include "Language.h"
