@@ -25,6 +25,7 @@
 #include "GUI_LoginBox.h"
 
 #include "Application.h"
+#include "GameContext.h"
 #include "GUIManager.h"
 #include "AppContext.h"
 #include "Language.h"
@@ -61,7 +62,7 @@ void GetUser()
     long response_code = 0;
 
     CURL* curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, "http://dev.api.rigsofrods.org/auth");
+    curl_easy_setopt(curl, CURLOPT_URL, "http://dev.api.rigsofrods.org/user/me"); // @me
 
 
     // Authorization: Bearer <ACCESS_TOKEN>
@@ -102,16 +103,29 @@ void PostAuth(std::string login, std::string passwd)
 
     // non-standard see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
     // we will use for it indicating that 2fa is required
-    if (response_code == 402) // not a failure
+    if (response_code == 402) // not a failure, forward to 2fa prompt
     {
         return;
     }
-    else if (response_code == 401) // a failure
+    else if (response_code == 400) // a failure, user not found or bad pass combo
     {
+        App::GetGameContext()->PushMessage(
+            Message(MSG_NET_SSO_FAILURE, _LC("Login", "You did not sign in correctly or your account is temporarily disabled. Please retry."))
+        );
         return;
     }
-    else if (response_code != 200)
+    else if (response_code == 401) // a failure, user is likely banned
     {
+        App::GetGameContext()->PushMessage(
+            Message(MSG_NET_SSO_FAILURE, _LC("Login", "Could not log you in. Your account has been suspended."))
+        );
+        return;
+    }
+    else if (response_code != 200) // a net failure
+    {
+        App::GetGameContext()->PushMessage(
+            Message(MSG_NET_SSO_FAILURE, _LC("Login", "Connection error. Please check your connection and try again."))
+        );
         return;
     }
 
@@ -139,18 +153,69 @@ void LoginBox::Draw()
     bool keep_open = true;
     ImGui::Begin(_LC("Login", "Login"), &keep_open, win_flags);
 
-    ImGui::Text(_LC("Login", "Your name or email address"));
-    ImGui::InputText("##login", m_login.GetBuffer(), m_login.GetCapacity());
-    ImGui::Text(_LC("Login", "Password"));
-    ImGui::InputText("##password", m_passwd.GetBuffer(), m_passwd.GetCapacity(), ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
-    ImGui::Checkbox("Remember me", &m_remember);
-    ImGui::Button("Login");
+    if (!m_is_processing)
+    {
+        // draw errors if they exist but do not block anything else from drawing, allows for retries
+        if (!m_errors.empty())
+        {
+            ImGui::TextColored(App::GetGuiManager()->GetTheme().error_text_color, "%s", m_errors.c_str());
+        }
+
+        if (m_needs_2fa) // we got 402, 2fa time
+        {
+            ImGui::Text(_LC("Login", "Please enter your two-factor authentication code"));
+            ImGui::InputText("##2fa", m_2fa_code.GetBuffer(), m_2fa_code.GetCapacity());
+            ImGui::Button("Confirm");
+        }
+        else
+        {
+            ImGui::Text(_LC("Login", "Your name or email address"));
+            ImGui::InputText("##login", m_login.GetBuffer(), m_login.GetCapacity());
+            ImGui::Text(_LC("Login", "Password"));
+            ImGui::InputText("##password", m_passwd.GetBuffer(), m_passwd.GetCapacity(), ImGuiInputTextFlags_Password | ImGuiInputTextFlags_CharsNoBlank);
+            ImGui::Checkbox("Remember me", &m_remember);
+            ImGui::Button("Login");
+        }
+    }
+    else
+    {
+        // todo make this a spinner
+        ImGui::Text("Please wait...");
+    }
 
     ImGui::End();
     if (!keep_open)
     {
         this->SetVisible(false);
     }
+}
+
+void LoginBox::Login()
+{
+#if defined(USE_CURL)
+    m_is_processing = true;
+
+    // check if we have any empty input from the form
+    if (m_login.IsEmpty() && m_passwd.IsEmpty())
+    {
+        App::GetGameContext()->PushMessage(
+            Message(MSG_NET_SSO_FAILURE, _LC("Login", "There must not be any empty fields."))
+        );
+        return;
+    }
+
+    std::string login(m_login);
+    std::string passwd(m_passwd);
+
+    std::packaged_task<void(std::string, std::string)> task(PostAuth);
+    std::thread(std::move(task), login, passwd).detach();
+#endif
+}
+
+void LoginBox::ShowError(std::string const& msg)
+{
+    m_is_processing = false;
+    m_errors = msg;
 }
 
 void LoginBox::SetVisible(bool visible)

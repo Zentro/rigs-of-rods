@@ -476,6 +476,10 @@ int main(int argc, char *argv[])
                     App::GetGuiManager()->GetMpSelector()->DisplayRefreshFailed(m.description);
                     break;
 
+                case MSG_NET_SSO_FAILURE:
+                    App::GetGuiManager()->GetLoginBox()->ShowError(m.description);
+                    break;
+
                 // -- Gameplay events --
 
                 case MSG_SIM_PAUSE_REQUESTED:

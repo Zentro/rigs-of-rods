@@ -158,6 +158,7 @@ GUI::SurveyMap*             GUIManager::GetSurveyMap()         { return &m_impl-
 GUI::SimActorStats*         GUIManager::GetSimActorStats()     { return &m_impl->panel_SimActorStats       ; }
 GUI::DirectionArrow*        GUIManager::GetDirectionArrow()    { return &m_impl->panel_DirectionArrow      ; }
 GUI::MpClientList*          GUIManager::GetMpClientList()      { return &m_impl->panel_MpClientList        ; }
+GUI::LoginBox*              GUIManager::GetLoginBox()          { return &m_impl->panel_LoginBox            ; }
 
 GUIManager::GUIManager()
 {

@@ -123,6 +123,7 @@ public:
     GUI::SimActorStats* GetSimActorStats();
     GUI::DirectionArrow* GetDirectionArrow();
     GUI::MpClientList* GetMpClientList();
+    GUI::LoginBox* GetLoginBox();
 
     // GUI manipulation
     void ShowMessageBox(const char* title, const char* text, bool allow_close = true, const char* btn1_text = "OK", const char* btn2_text = nullptr);

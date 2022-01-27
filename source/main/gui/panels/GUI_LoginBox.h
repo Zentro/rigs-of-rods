@@ -37,9 +37,9 @@ namespace GUI {
 
 struct Token
 {
-    std::string     access_token; //<- bearer token
+    std::string     access_token;       //<- bearer token
     std::string     expiry_date;
-    //std::string     refresh_token; //<- remember me if token expires
+    //std::string     refresh_token;    //<- remember me if token expires
 };
 
 struct UserItem
@@ -72,13 +72,19 @@ public:
 
     void SetVisible(bool visible);
     bool IsVisible() const { return m_is_visible; }
+    void ShowError(std::string const& msg);
+    void Login();
     void Draw();
 
 private:
     bool m_is_visible = false;
     Str<1000> m_login;
     Str<1000> m_passwd;
+    Str<1000> m_2fa_code;
     bool m_remember = true;
+    std::string m_errors; // wrong pw combo or bad 2fa code, allow for retries
+    bool m_needs_2fa = false;
+    bool m_is_processing = false;
 };
 
 }
