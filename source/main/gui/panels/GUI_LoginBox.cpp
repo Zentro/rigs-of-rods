@@ -34,6 +34,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 #include <vector>
 #include <fmt/core.h>
 #include <stdio.h>
@@ -54,33 +55,18 @@ static size_t CurlWriteFunc(void* ptr, size_t size, size_t nmemb, std::string* d
     return size * nmemb;
 }
 
-void GetUser()
-{
-    std::string user_agent = fmt::format("{}/{}", "Rigs of Rods Client", ROR_VERSION_STRING);
-    std::string response_payload;
-    std::string response_header;
-    long response_code = 0;
-
-    CURL* curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, "http://dev.api.rigsofrods.org/user/me"); // @me
-
-
-    // Authorization: Bearer <ACCESS_TOKEN>
-}
-
-void GetUserAvatar()
-{
-
-}
-
-void GetUserProfileBanner()
-{
-
-}
-
 void PostAuth(std::string login, std::string passwd)
 {
     // !!!! DO NOT USE QUERY PARAMS - USE REQUEST BODY INSTEAD !!!!
+    rapidjson::Document j_request_body;
+    j_request_body.SetObject();
+    j_request_body.AddMember("login", rapidjson::StringRef(login.c_str()), j_request_body.GetAllocator());
+    j_request_body.AddMember("password", rapidjson::StringRef(passwd.c_str()), j_request_body.GetAllocator());
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    j_request_body.Accept(writer);
+    std::string request_body = buffer.GetString();
+
     std::string user_agent = fmt::format("{}/{}", "Rigs of Rods Client", ROR_VERSION_STRING);
     std::string response_payload;
     std::string response_header;
@@ -88,7 +74,8 @@ void PostAuth(std::string login, std::string passwd)
 
     CURL* curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, "http://dev.api.rigsofrods.org/auth"); // todo api url + endpoint
-    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonstr.c_str()); // post request body
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str()); // post request body
+    curl_easy_setopt(curl, CURLOPT_POST, 1);
     curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "gzip");
     curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteFunc);
@@ -123,6 +110,8 @@ void PostAuth(std::string login, std::string passwd)
     }
     else if (response_code != 200) // a net failure
     {
+        Ogre::LogManager::getSingleton().stream()
+            << "[RoR|User|SSO] Failed to sign user in; HTTP status code: " << response_code;
         App::GetGameContext()->PushMessage(
             Message(MSG_NET_SSO_FAILURE, _LC("Login", "Connection error. Please check your connection and try again."))
         );
@@ -130,9 +119,21 @@ void PostAuth(std::string login, std::string passwd)
     }
 
     // fetch user after, get token now
+    rapidjson::Document j_response_body;
+    j_response_body.Parse(response_payload.c_str());
+    if (j_response_body.HasParseError() || !j_response_body.IsObject())
+    {
+        Ogre::LogManager::getSingleton().stream()
+            << "[RoR|User|SSO] Error parsing JSON";
+        App::GetGameContext()->PushMessage(
+            Message(MSG_NET_SSO_FAILURE, _LC("Login", "Received malformed data. Please try again."))
+        );
+        return;
+    }
 
-    rapidjson::Document j_data_doc;
-    j_data_doc.Parse(response_payload.c_str());
+    App::sso_access_token->setStr(j_response_body["access_token"].GetString());
+    App::sso_refresh_token->setStr(j_response_body["refresh_token"].GetString());
+    App::sso_expiry_date->setStr(j_response_body["expiry_date"].GetString());
 }
 
 #endif
@@ -145,6 +146,8 @@ LoginBox::~LoginBox()
 
 void LoginBox::Draw()
 {
+    // do not load if the client is already signed in
+
     GUIManager::GuiTheme const& theme = App::GetGuiManager()->GetTheme();
 
     ImGui::SetNextWindowContentWidth(300.f); // todo find better sizing
@@ -165,7 +168,7 @@ void LoginBox::Draw()
         {
             ImGui::Text(_LC("Login", "Please enter your two-factor authentication code"));
             ImGui::InputText("##2fa", m_2fa_code.GetBuffer(), m_2fa_code.GetCapacity());
-            ImGui::Button("Confirm");
+            ImGui::Button("Confirm"); // todo complete 2fa implementation
         }
         else
         {

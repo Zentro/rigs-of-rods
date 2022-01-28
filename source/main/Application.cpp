@@ -119,6 +119,11 @@ CVar* mp_player_name;
 CVar* mp_player_token;
 CVar* mp_api_url;
 
+// SSO
+CVar* sso_access_token;
+CVar* sso_refresh_token;
+CVar* sso_expiry_date;
+
 // Diagnostic
 CVar* diag_auto_spawner_report;
 CVar* diag_camera;

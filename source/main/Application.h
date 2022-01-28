@@ -299,6 +299,11 @@ extern CVar* mp_player_name;
 extern CVar* mp_player_token;
 extern CVar* mp_api_url;
 
+// SSO
+extern CVar* sso_access_token;
+extern CVar* sso_refresh_token;
+extern CVar* sso_expiry_date;
+
 // Diagnostic
 extern CVar* diag_auto_spawner_report;
 extern CVar* diag_camera;
