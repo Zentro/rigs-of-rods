@@ -41,6 +41,7 @@
 #include "GUI_MultiplayerSelector.h"
 #include "GUI_MultiplayerClientList.h"
 #include "GUI_RepositorySelector.h"
+#include "GUI_LoginBox.h"
 #include "GUI_SimActorStats.h"
 #include "InputEngine.h"
 #include "Language.h"
@@ -490,6 +491,21 @@ int main(int argc, char *argv[])
 
                 case MSG_NET_REFRESH_REPOLIST_FAILURE:
                     App::GetGuiManager()->GetRepoSelector()->ShowError(m.description);
+
+                case MSG_NET_SSO_SUCCESS:
+                    App::GetGuiManager()->GetLoginBox()->SetVisible(false);
+                    break;
+
+                case MSG_NET_SSO_FAILURE:
+                    App::GetGuiManager()->GetLoginBox()->ShowError(m.description);
+                    break;
+
+                case MSG_NET_SSO_2FA_REQUESTED:
+                    App::GetGuiManager()->GetLoginBox()->NeedsTfa();
+                    break;
+
+                case MSG_NET_SSO_2FA_FAILURE:
+                    App::GetGuiManager()->GetLoginBox()->ShowError(m.description);
                     break;
 
                 // -- Gameplay events --
@@ -858,6 +874,7 @@ int main(int argc, char *argv[])
                     if (!App::GetGuiManager()->IsVisible_MainSelector() && !App::GetGuiManager()->IsVisible_MultiplayerSelector() &&
                         !App::GetGuiManager()->IsVisible_GameSettings() && !App::GetGuiManager()->IsVisible_GameControls() &&
                         !App::GetGuiManager()->IsVisible_GameAbout() && !App::GetGuiManager()->IsVisible_RepositorySelector())
+                        !App::GetGuiManager()->IsVisible_GameAbout() && !App::GetGuiManager()->IsVisible_LoginBox())
                     {
                         App::GetGameContext()->HandleSavegameHotkeys();
                     }

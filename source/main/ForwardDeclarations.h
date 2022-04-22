@@ -158,6 +158,7 @@ namespace RoR
         class  SimActorStats;
         class  SurveyMap;
         class  TopMenubar;
+        class  LoginBox;
     }
 } // namespace RoR
 

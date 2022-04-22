@@ -87,6 +87,10 @@ enum MsgType
     MSG_NET_REFRESH_REPOLIST_SUCCESS,    //!< Payload = GUI::ResourcesCollection* (owner)
     MSG_NET_OPEN_RESOURCE_SUCCESS,    //!< Payload = GUI::ResourcesCollection* (owner)
     MSG_NET_REFRESH_REPOLIST_FAILURE,
+    MSG_NET_SSO_FAILURE,
+    MSG_NET_SSO_SUCCESS,
+    MSG_NET_SSO_2FA_REQUESTED,
+    MSG_NET_SSO_2FA_FAILURE,
     // Simulation
     MSG_SIM_PAUSE_REQUESTED,
     MSG_SIM_UNPAUSE_REQUESTED,
@@ -321,6 +325,10 @@ extern CVar* mp_api_url;
 
 // New remote API
 extern CVar* remote_query_url;
+// SSO
+extern CVar* sso_access_token;
+extern CVar* sso_refresh_token;
+extern CVar* sso_expiry_date;
 
 // Diagnostic
 extern CVar* diag_auto_spawner_report;
