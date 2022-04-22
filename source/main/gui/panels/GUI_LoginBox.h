@@ -35,36 +35,6 @@
 namespace RoR {
 namespace GUI {
 
-struct Token
-{
-    std::string     access_token;       //<- bearer token
-    std::string     expiry_date;
-    //std::string     refresh_token;    //<- remember me if token expires
-};
-
-struct UserItem
-{
-    std::string                                 email;    
-    int                                         uid;      //<- uid for fetching purposes
-    std::string                                 username; //<- this will replace MP usernames
-    bool                                        use_tfa;  //<- for indication purposes
-    //std::vector<UserAvatarCollection>           avatar_urls;
-    //std::vector<UserProfileBannerCollection>    profile_banner_urls;
-};
-
-struct UserAvatarCollection {
-    std::string o;
-    std::string h;
-    std::string l;
-    std::string m;
-    std::string s;
-};
-
-struct UserProfileBannerCollection {
-    std::string l;
-    std::string m;
-};
-
 class LoginBox {
 public:
     LoginBox();
@@ -73,6 +43,9 @@ public:
     void SetVisible(bool visible);
     bool IsVisible() const { return m_is_visible; }
     void ShowError(std::string const& msg);
+    void ConfirmTfa();
+    void TriggerTfa();
+    void NeedsTfa();
     void Login();
     void Draw();
 
@@ -80,11 +53,14 @@ private:
     bool m_is_visible = false;
     Str<1000> m_login;
     Str<1000> m_passwd;
-    Str<1000> m_2fa_code;
+    Str<1000> m_tfa_code;
     bool m_remember = true;
-    std::string m_errors; // wrong pw combo or bad 2fa code, allow for retries
-    bool m_needs_2fa = false;
+    std::string m_errors;
+    bool m_needs_tfa = false;
     bool m_is_processing = false;
+    std::vector<std::string> m_tfa_providers;
+    std::string m_tfa_provider;
+    bool m_tfa_trigger = true;
 };
 
 }
