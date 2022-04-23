@@ -502,7 +502,8 @@ int main(int argc, char *argv[])
                     break;
 
                 case MSG_NET_SSO_2FA_REQUESTED:
-                    App::GetGuiManager()->GetLoginBox()->NeedsTfa();
+                    App::GetGuiManager()->GetLoginBox()->NeedsTfa(*reinterpret_cast<std::vector<std::string>*>(m.payload));
+                    delete reinterpret_cast<std::vector<std::string>*>(m.payload);
                     break;
 
                 case MSG_NET_SSO_2FA_FAILURE:

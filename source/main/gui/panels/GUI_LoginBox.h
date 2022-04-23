@@ -28,6 +28,7 @@
 #include "OgreImGui.h"
 
 #include <future>
+#include <string>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -45,7 +46,7 @@ public:
     void ShowError(std::string const& msg);
     void ConfirmTfa();
     void TriggerTfa();
-    void NeedsTfa();
+    void NeedsTfa(std::vector<std::string> tfa_providers);
     void Login();
     void Draw();
 
