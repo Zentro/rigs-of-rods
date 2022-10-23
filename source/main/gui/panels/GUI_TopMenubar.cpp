@@ -40,7 +40,6 @@
 #include "Network.h"
 #include "PlatformUtils.h"
 #include "Replay.h"
-#include "SkyManager.h"
 #include "Terrain.h"
 #include "Water.h"
 #include "ScriptEngine.h"

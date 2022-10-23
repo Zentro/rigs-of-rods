@@ -24,7 +24,6 @@
 #include "CameraManager.h"
 #include "GfxActor.h"
 #include "GfxScene.h"
-#include "SkyManager.h"
 #include "Terrain.h"
 
 #include <OgreOverlaySystem.h>

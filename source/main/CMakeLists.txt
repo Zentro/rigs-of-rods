@@ -41,7 +41,6 @@ set(SOURCE_FILES
         gfx/ShadowManager.{h,cpp}
         gfx/SimBuffers.h
         gfx/Skidmark.{h,cpp}
-        gfx/SkyManager.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}
         gfx/Water.{h,cpp}
         gfx/camera/CameraManager.{h,cpp}
@@ -376,10 +375,6 @@ if (USE_CURL)
     endif ()
 endif ()
 
-if (USE_CAELUM)
-    target_link_libraries(${BINNAME} PRIVATE Caelum::Caelum)
-    target_compile_definitions(${BINNAME} PRIVATE USE_CAELUM)
-endif ()
 if (USE_PAGED)
     target_link_libraries(${BINNAME} PRIVATE PagedGeometry::PagedGeometry)
     target_compile_definitions(${BINNAME} PRIVATE USE_PAGED)
@@ -414,19 +409,6 @@ if (DEFINED OGRE_PLUGIN_DIR)
     set(PLUGINS_FOLDER "${OGRE_PLUGIN_DIR}")
 else ()
     set(PLUGINS_FOLDER ".")
-endif ()
-
-if (WIN32)
-    set(CFG_OGRE_PLUGIN_CAELUM "Plugin=Caelum")
-    set(CFG_OGRE_PLUGIN_CAELUM_D "Plugin=Caelum")
-else ()
-    if (${_PREFIX}USE_CAELUM STREQUAL "SYSTEM")
-        set(CFG_OGRE_PLUGIN_CAELUM "Plugin=../libCaelum.so")
-        set(CFG_OGRE_PLUGIN_CAELUM_D "Plugin=../libCaelum_d.so")
-    else ()
-        set(CFG_OGRE_PLUGIN_CAELUM "Plugin=libCaelum.so")
-        set(CFG_OGRE_PLUGIN_CAELUM_D "Plugin=libCaelum_d.so")
-    endif ()
 endif ()
 
 configure_file(plugins.cfg.in ${RUNTIME_OUTPUT_DIRECTORY}/plugins.cfg)

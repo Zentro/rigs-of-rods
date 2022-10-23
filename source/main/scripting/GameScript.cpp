@@ -51,7 +51,6 @@
 #include "Network.h"
 #include "RoRVersion.h"
 #include "ScriptEngine.h"
-#include "SkyManager.h"
 #include "Terrain.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"

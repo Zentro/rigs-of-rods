@@ -12,4 +12,3 @@ Plugin=Codec_FreeImage_d
 Plugin=Plugin_ParticleFX_d
 Plugin=Plugin_OctreeSceneManager_d
 Plugin=Plugin_CgProgramManager_d
-@CFG_OGRE_PLUGIN_CAELUM_D@
