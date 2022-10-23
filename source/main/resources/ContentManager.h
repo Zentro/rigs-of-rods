@@ -61,7 +61,6 @@ public:
         static const ResourcePack FAMICONS;
         static const ResourcePack FLAGS;
         static const ResourcePack FONTS;
-        static const ResourcePack HYDRAX;
         static const ResourcePack ICONS;
         static const ResourcePack MATERIALS;
         static const ResourcePack MESHES;
@@ -70,8 +69,6 @@ public:
         static const ResourcePack PAGED;
         static const ResourcePack PARTICLES;
         static const ResourcePack PSSM;
-        static const ResourcePack SKYX;
-        static const ResourcePack RTSHADER;
         static const ResourcePack SCRIPTS;
         static const ResourcePack SOUNDS;
         static const ResourcePack TEXTURES;

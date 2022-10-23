@@ -43,7 +43,6 @@
 #include "Utils.h"
 #include "WriteTextToTexture.h"
 
-#include <RTShaderSystem/OgreRTShaderSystem.h>
 #include <Overlay/OgreFontManager.h>
 
 #ifdef USE_ANGELSCRIPT
@@ -728,8 +727,8 @@ void TerrainObjectManager::LoadTerrainObject(const Ogre::String& name, const Ogr
     if (odef->mat_name_generate != "")
     {
         Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(odef->mat_name_generate,"generatedMaterialShaders");
-        Ogre::RTShader::ShaderGenerator::getSingleton().createShaderBasedTechnique(*mat, Ogre::MaterialManager::DEFAULT_SCHEME_NAME, Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-        Ogre::RTShader::ShaderGenerator::getSingleton().invalidateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, String(odef->mat_name_generate));
+        //Ogre::RTShader::ShaderGenerator::getSingleton().createShaderBasedTechnique(*mat, Ogre::MaterialManager::DEFAULT_SCHEME_NAME, Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+        //Ogre::RTShader::ShaderGenerator::getSingleton().invalidateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, String(odef->mat_name_generate));
     }
 
     for (ODefAnimation& anim : odef->animations)
