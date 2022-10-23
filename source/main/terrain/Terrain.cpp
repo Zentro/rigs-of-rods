@@ -29,7 +29,6 @@
 #include "GUIManager.h"
 #include "GUI_LoadingWindow.h"
 #include "GUI_SurveyMap.h"
-#include "HydraxWater.h"
 #include "Language.h"
 #include "ScriptEngine.h"
 #include "ShadowManager.h"
@@ -54,7 +53,6 @@ RoR::Terrain::Terrain(CacheEntry* entry)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
     , m_cur_gravity(DEFAULT_GRAVITY)
-    , m_hydrax_water(nullptr)
     , m_cache_entry(entry)
 {
 }
@@ -81,11 +79,6 @@ RoR::Terrain::~Terrain()
     {
         App::GetGfxScene()->GetSceneManager()->destroyAllLights();
         m_main_light = nullptr;
-    }
-
-    if (m_hydrax_water != nullptr)
-    {
-        m_water.reset(); // TODO: Currently needed - research and get rid of this ~ only_a_ptr, 08/2018
     }
 
     if (m_object_manager != nullptr)
@@ -379,36 +372,9 @@ void RoR::Terrain::initWater()
         return;
     }
 
-    if (App::gfx_water_mode->getEnum<GfxWaterMode>() == GfxWaterMode::HYDRAX)
-    {
-        // try to load hydrax config
-        if (!m_def.hydrax_conf_file.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def.hydrax_conf_file))
-        {
-            m_hydrax_water = new HydraxWater(m_def.water_height, m_def.hydrax_conf_file);
-        }
-        else
-        {
-            // no config provided, fall back to the default one
-            m_hydrax_water = new HydraxWater(m_def.water_height);
-        }
-
-        m_water = std::unique_ptr<IWater>(m_hydrax_water);
-
-        //Apply depth technique to the terrain
-        TerrainGroup::TerrainIterator ti = m_geometry_manager->getTerrainGroup()->getTerrainIterator();
-        while (ti.hasMoreElements())
-        {
-            Ogre::Terrain* t = ti.getNext()->instance;
-            MaterialPtr ptr = t->getMaterial();
-            m_hydrax_water->GetHydrax()->getMaterialManager()->addDepthTechnique(ptr->createTechnique());
-        }
-    }
-    else
-    {
-        m_water = std::unique_ptr<IWater>(new Water(this->getMaxTerrainSize()));
-        m_water->SetStaticWaterHeight(m_def.water_height);
-        m_water->SetWaterBottomHeight(m_def.water_bottom_height);
-    }
+    m_water = std::unique_ptr<IWater>(new Water(this->getMaxTerrainSize()));
+    m_water->SetStaticWaterHeight(m_def.water_height);
+    m_water->SetWaterBottomHeight(m_def.water_bottom_height);
 }
 
 void RoR::Terrain::initShadows()

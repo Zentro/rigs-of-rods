@@ -70,7 +70,6 @@ namespace RoR
     class  GfxScene;
     class  GUIManager;
     struct GuiManagerImpl;
-    class  HydraxWater;
     class  InputEngine;
     class  IWater;
     class  Landusemap;
