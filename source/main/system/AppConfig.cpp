@@ -150,13 +150,6 @@ GfxWaterMode ParseGfxWaterMode(std::string const & s)
     else                              { return GfxWaterMode::BASIC     ; }
 }
 
-GfxSkyMode ParseGfxSkyMode(std::string const & s)
-{
-    if (s == CONF_SKY_SANDSTORM)      { return GfxSkyMode::SANDSTORM ; }
-    if (s == CONF_SKY_CAELUM   )      { return GfxSkyMode::CAELUM    ; }
-    else                              { return GfxSkyMode::SANDSTORM ; } 
-}
-
 const char* IoInputGrabModeToStr(IoInputGrabMode v)
 {
     switch (v)
@@ -248,16 +241,6 @@ const char* GfxWaterModeToStr(GfxWaterMode v)
     case GfxWaterMode::FULL_FAST: return CONF_WATER_FULL_FAST;
     case GfxWaterMode::FULL_HQ  : return CONF_WATER_FULL_HQ;
     default                     : return "";
-    }
-}
-
-const char* GfxSkyModeToStr(GfxSkyMode v)
-{
-    switch(v)
-    {
-    case GfxSkyMode::CAELUM   : return CONF_SKY_CAELUM;
-    case GfxSkyMode::SANDSTORM: return CONF_SKY_SANDSTORM;
-    default                   : return "";
     }
 }
 
