@@ -32,7 +32,6 @@
 #include "GUIUtils.h"
 #include "GUI_DirectionArrow.h"
 #include "OverlayWrapper.h"
-#include "SkyManager.h"
 #include "TerrainGeometryManager.h"
 #include "Terrain.h"
 #include "TerrainObjectManager.h"
@@ -155,14 +154,7 @@ void GfxScene::UpdateScene(float dt_sec)
         water->FrameStepWater(dt_sec);
     }
 
-    // Terrain - sky
-#ifdef USE_CAELUM
-    SkyManager* sky = App::GetSimTerrain()->getSkyManager();
-    if (sky != nullptr)
-    {
-        sky->DetectSkyUpdate();
-    }
-#endif
+    // Terrain - sky ~ removed 10/23 for testing to remove caelum
 
     // GUI - race
     if (m_simbuf.simbuf_race_in_progress != m_simbuf.simbuf_race_in_progress_prev)

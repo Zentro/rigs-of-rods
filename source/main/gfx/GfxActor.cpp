@@ -42,7 +42,6 @@
 #include "Renderdash.h" // classic 'renderdash' material
 #include "ActorSpawner.h"
 #include "SlideNode.h"
-#include "SkyManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "TurboJet.h"
@@ -329,15 +328,6 @@ void RoR::GfxActor::UpdateVideoCameras(float dt_sec)
 
     for (VideoCamera& vidcam: m_videocameras)
     {
-#ifdef USE_CAELUM
-        // caelum needs to know that we changed the cameras
-        SkyManager* sky = App::GetSimTerrain()->getSkyManager();
-        if ((sky != nullptr) && (RoR::App::app_state->getEnum<AppState>() == RoR::AppState::SIMULATION))
-        {
-            sky->NotifySkyCameraChanged(vidcam.vcam_ogre_camera);
-        }
-#endif // USE_CAELUM
-
         if ((vidcam.vcam_type == VCTYPE_MIRROR_PROP_LEFT)
             || (vidcam.vcam_type == VCTYPE_MIRROR_PROP_RIGHT))
         {

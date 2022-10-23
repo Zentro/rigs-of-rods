@@ -67,14 +67,6 @@ RoR::Terrain::~Terrain()
 
     //I think that the order is important
 
-#ifdef USE_CAELUM
-    if (m_sky_manager != nullptr)
-    {
-        delete(m_sky_manager);
-        m_sky_manager = nullptr;
-    }
-#endif // USE_CAELUM
-
     if (m_main_light != nullptr)
     {
         App::GetGfxScene()->GetSceneManager()->destroyAllLights();
@@ -154,12 +146,6 @@ RoR::Terrain* RoR::Terrain::LoadAndPrepareTerrain(CacheEntry* entry)
     loading_window->SetProgress(27, _L("Initializing Light Subsystem"));
     terrn_mgr->initLight();
 
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() != GfxSkyMode::CAELUM) //Caelum has its own fog management
-    {
-        loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
-        terrn_mgr->initFog();
-    }
-
     loading_window->SetProgress(31, _L("Initializing Vegetation Subsystem"));
     terrn_mgr->initVegetation();
 
@@ -238,26 +224,6 @@ void RoR::Terrain::initCamera()
 
 void RoR::Terrain::initSkySubSystem()
 {
-#ifdef USE_CAELUM
-    // Caelum skies
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-        m_sky_manager = new SkyManager();
-
-        // try to load caelum config
-        if (!m_def.caelum_config.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def.caelum_config))
-        {
-            // config provided and existing, use it :)
-            m_sky_manager->LoadCaelumScript(m_def.caelum_config, m_def.caelum_fog_start, m_def.caelum_fog_end);
-        }
-        else
-        {
-            // no config provided, fall back to the default one
-            m_sky_manager->LoadCaelumScript("ror_default_sky");
-        }
-    }
-    else
-#endif //USE_CAELUM
     if (!m_def.cubemap_config.empty())
     {
         // use custom
@@ -272,28 +238,19 @@ void RoR::Terrain::initSkySubSystem()
 
 void RoR::Terrain::initLight()
 {
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-#ifdef USE_CAELUM
-        m_main_light = m_sky_manager->GetSkyMainLight();
-#endif
-    }
-    else
-    {
-        // screw caelum, we will roll our own light
+    // screw caelum, we will roll our own light
 
-        // Create a light
-        m_main_light = App::GetGfxScene()->GetSceneManager()->createLight("MainLight");
-        //directional light for shadow
-        m_main_light->setType(Light::LT_DIRECTIONAL);
-        m_main_light->setDirection(Ogre::Vector3(0.785, -0.423, 0.453).normalisedCopy());
+    // Create a light
+    m_main_light = App::GetGfxScene()->GetSceneManager()->createLight("MainLight");
+    //directional light for shadow
+    m_main_light->setType(Light::LT_DIRECTIONAL);
+    m_main_light->setDirection(Ogre::Vector3(0.785, -0.423, 0.453).normalisedCopy());
 
-        m_main_light->setDiffuseColour(m_def.ambient_color);
-        m_main_light->setSpecularColour(m_def.ambient_color);
-        m_main_light->setCastShadows(true);
-        m_main_light->setShadowFarDistance(1000.0f);
-        m_main_light->setShadowNearClipDistance(-1);
-    }
+    m_main_light->setDiffuseColour(m_def.ambient_color);
+    m_main_light->setSpecularColour(m_def.ambient_color);
+    m_main_light->setCastShadows(true);
+    m_main_light->setShadowFarDistance(1000.0f);
+    m_main_light->setShadowNearClipDistance(-1);
 }
 
 void RoR::Terrain::initFog()
