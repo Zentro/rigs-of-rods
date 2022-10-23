@@ -28,9 +28,9 @@
 #include "DustPool.h" // General particle gfx
 #include "EngineSim.h"
 #include "GfxScene.h"
+#include "IWater.h" // <- added to fix build
 #include "GUIManager.h"
 #include "GUIUtils.h"
-#include "HydraxWater.h"
 #include "FlexAirfoil.h"
 #include "FlexBody.h"
 #include "FlexMeshWheel.h"

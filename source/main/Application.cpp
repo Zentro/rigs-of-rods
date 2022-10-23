@@ -249,7 +249,7 @@ Console*               GetConsole            () { return &g_console;}
 InputEngine*           GetInputEngine        () { return g_input_engine;}
 CacheSystem*           GetCacheSystem        () { return g_cache_system;}
 MumbleIntegration*     GetMumble             () { return g_mumble; }
-Terrain*        GetSimTerrain         () { return g_sim_terrain; }
+Terrain*               GetSimTerrain         () { return g_sim_terrain; }
 ThreadPool*            GetThreadPool         () { return g_thread_pool; }
 CameraManager*         GetCameraManager      () { return g_camera_manager; }
 GfxScene*              GetGfxScene           () { return &g_gfx_scene; }

@@ -26,8 +26,8 @@
 #include "ActorManager.h"
 #include "Console.h"
 #include "DustPool.h"
-#include "HydraxWater.h"
 #include "GameContext.h"
+#include "IWater.h" // <- added to fix build
 #include "GUIManager.h"
 #include "GUIUtils.h"
 #include "GUI_DirectionArrow.h"
