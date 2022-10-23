@@ -147,7 +147,6 @@ GfxWaterMode ParseGfxWaterMode(std::string const & s)
     if (s == CONF_WATER_REFLECT  )    { return GfxWaterMode::REFLECT   ; }
     if (s == CONF_WATER_FULL_FAST)    { return GfxWaterMode::FULL_FAST ; }
     if (s == CONF_WATER_FULL_HQ  )    { return GfxWaterMode::FULL_HQ   ; }
-    if (s == CONF_WATER_HYDRAX   )    { return GfxWaterMode::HYDRAX    ; }
     else                              { return GfxWaterMode::BASIC     ; }
 }
 
@@ -155,7 +154,6 @@ GfxSkyMode ParseGfxSkyMode(std::string const & s)
 {
     if (s == CONF_SKY_SANDSTORM)      { return GfxSkyMode::SANDSTORM ; }
     if (s == CONF_SKY_CAELUM   )      { return GfxSkyMode::CAELUM    ; }
-    if (s == CONF_SKY_SKYX     )      { return GfxSkyMode::SKYX      ; }
     else                              { return GfxSkyMode::SANDSTORM ; } 
 }
 
@@ -249,7 +247,6 @@ const char* GfxWaterModeToStr(GfxWaterMode v)
     case GfxWaterMode::REFLECT  : return CONF_WATER_REFLECT;
     case GfxWaterMode::FULL_FAST: return CONF_WATER_FULL_FAST;
     case GfxWaterMode::FULL_HQ  : return CONF_WATER_FULL_HQ;
-    case GfxWaterMode::HYDRAX   : return CONF_WATER_HYDRAX;
     default                     : return "";
     }
 }
@@ -259,7 +256,6 @@ const char* GfxSkyModeToStr(GfxSkyMode v)
     switch(v)
     {
     case GfxSkyMode::CAELUM   : return CONF_SKY_CAELUM;
-    case GfxSkyMode::SKYX     : return CONF_SKY_SKYX;
     case GfxSkyMode::SANDSTORM: return CONF_SKY_SANDSTORM;
     default                   : return "";
     }

@@ -76,7 +76,6 @@ DECLARE_RESOURCE_PACK( DASHBOARDS,            "dashboards",           "Dashboard
 DECLARE_RESOURCE_PACK( FAMICONS,              "famicons",             "FamiconsRG");
 DECLARE_RESOURCE_PACK( FLAGS,                 "flags",                "FlagsRG");
 DECLARE_RESOURCE_PACK( FONTS,                 "fonts",                "FontsRG");
-DECLARE_RESOURCE_PACK( HYDRAX,                "hydrax",               "HydraxRG");
 DECLARE_RESOURCE_PACK( ICONS,                 "icons",                "IconsRG");
 DECLARE_RESOURCE_PACK( MATERIALS,             "materials",            "MaterialsRG");
 DECLARE_RESOURCE_PACK( MESHES,                "meshes",               "MeshesRG");
@@ -89,7 +88,6 @@ DECLARE_RESOURCE_PACK( RTSHADER,              "rtshader",             "RtShaderR
 DECLARE_RESOURCE_PACK( SCRIPTS,               "scripts",              "ScriptsRG");
 DECLARE_RESOURCE_PACK( SOUNDS,                "sounds",               "SoundsRG");
 DECLARE_RESOURCE_PACK( TEXTURES,              "textures",             "TexturesRG");
-DECLARE_RESOURCE_PACK( SKYX,                  "SkyX",                 "SkyXRG");
 
 // ================================================================================
 // Functions
@@ -391,14 +389,9 @@ void ContentManager::LoadGameplayResources()
         m_base_resource_loaded = true;
     }
 
-    if (App::gfx_water_mode->getEnum<GfxWaterMode>() == GfxWaterMode::HYDRAX)
-        this->AddResourcePack(ContentManager::ResourcePack::HYDRAX);
-
     if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
         this->AddResourcePack(ContentManager::ResourcePack::CAELUM);
 
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
-        this->AddResourcePack(ContentManager::ResourcePack::SKYX);
 
     if (App::gfx_vegetation_mode->getEnum<GfxVegetation>() != RoR::GfxVegetation::NONE)
         this->AddResourcePack(ContentManager::ResourcePack::PAGED);

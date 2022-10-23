@@ -318,10 +318,7 @@ void GameSettings::DrawGraphicsSettings()
     DrawGCombo(App::gfx_sky_mode, _LC("GameSettings", "Sky gfx"),
         m_combo_items_sky_mode.c_str());
 
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() != GfxSkyMode::SKYX)
-    {
-        DrawGIntSlider(App::gfx_sight_range, _LC("GameSettings", "Sight range (meters)"), 100, 5000);
-    }
+    DrawGIntSlider(App::gfx_sight_range, _LC("GameSettings", "Sight range (meters)"), 100, 5000);
 
     DrawGCombo(App::gfx_texture_filter , _LC("GameSettings", "Texture filtering"),
         m_combo_items_tex_filter.c_str());
@@ -480,7 +477,6 @@ void GameSettings::SetVisible(bool v)
     {
         ImAddItemToComboboxString(m_combo_items_sky_mode, ToLocalizedString(GfxSkyMode::SANDSTORM));
         ImAddItemToComboboxString(m_combo_items_sky_mode, ToLocalizedString(GfxSkyMode::CAELUM));
-        ImAddItemToComboboxString(m_combo_items_sky_mode, ToLocalizedString(GfxSkyMode::SKYX));
         ImTerminateComboboxString(m_combo_items_sky_mode);
     }
 
@@ -509,7 +505,6 @@ void GameSettings::SetVisible(bool v)
         ImAddItemToComboboxString(m_combo_items_water_mode, ToLocalizedString(GfxWaterMode::REFLECT));
         ImAddItemToComboboxString(m_combo_items_water_mode, ToLocalizedString(GfxWaterMode::FULL_FAST));
         ImAddItemToComboboxString(m_combo_items_water_mode, ToLocalizedString(GfxWaterMode::FULL_HQ));
-        ImAddItemToComboboxString(m_combo_items_water_mode, ToLocalizedString(GfxWaterMode::HYDRAX));
         ImTerminateComboboxString(m_combo_items_water_mode);
     }
 

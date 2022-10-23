@@ -394,7 +394,6 @@ std::string ToLocalizedString(GfxSkyMode e)
     {
     case GfxSkyMode::SANDSTORM: return _LC("GfxSkyMode", "Sandstorm (fastest)");
     case GfxSkyMode::CAELUM:    return _LC("GfxSkyMode", "Caelum (best looking, slower)");
-    case GfxSkyMode::SKYX:      return _LC("GfxSkyMode", "SkyX (best looking, slower)");
     default:                    return "";
     }
 }
@@ -431,8 +430,7 @@ std::string ToLocalizedString(GfxWaterMode e)
     case GfxWaterMode::BASIC:     return _LC("GfxWaterMode", "Basic (fastest)");
     case GfxWaterMode::REFLECT:   return _LC("GfxWaterMode", "Reflection");
     case GfxWaterMode::FULL_FAST: return _LC("GfxWaterMode", "Reflection + refraction (speed optimized)");
-    case GfxWaterMode::FULL_HQ:   return _LC("GfxWaterMode", "Reflection + refraction (quality optimized)");
-    case GfxWaterMode::HYDRAX:    return _LC("GfxWaterMode", "HydraX");
+    case GfxWaterMode::FULL_HQ:   return _LC("GfxWaterMode", "Reflection + refraction (quality optimized)"); // <- these need to go too
     default:                      return "";
     }
 }
