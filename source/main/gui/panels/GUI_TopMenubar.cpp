@@ -222,10 +222,6 @@ void TopMenubar::Update()
     if ((m_open_menu != TopMenu::TOPMENU_SETTINGS) && ImGui::IsItemHovered())
     {
         m_open_menu = TopMenu::TOPMENU_SETTINGS;
-#ifdef USE_CAELUM
-        if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-            m_daytime = App::GetSimTerrain()->getSkyManager()->GetTime();
-#endif // USE_CAELUM
     }
 
     ImGui::SameLine();
@@ -552,24 +548,6 @@ void TopMenubar::Update()
                     DrawGCheckbox(App::gfx_fixed_cam_tracking, _LC("TopMenubar", "Tracking"));
                 }
             }
-#ifdef USE_CAELUM
-            if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-            {
-                ImGui::Separator();
-                ImGui::TextColored(GRAY_HINT_TEXT, _LC("TopMenubar", "Time of day:"));
-                float time = App::GetSimTerrain()->getSkyManager()->GetTime();
-                if (ImGui::SliderFloat("", &time, m_daytime - 0.5f, m_daytime + 0.5f, ""))
-                {
-                    App::GetSimTerrain()->getSkyManager()->SetTime(time);
-                }
-                ImGui::SameLine();
-                DrawGCheckbox(App::gfx_sky_time_cycle, _LC("TopMenubar", "Cycle"));
-                if (App::gfx_sky_time_cycle->getBool())
-                {
-                    DrawGIntSlider(App::gfx_sky_time_speed, _LC("TopMenubar", "Speed"), 10, 2000);
-                }
-            }       
-#endif // USE_CAELUM
             if (RoR::App::gfx_water_waves->getBool() && App::mp_state->getEnum<MpState>() != MpState::CONNECTED && App::GetSimTerrain()->getWater())
             {
                 if (App::gfx_water_mode->getEnum<GfxWaterMode>() != GfxWaterMode::NONE)

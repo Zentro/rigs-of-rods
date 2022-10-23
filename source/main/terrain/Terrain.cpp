@@ -32,7 +32,6 @@
 #include "Language.h"
 #include "ScriptEngine.h"
 #include "ShadowManager.h"
-#include "SkyManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
 #include "Water.h"
@@ -48,7 +47,6 @@ RoR::Terrain::Terrain(CacheEntry* entry)
     , m_geometry_manager(0)
     , m_object_manager(0)
     , m_shadow_manager(0)
-    , m_sky_manager(0)
     , m_sight_range(1000)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
@@ -398,11 +396,6 @@ float RoR::Terrain::GetHeightAt(float x, float z)
 Ogre::Vector3 RoR::Terrain::GetNormalAt(float x, float y, float z)
 {
     return m_geometry_manager->getNormalAt(x, y, z);
-}
-
-SkyManager* RoR::Terrain::getSkyManager()
-{
-    return m_sky_manager;
 }
 
 bool RoR::Terrain::isFlat()

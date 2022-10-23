@@ -278,16 +278,6 @@ bool ActorManager::LoadScene(Ogre::String filename)
 
     App::GetGameContext()->GetActorManager()->SetSimulationPaused(j_doc["physics_paused"].GetBool());
 
-#ifdef USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-        if (j_doc.HasMember("daytime"))
-        {
-            App::GetSimTerrain()->getSkyManager()->SetTime(j_doc["daytime"].GetDouble());
-        }
-    }
-#endif // USE_CAELUM
-
     // Character
     auto data = j_doc["player_position"].GetArray();
     Vector3 position = Vector3(data[0].GetFloat(), data[1].GetFloat(), data[2].GetFloat());
@@ -432,13 +422,6 @@ bool ActorManager::SaveScene(Ogre::String filename)
 
     // Terrain
     j_doc.AddMember("terrain_name", rapidjson::StringRef(App::sim_terrain_name->getStr().c_str()), j_doc.GetAllocator());
-
-#ifdef USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-        j_doc.AddMember("daytime", App::GetSimTerrain()->getSkyManager()->GetTime(), j_doc.GetAllocator());
-    }
-#endif // USE_CAELUM
 
     j_doc.AddMember("forced_awake", m_forced_awake, j_doc.GetAllocator());
 

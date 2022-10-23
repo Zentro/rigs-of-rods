@@ -63,7 +63,6 @@ public:
 
     TerrainGeometryManager* getGeometryManager()          { return m_geometry_manager; }
     TerrainObjectManager*   getObjectManager()            { return m_object_manager; }
-    SkyManager*             getSkyManager();
     ShadowManager*          getShadowManager()            { return m_shadow_manager; }
     TerrainEditor*          GetTerrainEditor()            { return &m_terrain_editor; }
     Collisions*             GetCollisions()               { return m_collisions; }
@@ -115,7 +114,6 @@ private:
     TerrainEditor           m_terrain_editor;
     Collisions*             m_collisions;
     ShadowManager*          m_shadow_manager;
-    SkyManager*             m_sky_manager;
 
     // Properties
 

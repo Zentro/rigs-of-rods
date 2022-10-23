@@ -40,7 +40,6 @@
 #include "Replay.h"
 #include "ScrewProp.h"
 #include "ScriptEngine.h"
-#include "SkyManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "Utils.h"
@@ -1023,46 +1022,6 @@ void GameContext::UpdateSimInputEvents(float dt)
     {
         prev_pos = Ogre::Vector3::ZERO;
     }
-}
-
-void GameContext::UpdateSkyInputEvents(float dt)
-{
-#ifdef USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM &&
-        App::GetSimTerrain()->getSkyManager())
-    {
-        float time_factor = 1.0f;
-
-        if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME))
-        {
-            time_factor = 1000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME_FAST))
-        {
-            time_factor = 10000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME))
-        {
-            time_factor = -1000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME_FAST))
-        {
-            time_factor = -10000.0f;
-        }
-        else if (App::gfx_sky_time_cycle->getBool())
-        {
-            time_factor = App::gfx_sky_time_speed->getInt();
-        }
-
-        if (App::GetSimTerrain()->getSkyManager()->GetSkyTimeFactor() != time_factor)
-        {
-            App::GetSimTerrain()->getSkyManager()->SetSkyTimeFactor(time_factor);
-            Str<200> msg; msg << _L("Time set to ") << App::GetSimTerrain()->getSkyManager()->GetPrettyTime();
-            RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE, msg.ToCStr());
-        }
-    }
-
-#endif // USE_CAELUM
 }
 
 void GameContext::UpdateCommonInputEvents(float dt)

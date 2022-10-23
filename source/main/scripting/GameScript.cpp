@@ -151,38 +151,6 @@ Radian GameScript::getPersonRotation()
     return result;
 }
 
-String GameScript::getCaelumTime()
-{
-    String result = "";
-#ifdef USE_CAELUM
-    if (App::GetSimTerrain())
-    {
-        result = App::GetSimTerrain()->getSkyManager()->GetPrettyTime();
-    }
-#endif // USE_CAELUM
-    return result;
-}
-
-void GameScript::setCaelumTime(float value)
-{
-#ifdef USE_CAELUM
-    if (!this->HaveSimTerrain(__FUNCTION__))
-        return;
-
-    App::GetSimTerrain()->getSkyManager()->SetSkyTimeFactor(value);
-#endif // USE_CAELUM
-}
-
-bool GameScript::getCaelumAvailable()
-{
-    bool result = false;
-#ifdef USE_CAELUM
-    if (App::GetSimTerrain())
-        result = App::GetSimTerrain()->getSkyManager() != 0;
-#endif // USE_CAELUM
-    return result;
-}
-
 void GameScript::stopTimer()
 {
     App::GetGameContext()->GetRaceSystem().StopRaceTimer();

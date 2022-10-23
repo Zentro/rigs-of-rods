@@ -71,9 +71,6 @@ void RoR::RegisterGameScript(asIScriptEngine *engine)
     // > Terrain
     result = engine->RegisterObjectMethod("GameScriptClass", "void loadTerrain(const string &in)", asMETHOD(GameScript, loadTerrain), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getLoadedTerrain(string &out)", asMETHOD(GameScript, getLoadedTerrain), asCALL_THISCALL); ROR_ASSERT(result >= 0);
-    result = engine->RegisterObjectMethod("GameScriptClass", "bool getCaelumAvailable()", asMETHOD(GameScript, getCaelumAvailable), asCALL_THISCALL); ROR_ASSERT(result >= 0);
-    result = engine->RegisterObjectMethod("GameScriptClass", "string getCaelumTime()", asMETHOD(GameScript, getCaelumTime), asCALL_THISCALL); ROR_ASSERT(result >= 0);
-    result = engine->RegisterObjectMethod("GameScriptClass", "void setCaelumTime(float)", asMETHOD(GameScript, setCaelumTime), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "float getGravity()", asMETHOD(GameScript, getGravity), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void setGravity(float)", asMETHOD(GameScript, setGravity), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "float getGroundHeight(vector3 &in)", asMETHOD(GameScript, getGroundHeight), asCALL_THISCALL); ROR_ASSERT(result >= 0);
