@@ -65,7 +65,6 @@ public:
     TerrainObjectManager*   getObjectManager()            { return m_object_manager; }
     HydraxWater*            getHydraxManager()            { return m_hydrax_water; }
     SkyManager*             getSkyManager();
-    SkyXManager*            getSkyXManager()              { return SkyX_manager; }
     ShadowManager*          getShadowManager()            { return m_shadow_manager; }
     TerrainEditor*          GetTerrainEditor()            { return &m_terrain_editor; }
     Collisions*             GetCollisions()               { return m_collisions; }
@@ -118,7 +117,6 @@ private:
     Collisions*             m_collisions;
     ShadowManager*          m_shadow_manager;
     SkyManager*             m_sky_manager;
-    SkyXManager*            SkyX_manager;
     HydraxWater*            m_hydrax_water;
 
     // Properties

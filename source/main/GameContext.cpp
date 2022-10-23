@@ -41,7 +41,6 @@
 #include "ScrewProp.h"
 #include "ScriptEngine.h"
 #include "SkyManager.h"
-#include "SkyXManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "Utils.h"
@@ -1064,30 +1063,6 @@ void GameContext::UpdateSkyInputEvents(float dt)
     }
 
 #endif // USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX &&
-        App::GetSimTerrain()->getSkyXManager())
-    {
-        if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME))
-        {
-            App::GetSimTerrain()->getSkyXManager()->GetSkyX()->setTimeMultiplier(1.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME_FAST))
-        {
-            App::GetSimTerrain()->getSkyXManager()->GetSkyX()->setTimeMultiplier(2.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME))
-        {
-            App::GetSimTerrain()->getSkyXManager()->GetSkyX()->setTimeMultiplier(-1.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME_FAST))
-        {
-            App::GetSimTerrain()->getSkyXManager()->GetSkyX()->setTimeMultiplier(-2.0f);
-        }
-        else
-        {
-            App::GetSimTerrain()->getSkyXManager()->GetSkyX()->setTimeMultiplier(0.01f);
-        }
-    }
 }
 
 void GameContext::UpdateCommonInputEvents(float dt)

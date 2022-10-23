@@ -43,7 +43,6 @@ set(SOURCE_FILES
         gfx/SimBuffers.h
         gfx/Skidmark.{h,cpp}
         gfx/SkyManager.{h,cpp}
-        gfx/SkyXManager.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}
         gfx/Water.{h,cpp}
         gfx/camera/CameraManager.{h,cpp}
@@ -77,26 +76,6 @@ set(SOURCE_FILES
         gfx/particle/FireExtinguisherAffectorFactory.h
         gfx/particle/OgreParticleCustomParam.h
         gfx/particle/OgreShaderParticleRenderer.{h,cpp}
-        gfx/skyx/AtmosphereManager.{h,cpp}
-        gfx/skyx/BasicController.{h,cpp}
-        gfx/skyx/CloudsManager.{h,cpp}
-        gfx/skyx/ColorGradient.{h,cpp}
-        gfx/skyx/Controller.h
-        gfx/skyx/GPUManager.{h,cpp}
-        gfx/skyx/MeshManager.{h,cpp}
-        gfx/skyx/MoonManager.{h,cpp}
-        gfx/skyx/Prerequisites.{h,cpp}
-        gfx/skyx/SCfgFileManager.{h,cpp}
-        gfx/skyx/SkyX.{h,cpp}
-        gfx/skyx/VCloudsManager.{h,cpp}
-        gfx/skyx/VClouds/DataManager.{h,cpp}
-        gfx/skyx/VClouds/Ellipsoid.{h,cpp}
-        gfx/skyx/VClouds/FastFakeRandom.{h,cpp}
-        gfx/skyx/VClouds/GeometryBlock.{h,cpp}
-        gfx/skyx/VClouds/GeometryManager.{h,cpp}
-        gfx/skyx/VClouds/Lightning.{h,cpp}
-        gfx/skyx/VClouds/LightningManager.{h,cpp}
-        gfx/skyx/VClouds/VClouds.{h,cpp}
         gui/DashBoardManager.{h,cpp}
         gui/GUIManager.{h,cpp}
         gui/GUIUtils.{h,cpp}
@@ -319,7 +298,6 @@ target_include_directories(${BINNAME} PRIVATE
         gfx/camera
         gfx/hydrax
         gfx/particle
-        gfx/skyx
         gui
         gui/imgui
         gui/mygui

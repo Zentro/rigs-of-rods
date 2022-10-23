@@ -34,7 +34,6 @@
 #include "ScriptEngine.h"
 #include "ShadowManager.h"
 #include "SkyManager.h"
-#include "SkyXManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
 #include "Water.h"
@@ -51,7 +50,6 @@ RoR::Terrain::Terrain(CacheEntry* entry)
     , m_object_manager(0)
     , m_shadow_manager(0)
     , m_sky_manager(0)
-    , SkyX_manager(0)
     , m_sight_range(1000)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
@@ -78,12 +76,6 @@ RoR::Terrain::~Terrain()
         m_sky_manager = nullptr;
     }
 #endif // USE_CAELUM
-
-    if (SkyX_manager != nullptr)
-    {
-        delete(SkyX_manager);
-        SkyX_manager = nullptr;
-    }
 
     if (m_main_light != nullptr)
     {
@@ -284,28 +276,15 @@ void RoR::Terrain::initSkySubSystem()
     }
     else
 #endif //USE_CAELUM
-    // SkyX skies
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
+    if (!m_def.cubemap_config.empty())
     {
-         // try to load SkyX config
-         if (!m_def.skyx_config.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def.skyx_config))
-            SkyX_manager = new SkyXManager(m_def.skyx_config);
-         else
-            SkyX_manager = new SkyXManager("SkyXDefault.skx");
+        // use custom
+        App::GetGfxScene()->GetSceneManager()->setSkyBox(true, m_def.cubemap_config, 100, true);
     }
     else
     {
-
-        if (!m_def.cubemap_config.empty())
-        {
-            // use custom
-            App::GetGfxScene()->GetSceneManager()->setSkyBox(true, m_def.cubemap_config, 100, true);
-        }
-        else
-        {
-            // use default
-            App::GetGfxScene()->GetSceneManager()->setSkyBox(true, "tracks/skyboxcol", 100, true);
-        }
+        // use default
+        App::GetGfxScene()->GetSceneManager()->setSkyBox(true, "tracks/skyboxcol", 100, true);
     }
 }
 
@@ -316,10 +295,6 @@ void RoR::Terrain::initLight()
 #ifdef USE_CAELUM
         m_main_light = m_sky_manager->GetSkyMainLight();
 #endif
-    }
-    else if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
-    {
-        m_main_light = SkyX_manager->getMainLight();
     }
     else
     {
