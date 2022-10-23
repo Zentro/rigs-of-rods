@@ -310,10 +310,6 @@ void ParseHelper(CVar* cvar, std::string const & val)
     {
         AssignHelper(App::gfx_water_mode, (int)ParseGfxWaterMode(val));
     }
-    else if (cvar->getName() == App::gfx_sky_mode->getName())
-    {
-        AssignHelper(App::gfx_sky_mode, (int)ParseGfxSkyMode(val));
-    }
     else if (cvar->getName() == App::sim_gearbox_mode->getName())
     {
         AssignHelper(App::sim_gearbox_mode, (int)ParseSimGearboxMode(val));
@@ -389,7 +385,6 @@ void WriteVarsHelper(std::stringstream& f, const char* label, const char* prefix
             else if (pair.second->getName() == App::gfx_vegetation_mode->getName() ){ f << GfxVegetationToStr(App::gfx_vegetation_mode ->getEnum<GfxVegetation>()); }
             else if (pair.second->getName() == App::gfx_flares_mode->getName()     ){ f << GfxFlaresModeToStr(App::gfx_flares_mode     ->getEnum<GfxFlaresMode>()); }
             else if (pair.second->getName() == App::gfx_water_mode->getName()      ){ f << GfxWaterModeToStr (App::gfx_water_mode      ->getEnum<GfxWaterMode>());  }
-            else if (pair.second->getName() == App::gfx_sky_mode->getName()        ){ f << GfxSkyModeToStr   (App::gfx_sky_mode        ->getEnum<GfxSkyMode>());    }
             else if (pair.second->getName() == App::sim_gearbox_mode->getName()    ){ f << SimGearboxModeToStr(App::sim_gearbox_mode->getEnum<SimGearboxMode>());    }
             else                                                                    { f << pair.second->getStr(); }
 

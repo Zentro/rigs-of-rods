@@ -315,9 +315,6 @@ void GameSettings::DrawGraphicsSettings()
         }
     }
 
-    DrawGCombo(App::gfx_sky_mode, _LC("GameSettings", "Sky gfx"),
-        m_combo_items_sky_mode.c_str());
-
     DrawGIntSlider(App::gfx_sight_range, _LC("GameSettings", "Sight range (meters)"), 100, 5000);
 
     DrawGCombo(App::gfx_texture_filter , _LC("GameSettings", "Texture filtering"),
@@ -471,13 +468,6 @@ void GameSettings::SetVisible(bool v)
         ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::NONE));
         ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::PSSM));
         ImTerminateComboboxString(m_combo_items_shadow_type);
-    }
-
-    if (m_combo_items_sky_mode == "")
-    {
-        ImAddItemToComboboxString(m_combo_items_sky_mode, ToLocalizedString(GfxSkyMode::SANDSTORM));
-        ImAddItemToComboboxString(m_combo_items_sky_mode, ToLocalizedString(GfxSkyMode::CAELUM));
-        ImTerminateComboboxString(m_combo_items_sky_mode);
     }
 
     if (m_combo_items_tex_filter == "")

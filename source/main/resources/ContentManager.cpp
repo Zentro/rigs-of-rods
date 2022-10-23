@@ -70,7 +70,6 @@ using namespace RoR;
 DECLARE_RESOURCE_PACK( OGRE_CORE,             "OgreCore",             "OgreCoreRG");
 DECLARE_RESOURCE_PACK( WALLPAPERS,            "wallpapers",           "Wallpapers");
 DECLARE_RESOURCE_PACK( AIRFOILS,              "airfoils",             "AirfoilsRG");
-DECLARE_RESOURCE_PACK( CAELUM,                "caelum",               "CaelumRG");
 DECLARE_RESOURCE_PACK( CUBEMAPS,              "cubemaps",             "CubemapsRG");
 DECLARE_RESOURCE_PACK( DASHBOARDS,            "dashboards",           "DashboardsRG");
 DECLARE_RESOURCE_PACK( FAMICONS,              "famicons",             "FamiconsRG");
@@ -388,10 +387,6 @@ void ContentManager::LoadGameplayResources()
 
         m_base_resource_loaded = true;
     }
-
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-        this->AddResourcePack(ContentManager::ResourcePack::CAELUM);
-
 
     if (App::gfx_vegetation_mode->getEnum<GfxVegetation>() != RoR::GfxVegetation::NONE)
         this->AddResourcePack(ContentManager::ResourcePack::PAGED);

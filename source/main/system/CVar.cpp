@@ -144,15 +144,11 @@ void Console::cVarSetupBuiltins()
     App::audio_enable_creak      = this->cVarCreate("audio_enable_creak",      "Creak Sound",                CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
     App::audio_device_name       = this->cVarCreate("audio_device_name",       "AudioDevice",                CVAR_ARCHIVE);
     App::audio_menu_music        = this->cVarCreate("audio_menu_music",        "MainMenuMusic",              CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
-
     App::gfx_flares_mode         = this->cVarCreate("gfx_flares_mode",         "Lights",                     CVAR_ARCHIVE | CVAR_TYPE_INT,     "4"/*(int)GfxFlaresMode::ALL_VEHICLES_ALL_LIGHTS*/);
     App::gfx_shadow_type         = this->cVarCreate("gfx_shadow_type",         "Shadow technique",           CVAR_ARCHIVE | CVAR_TYPE_INT,     "1"/*(int)GfxShadowType::PSSM*/);
     App::gfx_extcam_mode         = this->cVarCreate("gfx_extcam_mode",         "External Camera Mode",       CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"/*(int)GfxExtCamMode::PITCHING*/);
-    App::gfx_sky_mode            = this->cVarCreate("gfx_sky_mode",            "Sky effects",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "1"/*(int)GfxSkyMode::CAELUM*/);
     App::gfx_texture_filter      = this->cVarCreate("gfx_texture_filter",      "Texture Filtering",          CVAR_ARCHIVE | CVAR_TYPE_INT,     "3"/*(int)GfxTexFilter::ANISOTROPIC*/);
     App::gfx_vegetation_mode     = this->cVarCreate("gfx_vegetation_mode",     "Vegetation",                 CVAR_ARCHIVE | CVAR_TYPE_INT,     "3"/*(int)GfxVegetation::FULL*/);
-    App::gfx_sky_time_cycle      = this->cVarCreate("gfx_sky_time_cycle",      "",                                          CVAR_TYPE_BOOL,    "false");
-    App::gfx_sky_time_speed      = this->cVarCreate("gfx_sky_time_speed",      "",                                          CVAR_TYPE_INT,     "300");
     App::gfx_water_mode          = this->cVarCreate("gfx_water_mode",          "Water effects",              CVAR_ARCHIVE | CVAR_TYPE_INT,     "3"/*(int)GfxWaterMode::FULL_FAST*/);
     App::gfx_anisotropy          = this->cVarCreate("gfx_anisotropy",          "Anisotropy",                 CVAR_ARCHIVE | CVAR_TYPE_INT,     "4");
     App::gfx_water_waves         = this->cVarCreate("gfx_water_waves",         "Waves",                      CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");

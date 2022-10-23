@@ -204,9 +204,6 @@ CVar* audio_menu_music;
 CVar* gfx_flares_mode;
 CVar* gfx_shadow_type;
 CVar* gfx_extcam_mode;
-CVar* gfx_sky_mode;
-CVar* gfx_sky_time_cycle;
-CVar* gfx_sky_time_speed;
 CVar* gfx_texture_filter;
 CVar* gfx_vegetation_mode;
 CVar* gfx_water_mode;
@@ -385,16 +382,6 @@ std::string ToLocalizedString(GfxShadowType e)
     case GfxShadowType::NONE:         return _LC("GfxShadowType", "Disabled");
     case GfxShadowType::PSSM:         return _LC("GfxShadowType", "PSSM");
     default:                          return "";
-    }
-}
-
-std::string ToLocalizedString(GfxSkyMode e)
-{
-    switch (e)
-    {
-    case GfxSkyMode::SANDSTORM: return _LC("GfxSkyMode", "Sandstorm (fastest)");
-    case GfxSkyMode::CAELUM:    return _LC("GfxSkyMode", "Caelum (best looking, slower)");
-    default:                    return "";
     }
 }
 
