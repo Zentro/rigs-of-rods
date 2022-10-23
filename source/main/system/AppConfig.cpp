@@ -72,11 +72,6 @@ const char* CONF_WATER_BASIC        = "Basic (fastest)";
 const char* CONF_WATER_REFLECT      = "Reflection";
 const char* CONF_WATER_FULL_FAST    = "Reflection + refraction (speed optimized)";
 const char* CONF_WATER_FULL_HQ      = "Reflection + refraction (quality optimized)";
-const char* CONF_WATER_HYDRAX       = "Hydrax";
-
-const char* CONF_SKY_CAELUM         = "Caelum (best looking, slower)";
-const char* CONF_SKY_SKYX           = "SkyX (best looking, slower)";
-const char* CONF_SKY_SANDSTORM      = "Sandstorm (fastest)";
 
 const char* CONF_INPUT_GRAB_DYNAMIC = "Dynamically";
 const char* CONF_INPUT_GRAB_NONE    = "None";

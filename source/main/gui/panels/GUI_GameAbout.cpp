@@ -119,10 +119,6 @@ void GameAbout::Draw()
     ImGui::NewLine();
     ImGui::TextColored(theme.value_blue_text_color, "%s:", _LC("About", "Used Libs"));
     ImGui::Text("%s%s", "Ogre3D:",         " 3D rendering engine");
-#ifdef USE_CAELUM
-    ImGui::Text("%s%s", "Caelum:",         " Atmospheric effects");
-#endif
-    ImGui::Text("%s%s", "Hydrax:",         " Water rendering");
 #ifdef USE_ANGELSCRIPT
     ImGui::Text("%s%s", "AngelScript:",    " Scripting Backend");
 #endif
@@ -142,7 +138,6 @@ void GameAbout::Draw()
 #ifdef USE_SOCKETW
     ImGui::Text("%s%s", "SocketW:",        " Used as cross-platform socket abstraction");
 #endif
-    ImGui::Text("%s%s", "pThreads:",       " POSIX threads library");
     ImGui::Text("%s%s", "RapidJSON:",      " JSON parser/generator, used for online services");
 
     ImGui::End();
