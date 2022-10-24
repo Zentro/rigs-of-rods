@@ -165,13 +165,6 @@ std::string ToLocalizedString(SimGearboxMode e);
 /// @}
 /// @}
 
-enum class GfxShadowType
-{
-    NONE,
-    PSSM
-};
-std::string ToLocalizedString(GfxShadowType e);
-
 enum class GfxExtCamMode
 {
     NONE,
@@ -386,7 +379,6 @@ extern CVar* audio_menu_music;
 
 // Graphics
 extern CVar* gfx_flares_mode;
-extern CVar* gfx_shadow_type;
 extern CVar* gfx_extcam_mode;
 extern CVar* gfx_texture_filter;
 extern CVar* gfx_vegetation_mode;
@@ -400,7 +392,6 @@ extern CVar* gfx_surveymap_icons;
 extern CVar* gfx_declutter_map;
 extern CVar* gfx_envmap_enabled;
 extern CVar* gfx_envmap_rate;
-extern CVar* gfx_shadow_quality;
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
 extern CVar* gfx_camera_height;
@@ -414,7 +405,6 @@ extern CVar* gfx_fps_limit;
 extern CVar* gfx_speedo_digital;
 extern CVar* gfx_speedo_imperial;
 extern CVar* gfx_flexbody_cache;
-extern CVar* gfx_reduce_shadows;
 
 // ------------------------------------------------------------------------------------------------
 // Global objects

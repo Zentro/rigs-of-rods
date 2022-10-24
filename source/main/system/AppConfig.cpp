@@ -38,7 +38,6 @@ using namespace RoR;
 // --------------------------------
 // Config file strings and helpers
 
-const char* CONF_GFX_SHADOW_PSSM    = "Parallel-split Shadow Maps";
 const char* CONF_GFX_SHADOW_NONE    = "No shadows (fastest)";
 
 const char* CONF_EXTCAM_PITCHING    = "Pitching";
@@ -82,12 +81,6 @@ IoInputGrabMode ParseIoInputGrabMode(std::string const & s)
     if (s == CONF_INPUT_GRAB_DYNAMIC) { return RoR::IoInputGrabMode::DYNAMIC ; }
     if (s == CONF_INPUT_GRAB_NONE   ) { return RoR::IoInputGrabMode::NONE    ; }
     else                              { return RoR::IoInputGrabMode::ALL     ; }
-}
-
-GfxShadowType ParseGfxShadowType(std::string const & s)
-{
-    if (s == CONF_GFX_SHADOW_PSSM)    { return GfxShadowType::PSSM    ; }
-    else                              { return GfxShadowType::NONE    ; }
 }
 
 GfxExtCamMode ParseGfxExtCamMode(std::string const & s)
@@ -257,17 +250,6 @@ void ParseHelper(CVar* cvar, std::string const & val)
         if (rate > 6) { rate = 6; }
         AssignHelper(App::gfx_envmap_rate, rate);
     }
-    else if (cvar->getName() == App::gfx_shadow_quality->getName())
-    {
-        int quality = Ogre::StringConverter::parseInt(val);
-        if (quality < 0) { quality = 0; }
-        if (quality > 3) { quality = 3; }
-        AssignHelper(App::gfx_shadow_quality, quality);
-    }
-    else if (cvar->getName() == App::gfx_shadow_type->getName())
-    {
-        AssignHelper(App::gfx_shadow_type, (int)ParseGfxShadowType(val));
-    }
     else if (cvar->getName() == App::gfx_extcam_mode->getName())
     {
         AssignHelper(App::gfx_extcam_mode, (int)ParseGfxExtCamMode(val));
@@ -356,9 +338,7 @@ void WriteVarsHelper(std::stringstream& f, const char* label, const char* prefix
             {
                 f << pair.second->getName() << "=";
             }
-
-                 if (pair.second->getName() == App::gfx_shadow_type->getName()     ){ f << GfxShadowTypeToStr(App::gfx_shadow_type     ->getEnum<GfxShadowType>()); }
-            else if (pair.second->getName() == App::gfx_extcam_mode->getName()     ){ f << GfxExtCamModeToStr(App::gfx_extcam_mode     ->getEnum<GfxExtCamMode>()); }
+            if      (pair.second->getName() == App::gfx_extcam_mode->getName()     ){ f << GfxExtCamModeToStr(App::gfx_extcam_mode     ->getEnum<GfxExtCamMode>()); }
             else if (pair.second->getName() == App::gfx_texture_filter->getName()  ){ f << GfxTexFilterToStr (App::gfx_texture_filter  ->getEnum<GfxTexFilter>());  }
             else if (pair.second->getName() == App::gfx_vegetation_mode->getName() ){ f << GfxVegetationToStr(App::gfx_vegetation_mode ->getEnum<GfxVegetation>()); }
             else if (pair.second->getName() == App::gfx_flares_mode->getName()     ){ f << GfxFlaresModeToStr(App::gfx_flares_mode     ->getEnum<GfxFlaresMode>()); }

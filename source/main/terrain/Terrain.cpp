@@ -31,7 +31,6 @@
 #include "GUI_SurveyMap.h"
 #include "Language.h"
 #include "ScriptEngine.h"
-#include "ShadowManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
 #include "Water.h"
@@ -46,7 +45,6 @@ RoR::Terrain::Terrain(CacheEntry* entry)
     : m_collisions(0)
     , m_geometry_manager(0)
     , m_object_manager(0)
-    , m_shadow_manager(0)
     , m_sight_range(1000)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
@@ -81,12 +79,6 @@ RoR::Terrain::~Terrain()
     {
         delete(m_geometry_manager);
         m_geometry_manager = nullptr;
-    }
-
-    if (m_shadow_manager != nullptr)
-    {
-        delete(m_shadow_manager);
-        m_shadow_manager = nullptr;
     }
 
     if (m_collisions != nullptr)
@@ -124,9 +116,6 @@ RoR::Terrain* RoR::Terrain::LoadAndPrepareTerrain(CacheEntry* entry)
     }
 
     terrn_mgr->setGravity(terrn_mgr->m_def.gravity);
-
-    loading_window->SetProgress(15, _L("Initializing Shadow Subsystem"));
-    terrn_mgr->initShadows();
 
     loading_window->SetProgress(17, _L("Initializing Geometry Subsystem"));
     terrn_mgr->m_geometry_manager = new TerrainGeometryManager(terrn_mgr.get());
@@ -319,12 +308,6 @@ void RoR::Terrain::initWater()
     m_water = std::unique_ptr<IWater>(new Water(this->getMaxTerrainSize()));
     m_water->SetStaticWaterHeight(m_def.water_height);
     m_water->SetWaterBottomHeight(m_def.water_bottom_height);
-}
-
-void RoR::Terrain::initShadows()
-{
-    m_shadow_manager = new ShadowManager();
-    m_shadow_manager->loadConfiguration();
 }
 
 void RoR::Terrain::loadTerrainObjects()

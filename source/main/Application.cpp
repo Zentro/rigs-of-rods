@@ -202,7 +202,6 @@ CVar* audio_menu_music;
 
 // Graphics
 CVar* gfx_flares_mode;
-CVar* gfx_shadow_type;
 CVar* gfx_extcam_mode;
 CVar* gfx_texture_filter;
 CVar* gfx_vegetation_mode;
@@ -216,7 +215,6 @@ CVar* gfx_surveymap_icons;
 CVar* gfx_declutter_map;
 CVar* gfx_envmap_enabled;
 CVar* gfx_envmap_rate;
-CVar* gfx_shadow_quality;
 CVar* gfx_skidmarks_mode;
 CVar* gfx_sight_range;
 CVar* gfx_camera_height;
@@ -230,7 +228,6 @@ CVar* gfx_fps_limit;
 CVar* gfx_speedo_digital;
 CVar* gfx_speedo_imperial;
 CVar* gfx_flexbody_cache;
-CVar* gfx_reduce_shadows;
 
 // Instance management
 void SetSimTerrain     (Terrain* obj)          { g_sim_terrain = obj;}
@@ -371,16 +368,6 @@ std::string ToLocalizedString(GfxFlaresMode e)
     case GfxFlaresMode::ALL_VEHICLES_HEAD_ONLY:  return _LC("GfxFlaresMode", "All vehicles, main lights");
     case GfxFlaresMode::ALL_VEHICLES_ALL_LIGHTS: return _LC("GfxFlaresMode", "All vehicles, all lights");
     default:                                     return "";
-    }
-}
-
-std::string ToLocalizedString(GfxShadowType e)
-{
-    switch (e)
-    {
-    case GfxShadowType::NONE:         return _LC("GfxShadowType", "Disabled");
-    case GfxShadowType::PSSM:         return _LC("GfxShadowType", "PSSM");
-    default:                          return "";
     }
 }
 

@@ -457,46 +457,11 @@ void TerrainGeometryManager::configureTerrainDefaults()
     defaultimp.minBatchSize = m_spec->batch_size_min;
     defaultimp.maxBatchSize = m_spec->batch_size_max;
 
-    // optimizations
-    TerrainPSSMMaterialGenerator::SM2Profile* matProfile = nullptr;
-    if (custom_mat.empty())
-    {
-        matProfile = static_cast<TerrainPSSMMaterialGenerator::SM2Profile*>(terrainOptions->getDefaultMaterialGenerator()->getActiveProfile());
-        if (matProfile)
-        {
-            matProfile->setLightmapEnabled(m_spec->lightmap_enabled);
-            // Fix for OpenGL, otherwise terrains are black
-            if (Root::getSingleton().getRenderSystem()->getName() == "OpenGL Rendering Subsystem")
-            {
-                matProfile->setLayerNormalMappingEnabled(true);
-                matProfile->setLayerSpecularMappingEnabled(true);
-            }
-            else
-            {
-                matProfile->setLayerNormalMappingEnabled(m_spec->norm_map_enabled);
-                matProfile->setLayerSpecularMappingEnabled(m_spec->spec_map_enabled);
-            }
-            matProfile->setLayerParallaxMappingEnabled(m_spec->parallax_enabled);
-            matProfile->setGlobalColourMapEnabled(m_spec->global_colormap_enabled);
-            matProfile->setReceiveDynamicShadowsDepth(m_spec->recv_dyn_shadows_depth);
-
-            terrainManager->getShadowManager()->updateTerrainMaterial(matProfile);
-        }
-    }
-
     terrainOptions->setLayerBlendMapSize   (m_spec->layer_blendmap_size);
     terrainOptions->setCompositeMapSize    (m_spec->composite_map_size);
     terrainOptions->setCompositeMapDistance(m_spec->composite_map_distance);
     terrainOptions->setSkirtSize           (m_spec->skirt_size);
     terrainOptions->setLightMapSize        (m_spec->lightmap_size);
-
-    if (custom_mat.empty())
-    {
-        if (matProfile->getReceiveDynamicShadowsPSSM())
-        {
-            terrainOptions->setCastsDynamicShadows(true);
-        }
-    }
 
     terrainOptions->setUseRayBoxDistanceCalculation(false);
 

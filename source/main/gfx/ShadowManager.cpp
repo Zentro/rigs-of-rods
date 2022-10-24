@@ -35,10 +35,6 @@ using namespace RoR;
 
 ShadowManager::ShadowManager()
 {
-    PSSM_Shadows.mPSSMSetup.setNull();
-    PSSM_Shadows.mDepthShadows = false;
-    PSSM_Shadows.ShadowsTextureNum = 3;
-    PSSM_Shadows.Quality = RoR::App::gfx_shadow_quality->getInt(); //0 = Low quality, 1 = mid, 2 = hq, 3 = ultra
 }
 
 ShadowManager::~ShadowManager()
@@ -55,37 +51,6 @@ int ShadowManager::updateShadowTechnique()
     float scoef = 0.5;
     App::GetGfxScene()->GetSceneManager()->setShadowColour(Ogre::ColourValue(0.563 + scoef, 0.578 + scoef, 0.625 + scoef));
     App::GetGfxScene()->GetSceneManager()->setShowDebugShadows(false);
-
-    if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
-    {
-        processPSSM();
-        if (App::GetGfxScene()->GetSceneManager()->getShowDebugShadows())
-        {
-            // add the overlay elements to show the shadow maps:
-            // init overlay elements
-            OverlayManager& mgr = Ogre::OverlayManager::getSingleton();
-            Overlay* overlay = mgr.create("DebugOverlay");
-
-            for (int i = 0; i < PSSM_Shadows.ShadowsTextureNum; ++i)
-            {
-                TexturePtr tex = App::GetGfxScene()->GetSceneManager()->getShadowTexture(i);
-
-                // Set up a debug panel to display the shadow
-                MaterialPtr debugMat = MaterialManager::getSingleton().create("Ogre/DebugTexture" + StringConverter::toString(i), ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                debugMat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
-                TextureUnitState* t = debugMat->getTechnique(0)->getPass(0)->createTextureUnitState(tex->getName());
-                t->setTextureAddressingMode(TextureUnitState::TAM_CLAMP);
-
-                OverlayContainer* debugPanel = (OverlayContainer*)(OverlayManager::getSingleton().createOverlayElement("Panel", "Ogre/DebugTexPanel" + StringConverter::toString(i)));
-                debugPanel->_setPosition(0.8, i * 0.25);
-                debugPanel->_setDimensions(0.2, 0.24);
-                debugPanel->setMaterialName(debugMat->getName());
-                debugPanel->setEnabled(true);
-                overlay->add2D(debugPanel);
-                overlay->show();
-            }
-        }
-    }
     return 0;
 }
 
@@ -163,15 +128,7 @@ void ShadowManager::updatePSSM()
 
 void ShadowManager::updateTerrainMaterial(Ogre::TerrainPSSMMaterialGenerator::SM2Profile* matProfile)
 {
-    if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
-    {
-        Ogre::PSSMShadowCameraSetup* pssmSetup = static_cast<Ogre::PSSMShadowCameraSetup*>(PSSM_Shadows.mPSSMSetup.get());
-        matProfile->setReceiveDynamicShadowsDepth(true);
-        matProfile->setReceiveDynamicShadowsLowLod(false);
-        matProfile->setReceiveDynamicShadowsEnabled(true);
-        matProfile->setReceiveDynamicShadowsPSSM(pssmSetup);
-        matProfile->setLightmapEnabled(false);
-    }
+    // to be removed
 }
 
 void ShadowManager::setManagedMaterialSplitPoints(Ogre::PSSMShadowCameraSetup::SplitPointList splitPointList)

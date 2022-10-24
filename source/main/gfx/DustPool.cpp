@@ -48,7 +48,7 @@ DustPool::DustPool(Ogre::SceneManager* sm, const char* dname, int dsize):
         if (pss[i])
         {
             sns[i]->attachObject(pss[i]);
-            pss[i]->setCastShadows(false);
+            //pss[i]->setCastShadows(false);
             pss[i]->setVisibilityFlags(RoR::DEPTHMAP_DISABLED);
             if (pss[i]->getNumEmitters() > 0)
             {
