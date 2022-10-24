@@ -303,6 +303,18 @@ void GameSettings::DrawGraphicsSettings()
     DrawGCombo(App::gfx_flares_mode, _LC("GameSettings", "Light sources"),
         m_combo_items_light_sources.c_str());
 
+    DrawGCombo(App::gfx_shadow_type, _LC("GameSettings", "Shadow type (requires restart)"),
+        m_combo_items_shadow_type.c_str());
+
+    if (App::gfx_shadow_type->getEnum<GfxShadowType>() != GfxShadowType::NONE)
+    {
+        DrawGCheckbox(App::gfx_reduce_shadows, _LC("GameSettings", "Shadow optimizations"));
+        if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
+        {
+            DrawGIntSlider(App::gfx_shadow_quality, _LC("GameSettings", "Shadow quality"), 0, 3);
+        }
+    }
+
     DrawGIntSlider(App::gfx_sight_range, _LC("GameSettings", "Sight range (meters)"), 100, 5000);
 
     DrawGCombo(App::gfx_texture_filter , _LC("GameSettings", "Texture filtering"),
@@ -449,6 +461,13 @@ void GameSettings::SetVisible(bool v)
         ImAddItemToComboboxString(m_combo_items_light_sources, ToLocalizedString(GfxFlaresMode::ALL_VEHICLES_HEAD_ONLY));
         ImAddItemToComboboxString(m_combo_items_light_sources, ToLocalizedString(GfxFlaresMode::ALL_VEHICLES_ALL_LIGHTS));
         ImTerminateComboboxString(m_combo_items_light_sources);
+    }
+
+    if (m_combo_items_shadow_type == "")
+    {
+        ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::NONE));
+        ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::PSSM));
+        ImTerminateComboboxString(m_combo_items_shadow_type);
     }
 
     if (m_combo_items_tex_filter == "")

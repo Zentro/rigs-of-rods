@@ -607,13 +607,13 @@ void RoR::GfxCharacter::UpdateCharacterInScene()
         if (xc_simbuf.simbuf_actor_coupling != nullptr)
         {
             // Entering/switching vehicle
-            //xc_scenenode->getAttachedObject(0)->setCastShadows(false);
+            xc_scenenode->getAttachedObject(0)->setCastShadows(false);
             xc_scenenode->setVisible(xc_simbuf.simbuf_actor_coupling->GetGfxActor()->HasDriverSeatProp());
         }
         else if (xc_simbuf_prev.simbuf_actor_coupling != nullptr)
         {
             // Leaving vehicle
-            //xc_scenenode->getAttachedObject(0)->setCastShadows(true);
+            xc_scenenode->getAttachedObject(0)->setCastShadows(true);
             xc_scenenode->resetOrientation();
         }
     }

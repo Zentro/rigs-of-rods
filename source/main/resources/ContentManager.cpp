@@ -349,7 +349,19 @@ void ContentManager::InitManagedMaterials(std::string const & rg_name)
 {
     Ogre::String managed_materials_dir = PathCombine(App::sys_resources_dir->getStr(), "managed_materials");
 
-    // PSSM was here
+    //Dirty, needs to be improved
+    if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
+    {
+        if (rg_name == RGN_MANAGED_MATS) // Only load shared resources on startup
+        {
+            ResourceGroupManager::getSingleton().addResourceLocation(PathCombine(managed_materials_dir, "shadows/pssm/on/shared"), "FileSystem", rg_name);
+        }
+        ResourceGroupManager::getSingleton().addResourceLocation(PathCombine(managed_materials_dir, "shadows/pssm/on"), "FileSystem", rg_name);
+    }
+    else
+    {
+        ResourceGroupManager::getSingleton().addResourceLocation(PathCombine(managed_materials_dir,"shadows/pssm/off"), "FileSystem", rg_name);
+    }
 
     ResourceGroupManager::getSingleton().addResourceLocation(PathCombine(managed_materials_dir, "texture"), "FileSystem", rg_name);
 

@@ -170,7 +170,7 @@ void RoR::GfxEnvmap::SetupEnvMap()
             mesh->load();
 
             Ogre::Entity* e = App::GetGfxScene()->GetSceneManager()->createEntity(mesh->getName());
-            //e->setCastShadows(false);
+            e->setCastShadows(false);
             e->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY - 1);
             e->setVisible(true);
 

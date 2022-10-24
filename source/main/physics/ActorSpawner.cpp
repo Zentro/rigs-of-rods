@@ -7015,7 +7015,10 @@ void ActorSpawner::CreateCabVisual()
             Ogre::ColourValue(0,0,0)
         );
     }
-    // shadows WERE reduced, though very pointlessly
+    if (App::gfx_reduce_shadows->getBool())
+    {
+        backmat->setReceiveShadows(false);
+    }
     backmat->compile();
 
     m_actor->GetGfxActor()->UpdateSimDataBuffer(); // fill all current nodes - needed to setup flexing meshes

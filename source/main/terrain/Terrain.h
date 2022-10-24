@@ -63,6 +63,7 @@ public:
 
     TerrainGeometryManager* getGeometryManager()          { return m_geometry_manager; }
     TerrainObjectManager*   getObjectManager()            { return m_object_manager; }
+    ShadowManager*          getShadowManager()            { return m_shadow_manager; }
     TerrainEditor*          GetTerrainEditor()            { return &m_terrain_editor; }
     Collisions*             GetCollisions()               { return m_collisions; }
     IWater*                 getWater()                    { return m_water.get(); }
@@ -97,6 +98,7 @@ private:
     void initLight();
     void initObjects();
     void initScripting();
+    void initShadows();
     void initSkySubSystem();
     void initVegetation();
     void initWater();
@@ -111,6 +113,7 @@ private:
     std::unique_ptr<IWater> m_water;
     TerrainEditor           m_terrain_editor;
     Collisions*             m_collisions;
+    ShadowManager*          m_shadow_manager;
 
     // Properties
 

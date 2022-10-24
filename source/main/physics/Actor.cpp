@@ -2922,7 +2922,10 @@ void Actor::prepareInside(bool inside)
   //      m_gfx_actor->GetCabTransMaterial()->setReceiveShadows(!inside);
   //  }
 
-      // shadows WERE reduced here
+    if (App::gfx_reduce_shadows->getBool())
+    {
+        m_gfx_actor->SetCastShadows(!inside);
+    }
 }
 
 void Actor::lightsToggle()
