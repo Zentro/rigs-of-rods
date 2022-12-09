@@ -798,10 +798,11 @@ static Vector2 ImGui_GetItemRectSize()
     auto v = ImGui::GetItemRectSize(); return Vector2(v.x, v.y);
 }
 
-static void ImGui_SetItemAllowOverlap()
-{
-    ImGui::SetItemAllowOverlap();
-}
+// REMOVED FROM DearIMGUI (OGRE 14 bundles a newer version)
+// static void ImGui_SetItemAllowOverlap()
+// {
+//     ImGui::SetItemAllowOverlap();
+// }
 
 static bool ImGui_IsWindowFocused(int a)
 {
@@ -857,24 +858,25 @@ static void ImGui_EndChildFrame()
 // Inputs
 // ---------------------------------------------------------------------------
 
-static int ImGui_GetKeyIndex(int a)
-{
-    return ImGui::GetKeyIndex((ImGuiKey)a);
-}
+// REMOVED FROM DearIMGUI (OGRE 14 bundles a newer version)
+// static int ImGui_GetKeyIndex(int a)
+// {
+//     return ImGui::GetKeyIndex((ImGuiKey)a);
+// }
 
 static bool ImGui_IsKeyDown(int a)
 {
-    return ImGui::IsKeyDown(a);
+    return ImGui::IsKeyDown((ImGuiKey)a);
 }
 
 static bool ImGui_IsKeyPressed(int a, bool b)
 {
-    return ImGui::IsKeyPressed(a, b);
+    return ImGui::IsKeyPressed((ImGuiKey)a, b);
 }
 
 static bool ImGui_IsKeyReleased(int a)
 {
-    return ImGui::IsKeyReleased(a);
+    return ImGui::IsKeyReleased((ImGuiKey)a);
 }
 
 static bool ImGui_IsMouseDown(int a)
@@ -937,15 +939,17 @@ static void ImGui_SetMouseCursor(ImGuiMouseCursor a)
     ImGui::SetMouseCursor(a);
 }
 
-static void ImGui_CaptureKeyboardFromApp(bool a)
-{
-    ImGui::CaptureKeyboardFromApp(a);
-}
+// REMOVED FROM DearIMGUI (OGRE 14 bundles a newer version)
+// static void ImGui_CaptureKeyboardFromApp(bool a)
+// {
+//     ImGui::CaptureKeyboardFromApp(a);
+// }
 
-static void ImGui_CaptureMouseFromApp(bool a)
-{
-    ImGui::CaptureMouseFromApp(a);
-}
+// REMOVED FROM DearIMGUI (OGRE 14 bundles a newer version)
+// static void ImGui_CaptureMouseFromApp(bool a)
+// {
+//     ImGui::CaptureMouseFromApp(a);
+// }
 
 // ---------------------------------------------------------------------------
 // Clipboard

@@ -345,7 +345,7 @@ void RoR::RegisterImGuiNativeBindings(AngelScript::asIScriptEngine* engine)
     engine->RegisterGlobalFunction("vector2 GetItemRectMin()", asFUNCTION(ImGui_GetItemRectMin), asCALL_CDECL);
     engine->RegisterGlobalFunction("vector2 GetItemRectMax()", asFUNCTION(ImGui_GetItemRectMax), asCALL_CDECL);
     engine->RegisterGlobalFunction("vector2 GetItemRectSize()", asFUNCTION(ImGui_GetItemRectSize), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void SetItemAllowOverlap()", asFUNCTION(ImGui_SetItemAllowOverlap), asCALL_CDECL);
+    //REMOVED FROM DearIMGUI  engine->RegisterGlobalFunction("void SetItemAllowOverlap()", asFUNCTION(ImGui_SetItemAllowOverlap), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool IsWindowFocused(int = 0)", asFUNCTION(ImGui_IsWindowFocused), asCALL_CDECL); // TODO: update imgui -- flags omitted
     engine->RegisterGlobalFunction("bool IsWindowHovered(int = 0)", asFUNCTION(ImGui_IsWindowHovered), asCALL_CDECL); // TODO: update imgui -- flags omitted
     engine->RegisterGlobalFunction("bool IsRectVisible(const vector2&)", asFUNCTION(ImGui_IsRectVisibleSize), asCALL_CDECL);
@@ -358,7 +358,7 @@ void RoR::RegisterImGuiNativeBindings(AngelScript::asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool BeginChildFrame(uint, const vector2&, int = 0)", asFUNCTION(ImGui_BeginChildFrame), asCALL_CDECL);
     engine->RegisterGlobalFunction("void EndChildFrame()", asFUNCTION(ImGui_EndChildFrame), asCALL_CDECL);
 
-    engine->RegisterGlobalFunction("int GetKeyIndex(int)", asFUNCTION(ImGui_GetKeyIndex), asCALL_CDECL);
+    //REMOVED FROM DearIMGUI  engine->RegisterGlobalFunction("int GetKeyIndex(int)", asFUNCTION(ImGui_GetKeyIndex), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool IsKeyDown(int)", asFUNCTION(ImGui_IsKeyDown), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool IsKeyPressed(int, bool = true)", asFUNCTION(ImGui_IsKeyPressed), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool IsKeyReleased(int)", asFUNCTION(ImGui_IsKeyReleased), asCALL_CDECL);
@@ -376,8 +376,8 @@ void RoR::RegisterImGuiNativeBindings(AngelScript::asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void ResetMouseDragDelta(int = 0)", asFUNCTION(ImGui_ResetMouseDragDelta), asCALL_CDECL);
     engine->RegisterGlobalFunction("int GetMouseCursor()", asFUNCTION(ImGui_GetMouseCursor), asCALL_CDECL);
     engine->RegisterGlobalFunction("void SetMouseCursor(int)", asFUNCTION(ImGui_SetMouseCursor), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void CaptureKeyboardFromApp(bool = true)", asFUNCTION(ImGui_CaptureKeyboardFromApp), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void CaptureMouseFromApp(bool = true)", asFUNCTION(ImGui_CaptureMouseFromApp), asCALL_CDECL);
+    //REMOVED FROM DearIMGUI  engine->RegisterGlobalFunction("void CaptureKeyboardFromApp(bool = true)", asFUNCTION(ImGui_CaptureKeyboardFromApp), asCALL_CDECL);
+    //REMOVED FROM DearIMGUI  engine->RegisterGlobalFunction("void CaptureMouseFromApp(bool = true)", asFUNCTION(ImGui_CaptureMouseFromApp), asCALL_CDECL);
 
 
     engine->RegisterGlobalFunction("string GetClipboardText()", asFUNCTION(ImGui_GetClipboardText), asCALL_CDECL);
