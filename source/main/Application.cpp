@@ -119,8 +119,11 @@ CVar* mp_player_name;
 CVar* mp_player_token;
 CVar* mp_api_url;
 
-// New remote API
+// API
 CVar* remote_query_url;
+CVar* api_root_domain;
+CVar* api_query_url;
+CVar* api_login_token;
 
 // Diagnostic
 CVar* diag_auto_spawner_report;

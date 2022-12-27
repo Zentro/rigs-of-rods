@@ -19,8 +19,6 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#ifdef USE_CURL
-
 #include "HttpRemoteQuery.h"
 
 #include "Application.h"
@@ -28,59 +26,81 @@
 
 #include <fmt/core.h>
 
+#ifdef USE_CURL
 #include <curl/curl.h>
 #include <curl/easy.h>
 
 using namespace RoR;
 
-static size_t write_callback(void* ptr, size_t size, size_t nmemb, std::string* data)
+static size_t CurlWriteCallback(void* ptr, size_t size, size_t nmemb, std::string* data)
 {
     data->append((char*)ptr, size * nmemb);
     return size * nmemb;
+}
+
+void HttpRemoteQuery::GetServerList()
+{
+
+}
+
+void HttpRemoteQuery::doHttpDownloadRequest(std::string url)
+{
+
+}
+
+void HttpRemoteQuery::HandleHttpRequestErrors(HttpResponse& response) 
+{
+    if (HasErrors(response.status_code)) 
+    {
+        return;
+    }
+}
+
+bool HttpRemoteQuery::HasErrors(int status_code)
+{
+    return status_code >= 300 || status_code < 200;
 }
 
 HttpRemoteQuery::HttpResponse HttpRemoteQuery::doHttpRequest(
     std::string path, 
     std::string method, 
     std::string body,
-    bool privilaged /*= false*/) {
-
+    bool privilaged /*= false*/) 
+{
     HttpResponse http_response;
 
-    std::string url = 
-        fmt::format("{}/{}", App::remote_query_url->getStr(), path);
-    std::string user_agent = 
-        fmt::format("{}/{}", "Rigs of Rods Client", ROR_VERSION_STRING);
+    std::string url             = fmt::format("{}/{}", App::api_query_url->getStr(), path);
+    std::string user_agent      = fmt::format("{}/{}", "Rigs of Rods Client", ROR_VERSION_STRING);
 
-    struct curl_slist* headers;
-    headers = NULL;
+    struct curl_slist* slist;
+    slist = NULL;
 
-    headers = curl_slist_append(headers, "Accept: */*");
-    headers = curl_slist_append(headers, "Accept-Encoding: gzip");
-    headers = curl_slist_append(headers, "Content-Type: application/json");
-    if (privilaged) {
-        headers = curl_slist_append(headers,
-            fmt::format("Authorization: Bearer {}", "something").c_str());
-    }
+    slist = curl_slist_append(slist, "Accept: */*");
+    slist = curl_slist_append(slist, "Content-Type: application/json");
 
-    CURL* curl_th = curl_easy_init();
-    curl_easy_setopt(curl_th, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl_th, CURLOPT_POSTFIELDS, body);
-    curl_easy_setopt(curl_th, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl_th, CURLOPT_USERAGENT, user_agent.c_str());
+    CURL* handle = curl_easy_init();
+    curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(handle, CURLOPT_POSTFIELDS, body);
+    curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
+    curl_easy_setopt(handle, CURLOPT_XOAUTH2_BEARER, App::api_login_token->getStr().c_str());
+    curl_easy_setopt(handle, CURLOPT_ACCEPT_ENCODING, "gzip");
+    curl_easy_setopt(handle, CURLOPT_HTTPHEADER, slist);
+    curl_easy_setopt(handle, CURLOPT_USERAGENT, user_agent.c_str());
 #ifdef _WIN32
-    curl_easy_setopt(curl_th, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
+    curl_easy_setopt(handle, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
 #endif // _WIN32
-    curl_easy_setopt(curl_th, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl_th, CURLOPT_WRITEDATA, &http_response.body);
-    curl_easy_setopt(curl_th, CURLOPT_HEADERDATA, &http_response.headers);
+    curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, CurlWriteCallback);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &http_response.body);
+    curl_easy_setopt(handle, CURLOPT_HEADERDATA, &http_response.headers);
 
-    curl_easy_perform(curl_th);
-    curl_easy_getinfo(curl_th, CURLINFO_RESPONSE_CODE, &http_response.status_code);
+    curl_easy_perform(handle);
+    curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &http_response.status_code);
 
-    curl_easy_cleanup(curl_th);
-    curl_slist_free_all(headers);
-    curl_th = nullptr;
+    curl_easy_cleanup(handle);
+    curl_slist_free_all(slist);
+    handle = nullptr;
 
     return http_response;
 }
+
+#endif // USE_URL
