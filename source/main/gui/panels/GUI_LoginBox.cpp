@@ -61,7 +61,6 @@ static size_t CurlWriteFunc(void* ptr, size_t size, size_t nmemb, std::string* d
     return size * nmemb;
 }
 
-// TODO: FINISH
 void PostAuthWithTfa(std::string login, std::string passwd, std::string provider, std::string code)
 {
     rapidjson::Document j_request_body;
@@ -88,7 +87,7 @@ void PostAuthWithTfa(std::string login, std::string passwd, std::string provider
 
 
     CURL* curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, url); // todo api url + endpoint
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str()); // todo api url + endpoint
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str()); // post request body
 #ifdef _WIN32
     curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
@@ -126,7 +125,6 @@ void PostAuthWithTfa(std::string login, std::string passwd, std::string provider
     App::GetGameContext()->PushMessage(Message(MSG_NET_SSO_SUCCESS));
 }
 
-// TODO: FINISH
 void PostAuthTriggerTfa(std::string login, std::string passwd, std::string provider)
 {
     rapidjson::Document j_request_body;
@@ -134,6 +132,7 @@ void PostAuthTriggerTfa(std::string login, std::string passwd, std::string provi
     j_request_body.AddMember("login", rapidjson::StringRef(login.c_str()), j_request_body.GetAllocator());
     j_request_body.AddMember("password", rapidjson::StringRef(passwd.c_str()), j_request_body.GetAllocator());
     j_request_body.AddMember("tfa_provider", rapidjson::StringRef(provider.c_str()), j_request_body.GetAllocator());
+    j_request_body.AddMember("tfa_trigger", rapidjson::StringRef("true"), j_request_body.GetAllocator());
     j_request_body.AddMember("limit_ip", rapidjson::StringRef("1.1.1.1"), j_request_body.GetAllocator());
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -151,8 +150,9 @@ void PostAuthTriggerTfa(std::string login, std::string passwd, std::string provi
     slist = curl_slist_append(slist, "Content-Type: application/json");
 
     CURL* curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, url); // todo api url + endpoint
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str()); // post request body
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body.c_str());
+    curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 #ifdef _WIN32
     curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
 #endif // _WIN32
@@ -170,7 +170,7 @@ void PostAuthTriggerTfa(std::string login, std::string passwd, std::string provi
     curl_easy_cleanup(curl);
     curl = nullptr;
 
-    if (response_code != 200) // a net failure, restart from beginning
+    if (response_code != 200)
     {
         App::GetGameContext()->PushMessage(
             Message(MSG_NET_SSO_FAILURE, _LC("Login", "Connection error. Please check your connection and try again."))
@@ -178,7 +178,7 @@ void PostAuthTriggerTfa(std::string login, std::string passwd, std::string provi
         return;
     }
 
-    App::GetGameContext()->PushMessage(Message(MSG_NET_SSO_2FA_REQUESTED)); // success
+    App::GetGameContext()->PushMessage(Message(MSG_NET_SSO_2FA_TRIGGERED));
 }
 
 void PostAuth(std::string login, std::string passwd)
@@ -224,21 +224,21 @@ void PostAuth(std::string login, std::string passwd)
     curl_easy_cleanup(curl);
     curl = nullptr;
 
-    if (response_code == 400) // a failure, user not found or bad pass combo
+    if (response_code == 400)
     {
         App::GetGameContext()->PushMessage(
             Message(MSG_NET_SSO_FAILURE, _LC("Login", "You did not sign in correctly or your account is temporarily disabled. Please retry."))
         );
         return;
     }
-    else if (response_code == 401) // a failure, user is likely banned
+    else if (response_code == 401)
     {
         App::GetGameContext()->PushMessage(
             Message(MSG_NET_SSO_FAILURE, _LC("Login", "Could not log you in. Your account has been suspended."))
         );
         return;
     }
-    else if (response_code >= 300) // a net failure
+    else if (response_code >= 300)
     {
         Ogre::LogManager::getSingleton().stream()
             << "[RoR|User|Auth] Failed to sign user in; HTTP status code: " << response_code;
@@ -258,18 +258,15 @@ void PostAuth(std::string login, std::string passwd)
         return;
     }
 
-    // non-standard see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402
-    // we will use to indicate that 2fa is required
     if (response_code == 202)
     {
-        // fetch providers
-        std::vector<std::string> tfa_providers;
+        std::vector<std::string>* tfa_providers_ptr = new std::vector<std::string>();
         rapidjson::Value& j_tfa_providers = j_response_body["tfa_providers"];
         for (auto&& item : j_tfa_providers.GetArray()) 
         {
-            tfa_providers.push_back(item.GetString());
+            tfa_providers_ptr->push_back(item.GetString());
         }
-        App::GetGameContext()->PushMessage(Message(MSG_NET_SSO_2FA_REQUESTED, static_cast<void*>(&tfa_providers)));
+        App::GetGameContext()->PushMessage(Message(MSG_NET_SSO_2FA_REQUESTED, static_cast<void*>(tfa_providers_ptr)));
         return;
     }
 
@@ -298,7 +295,6 @@ void LoginBox::Draw()
 
     if (!m_is_processing)
     {
-        // draw errors if they exist but do not block anything else from drawing, allows for retries
         if (!m_errors.empty())
         {
             ImGui::TextColored(App::GetGuiManager()->GetTheme().error_text_color, "%s", m_errors.c_str());
@@ -321,11 +317,8 @@ void LoginBox::Draw()
                 if (ImGui::BeginTabItem(_LC("Login", "Email confirmation")))
                 {
                     m_tfa_provider = "email";
-                    /*if (m_tfa_trigger) // do not trigger again, default true until TriggerTfa() envoked
-                    {
-                        this->TriggerTfa();
-                    }*/
-                    m_tfa_trigger = true; // switching between tabs
+                    if (!m_tfa_trigger)
+                        this->TriggerTfa(); // Without this, there will be an infinite loop.
                     ImGui::TextWrapped(_LC("Login", "An email has been sent with a single-use code. Please enter that code to continue."));
                     ImGui::EndTabItem();
                 }
@@ -372,7 +365,6 @@ void LoginBox::Login()
 #if defined(USE_CURL)
     m_is_processing = true;
 
-    // check if we have any empty input from the form
     if (m_login.IsEmpty() && m_passwd.IsEmpty())
     {
         App::GetGameContext()->PushMessage(
@@ -393,7 +385,6 @@ void LoginBox::ShowError(std::string const& msg)
 {
     m_is_processing = false;
     m_errors = msg;
-    //m_needs_tfa = false; // restart from beginning
 }
 
 void LoginBox::ConfirmTfa()
@@ -421,9 +412,8 @@ void LoginBox::ConfirmTfa()
 void LoginBox::TriggerTfa()
 {
 #if defined(USE_CURL)
-    // check if the provider is present
-    m_is_processing = true; // don't let them switch tabs
-    m_tfa_trigger = false;
+    m_is_processing = true;
+    m_tfa_trigger = true;
 
     std::string login(m_login);
     std::string passwd(m_passwd);
@@ -437,10 +427,14 @@ void LoginBox::NeedsTfa(std::vector<std::string> tfa_providers)
 {
     m_is_processing = false;
     m_needs_tfa = true;
-    //m_tfa_providers = tfa_providers;
+    m_tfa_providers = tfa_providers;
 }
 
-//void LoginBox::
+void LoginBox::TfaTriggered()
+{
+    //m_tfa_trigger = false; dangerous!
+    m_is_processing = false;
+}
 
 void LoginBox::SetVisible(bool visible)
 {

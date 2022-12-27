@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
         App::sys_config_dir    ->setStr(PathCombine(App::sys_user_dir->getStr(), "config"));
         App::sys_cache_dir     ->setStr(PathCombine(App::sys_user_dir->getStr(), "cache"));
         App::sys_thumbnails_dir->setStr(PathCombine(App::sys_user_dir->getStr(), "thumbnails"));
+        App::sys_webcache_dir  ->setStr(PathCombine(App::sys_user_dir->getStr(), "webcache"));
         App::sys_savegames_dir ->setStr(PathCombine(App::sys_user_dir->getStr(), "savegames"));
         App::sys_screenshot_dir->setStr(PathCombine(App::sys_user_dir->getStr(), "screenshots"));
 
@@ -494,6 +495,8 @@ int main(int argc, char *argv[])
                     break;
 
                 case MSG_NET_SSO_SUCCESS:
+                    App::sso_access_token->setStr("test");
+                    App::sso_refresh_token->setStr("test");
                     App::GetGuiManager()->GetLoginBox()->SetVisible(false);
                     break;
 
@@ -502,8 +505,15 @@ int main(int argc, char *argv[])
                     break;
 
                 case MSG_NET_SSO_2FA_REQUESTED:
-                    App::GetGuiManager()->GetLoginBox()->NeedsTfa(*reinterpret_cast<std::vector<std::string>*>(m.payload));
-                    delete reinterpret_cast<std::vector<std::string>*>(m.payload);
+                    {
+                        std::vector<std::string>* tfa_providers_ptr = reinterpret_cast<std::vector<std::string>*>(m.payload);
+                        App::GetGuiManager()->GetLoginBox()->NeedsTfa(*tfa_providers_ptr);
+                        delete tfa_providers_ptr;
+                    }
+                    break;
+
+                case MSG_NET_SSO_2FA_TRIGGERED:
+                    App::GetGuiManager()->GetLoginBox()->TfaTriggered();
                     break;
 
                 case MSG_NET_SSO_2FA_FAILURE:

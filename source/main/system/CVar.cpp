@@ -108,6 +108,7 @@ void Console::cVarSetupBuiltins()
     App::sys_config_dir          = this->cVarCreate("sys_config_dir",          "Config Root",                0);
     App::sys_cache_dir           = this->cVarCreate("sys_cache_dir",           "Cache Path",                 0);
     App::sys_thumbnails_dir      = this->cVarCreate("sys_thumbnails_dir",      "Thumbnails Path",            0);
+    App::sys_webcache_dir        = this->cVarCreate("sys_webcache_dir",        "Web Cache Path",             0);
     App::sys_logs_dir            = this->cVarCreate("sys_logs_dir",            "Log Path",                   0);
     App::sys_resources_dir       = this->cVarCreate("sys_resources_dir",       "Resources Path",             0);
     App::sys_profiler_dir        = this->cVarCreate("sys_profiler_dir",        "Profiler output dir",        0);

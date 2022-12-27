@@ -90,6 +90,7 @@ enum MsgType
     MSG_NET_SSO_FAILURE,
     MSG_NET_SSO_SUCCESS,
     MSG_NET_SSO_2FA_REQUESTED,
+    MSG_NET_SSO_2FA_TRIGGERED,
     MSG_NET_SSO_2FA_FAILURE,
     // Simulation
     MSG_SIM_PAUSE_REQUESTED,
@@ -365,6 +366,7 @@ extern CVar* sys_user_dir;
 extern CVar* sys_config_dir;
 extern CVar* sys_cache_dir;
 extern CVar* sys_thumbnails_dir;
+extern CVar* sys_webcache_dir;
 extern CVar* sys_logs_dir;
 extern CVar* sys_resources_dir;
 extern CVar* sys_profiler_dir;

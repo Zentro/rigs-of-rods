@@ -36,32 +36,38 @@
 namespace RoR {
 namespace GUI {
 
+struct LoginToken {
+    std::string     access_token;
+    std::string     refresh_token;
+};
+
 class LoginBox {
 public:
     LoginBox();
     ~LoginBox();
 
-    void SetVisible(bool visible);
-    bool IsVisible() const { return m_is_visible; }
-    void ShowError(std::string const& msg);
-    void ConfirmTfa();
-    void TriggerTfa();
-    void NeedsTfa(std::vector<std::string> tfa_providers);
-    void Login();
-    void Draw();
+    void                        SetVisible(bool visible);
+    bool                        IsVisible() const { return m_is_visible; }
+    void                        ShowError(std::string const& msg);
+    void                        ConfirmTfa();
+    void                        TriggerTfa();
+    void                        NeedsTfa(std::vector<std::string> tfa_providers);
+    void                        TfaTriggered();
+    void                        Login();
+    void                        Draw();
 
 private:
-    bool m_is_visible = false;
-    Str<1000> m_login;
-    Str<1000> m_passwd;
-    Str<1000> m_tfa_code;
-    bool m_remember = true;
-    std::string m_errors;
-    bool m_needs_tfa = false;
-    bool m_is_processing = false;
-    std::vector<std::string> m_tfa_providers;
-    std::string m_tfa_provider;
-    bool m_tfa_trigger = true;
+    bool                        m_is_visible = false;
+    Str<1000>                   m_login;
+    Str<1000>                   m_passwd;
+    Str<1000>                   m_tfa_code;
+    bool                        m_remember = false;
+    std::string                 m_errors;
+    bool                        m_needs_tfa = false;
+    bool                        m_is_processing = false;
+    std::vector<std::string>    m_tfa_providers;
+    std::string                 m_tfa_provider;
+    bool                        m_tfa_trigger = false;
 };
 
 }

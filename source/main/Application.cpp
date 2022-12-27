@@ -160,6 +160,7 @@ CVar* sys_user_dir;
 CVar* sys_config_dir;
 CVar* sys_cache_dir;
 CVar* sys_thumbnails_dir;
+CVar* sys_webcache_dir;
 CVar* sys_logs_dir;
 CVar* sys_resources_dir;
 CVar* sys_profiler_dir;
