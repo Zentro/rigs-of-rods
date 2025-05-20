@@ -38,7 +38,7 @@ public:
     ~GfxEnvmap();
 
     // Public envmap live options - they reload automatically every frame
-    bool envmap_show_terrain_objects = true;
+    bool envmap_show_terrain_objects = true; // When false, all .ODEF objects are hidden when rendering envmap.
     float envmap_camera_nearclip_distance = 0.1f;
     float envmap_camera_farclip_distance = 0.0f; // (0 = infinite)
     float evmap_diag_overlay_pos_x = -0.8f;
