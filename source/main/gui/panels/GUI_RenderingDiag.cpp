@@ -113,6 +113,7 @@ void RenderingDiag::DrawEnvmapTab()
 
     ImGui::TextDisabled(_LC("RenderingDiag", ":: S T A T S ::"));
 
+
     ImGui::TextDisabled(_LC("RenderingDiag", "Envmap +X"));
     ImGui::SameLine();
     this->DrawEnvmapFace(0);
