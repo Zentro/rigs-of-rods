@@ -188,7 +188,10 @@ void GUIManager::DrawSimulationGui(float dt)
         this->FlexbodyDebug.Draw();
     }
 
-
+    if (this->RenderingDiag.IsVisible())
+    {
+        this->RenderingDiag.Draw();
+    }
 };
 
 void GUIManager::DrawSimGuiBuffered(GfxActor* player_gfx_actor)
