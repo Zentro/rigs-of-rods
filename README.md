@@ -6,7 +6,7 @@
 [![Build game](https://github.com/RigsOfRods/rigs-of-rods/workflows/Build%20game/badge.svg)](https://github.com/RigsOfRods/rigs-of-rods/actions?query=workflow%3A%22Build+game%22)
 
 
-![Rigs of Rods](doc/images/RoR_Logo_full.png?raw=true)
+![Rigs of Rods](https://i.ibb.co/4wSxFjJq/someimage.png)
 
 ## Rigs of Rods - open-source, soft-body physics sandbox
 
@@ -19,6 +19,19 @@ Whether you're interested in building your own vehicles, experimenting with real
 [Documentation](https://docs.rigsofrods.org/) -
 [Developer Portal](https://developer.rigsofrods.org/) -
 [What's New?](https://forum.rigsofrods.org/forums/announcements.44/)
+
+## Getting started
+
+### Get the game
+
+Ready to drive? Grab the latest version from the Rigs of Rods website and you'll be up and driving in no time.
+
+* [Read the Installation Guide](https://docs.rigsofrods.org/gameplay/installing-the-game/) - If you need help getting things running on your system. Perfect if you're new or need a quick refresher.
+
+
+### Build from source
+
+Read the official guide for compilation instructions on every supported platform.
 
 
 ## License
