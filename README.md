@@ -6,7 +6,7 @@
 [![Build game](https://github.com/RigsOfRods/rigs-of-rods/workflows/Build%20game/badge.svg)](https://github.com/RigsOfRods/rigs-of-rods/actions?query=workflow%3A%22Build+game%22)
 
 
-![Rigs of Rods](https://i.ibb.co/4wSxFjJq/someimage.png)
+![Rigs of Rods](doc/images/RoR_Banner.png)
 
 ## Rigs of Rods - open-source, soft-body physics sandbox
 
@@ -14,25 +14,62 @@
 
 Whether you're interested in building your own vehicles, experimenting with realistic physics, or exploring vast custom terrains, Rigs of Rods offers a deep and moddable exerpience for players and developers alike.
 
-[Read the Beginner's Guide](https://docs.rigsofrods.org/gameplay/beginners-guide/) -
 [Community Forums](https://forum.rigsofrods.org/) -
 [Documentation](https://docs.rigsofrods.org/) -
 [Developer Portal](https://developer.rigsofrods.org/) -
 [What's New?](https://forum.rigsofrods.org/forums/announcements.44/)
 
+## Features
+
+* **Soft-body physics:** Realistic crashes, terrain interaction, and vehicle/load dynamics across cars, trucks, boats, planes, trains, and more (with experimental tracked, 2-wheeled, and submarine support).
+* **Immersive gameplay:** Enter/exit vehicles, walk around, and spawn multiple vehicles per session.
+* **Community support:** Built-in browser for mods, plus vehicle part swapping and scripting with [AngelScript](https://www.angelcode.com/angelscript/).
+* **Multiplayer support:** Dedicated servers, LAN support, and in-game server browser.
+
 ## Getting started
 
 ### Get the game
 
-Ready to drive? Grab the latest version from the Rigs of Rods website and you'll be up and driving in no time.
-
-* [Read the Installation Guide](https://docs.rigsofrods.org/gameplay/installing-the-game/) - If you need help getting things running on your system. Perfect if you're new or need a quick refresher.
-
+Ready to drive? Grab the latest version from the **[Rigs of Rods website](https://www.rigsofrods.org/download)** and you'll be up and driving in no time.
 
 ### Build from source
 
 Read the official guide for compilation instructions on every supported platform.
 
+For detailed instructions on compiling from source, see the **[Guide to building Rigs of Rods](#)** for Windows and Linux.
+
+## Join the community
+
+Rigs of Rods is a community of creators, players, and developers who share a passion for soft-body physics simulation. Whether you’re here to play, build, or contribute, you are welcome to be a part of our community.
+
+* Join the discussion on the [community forums](https://forum.rigsofrods.org/).
+* Chat with other players and developers on the [official Discord server](https://discord.gg/rigsofrods).
+
+## Community Mods
+
+### Where to get mods (AKA "resources", "content," etc)
+
+Rigs of Rods, by default, includes only a small selection of built-in content. Most vehicles, terrains, and other additions are provided as user-generated mods available through the **[official Rigs of Rods repository](https://forum.rigsofrods.org/resources/)**. These community-created assets are separate from the core project and are not covered under the project's license, as they are contributed and licensed by their individual creators. As such, they will never be included with the game by default.
+
+As of Rigs of Rods version 2022.04, resources can be installed from within the game itself. **[Read the Guide to Installing Mods](https://docs.rigsofrods.org/gameplay/installing-content/)**.
+
+### How to create your own mods
+
+Creating mods for Rigs of Rods can be a challenging yet highly rewarding experience. While it may take time to learn the tools, formats, and techniques involved, the [official documentation](https://docs.rigsofrods.org) provides step-by-step guidance to help you get started. The community is also active and welcoming, through the community forums, community Discord server, and other resources where you can ask questions and share your progress.
+
+## Contributors
+
+<a href="https://github.com/rigsofrods/rigs-of-rods/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=rigsofrods/rigs-of-rods" />
+</a>
+
+For involved authors see [AUTHORS.md](AUTHORS.md).
+
+## Sponsors
+
+<a href="https://www.digitalocean.com/">
+    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
+</a>
 
 ## License
 
@@ -58,5 +95,4 @@ along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 ```
 
 For the full license text see [COPYING](COPYING).
-For involved authors see [AUTHORS.md](AUTHORS.md).
 For licenses of used libraries see [DEPENDENCIES.md](DEPENDENCIES.md).
