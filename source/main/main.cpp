@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
         App::sys_screenshot_dir->setStr(PathCombine(App::sys_user_dir->getStr(), "screenshots"));
         App::sys_scripts_dir   ->setStr(PathCombine(App::sys_user_dir->getStr(), "scripts"));
         App::sys_projects_dir  ->setStr(PathCombine(App::sys_user_dir->getStr(), "projects"));
+        App::sys_repo_attachments_dir->setStr(PathCombine(App::sys_user_dir->getStr(), "repo_attachments"));
 
         // Load RoR.cfg - updates cvars
         App::GetConsole()->loadConfig();
@@ -749,7 +750,7 @@ int main(int argc, char *argv[])
                     GUI::ResourcesCollection* data = static_cast<GUI::ResourcesCollection*>(m.payload);
                     try
                     {
-                        App::GetGuiManager()->RepositorySelector.UpdateFiles(data);
+                        App::GetGuiManager()->RepositorySelector.UpdateResourceFilesAndDescription(data);
                     }
                     catch (...) 
                     {
@@ -1009,7 +1010,7 @@ int main(int argc, char *argv[])
                     {
                         if (App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE)
                         {
-                            App::GetGameContext()->GetTerrain()->GetTerrainEditor()->WriteOutputFile();
+                            App::GetGameContext()->GetTerrain()->GetTerrainEditor()->WriteSeparateOutputFile();
                         }
                         App::GetGameContext()->SaveScene("autosave.sav");
                         App::GetGameContext()->ChangePlayerActor(nullptr);
@@ -1594,7 +1595,7 @@ int main(int argc, char *argv[])
                     {
                         if (App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE)
                         {
-                            App::GetGameContext()->GetTerrain()->GetTerrainEditor()->WriteOutputFile();
+                            App::GetGameContext()->GetTerrain()->GetTerrainEditor()->WriteSeparateOutputFile(); // Always write 'editor_out.log'
                             App::GetGameContext()->GetTerrain()->GetTerrainEditor()->ClearSelectedObject();
                             App::sim_state->setVal((int)SimState::RUNNING);
                             App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE,
@@ -1602,6 +1603,26 @@ int main(int argc, char *argv[])
                         }
                     }
                     catch (...) 
+                    {
+                        HandleMsgQueueException(m.type);
+                    }
+                    break;
+                }
+
+                case MSG_EDI_SAVE_TERRN_CHANGES_REQUESTED:
+                {
+                    try
+                    {
+                        if (App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE
+                            && App::GetGameContext()->GetTerrain()->getCacheEntry()->resource_bundle_type == "FileSystem")
+                        {
+                            // This is a project (unzipped mod) - update TOBJ files in place
+                            App::GetGameContext()->GetTerrain()->GetTerrainEditor()->WriteEditsToTobjFiles();
+                            App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE,
+                                _L("Terrain files have been updated"));
+                        }
+                    }
+                    catch (...)
                     {
                         HandleMsgQueueException(m.type);
                     }

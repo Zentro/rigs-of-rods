@@ -3127,18 +3127,6 @@ void ActorSpawner::ProcessSlidenode(RigDef::SlideNode & def)
     m_actor->m_slidenodes.push_back(slide_node);
 }
 
-NodeNum_t ActorSpawner::FindNodeIndex(RigDef::Node::Ref & node_ref, bool silent /* = false */)
-{
-    NodeNum_t node = ResolveNodeRef(node_ref);
-    if (node == NODENUM_INVALID && !silent)
-    {
-        std::stringstream msg;
-        msg << "Failed to find node by reference: " << node_ref.ToString();
-        AddMessage(Message::TYPE_ERROR, msg.str());
-    }
-    return node;
-}
-
 bool ActorSpawner::CollectNodesFromRanges(
     std::vector<RigDef::Node::Range> & node_ranges,
     std::vector<NodeNum_t> & out_node_indices
@@ -3149,16 +3137,14 @@ bool ActorSpawner::CollectNodesFromRanges(
     {
         if (itor->IsRange())
         {
-
-            NodeNum_t start = FindNodeIndex(itor->start, /* silent= */ false);
+            NodeNum_t start = this->ResolveNodeRef(itor->start);
             if (start == NODENUM_INVALID)
             {
                 AddMessage(Message::TYPE_WARNING, fmt::format("Invalid start node in range: {}", itor->start.ToString()));
                 return false;
             }
 
-            NodeNum_t end = FindNodeIndex(itor->end,   /* silent= */ true);
-
+            NodeNum_t end = this->ResolveNodeRef(itor->end, /* optional: */ true);
             if (end == NODENUM_INVALID)
             {
                 std::stringstream msg;
@@ -3443,8 +3429,8 @@ void ActorSpawner::ProcessTrigger(RigDef::Trigger & def)
 	}
 
     // `add_beam()`
-    const NodeNum_t node_1_index = FindNodeIndex(def.nodes[0]);
-    const NodeNum_t node_2_index = FindNodeIndex(def.nodes[1]);
+    const NodeNum_t node_1_index = this->ResolveNodeRef(def.nodes[0]);
+    const NodeNum_t node_2_index = this->ResolveNodeRef(def.nodes[1]);
     if (node_1_index == NODENUM_INVALID || node_2_index == NODENUM_INVALID)
     {
         this->AddMessage(Message::TYPE_WARNING, "Skipping trigger, some nodes not found");
@@ -3696,11 +3682,11 @@ void ActorSpawner::_ProcessKeyInertia(
 void ActorSpawner::ProcessCommand(RigDef::Command2 & def)
 {
     const NodeNum_t beam_index = m_actor->ar_num_beams;
-    const NodeNum_t node_1_index = FindNodeIndex(def.nodes[0]);
-    const NodeNum_t node_2_index = FindNodeIndex(def.nodes[1]);
+    const NodeNum_t node_1_index = this->ResolveNodeRef(def.nodes[0]);
+    const NodeNum_t node_2_index = this->ResolveNodeRef(def.nodes[1]);
     if (node_1_index == NODENUM_INVALID || node_2_index == NODENUM_INVALID)
     {
-        AddMessage(Message::TYPE_ERROR, "Failed to fetch node");
+        AddMessage(Message::TYPE_ERROR, "Skipping command, some nodes not found.");
         return;
     }
     beam_t & beam = AddBeam(m_actor->ar_nodes[node_1_index], m_actor->ar_nodes[node_2_index], def.beam_defaults, def.detacher_group);
@@ -4633,7 +4619,7 @@ void ActorSpawner::ProcessMeshWheel(RigDef::MeshWheel & meshwheel_def)
 
     m_actor->ar_wheels[wheel_id].wh_arg_keyword = RigDef::Keyword::MESHWHEELS;
     m_actor->ar_wheels[wheel_id].wh_arg_num_rays = meshwheel_def.num_rays;
-    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(meshwheel_def.rigidity_node);
+    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(meshwheel_def.rigidity_node, /* optional: */ true);
     m_actor->ar_wheels[wheel_id].wh_arg_simple_spring = meshwheel_def.spring;
     m_actor->ar_wheels[wheel_id].wh_arg_simple_damping = meshwheel_def.damping;
     m_actor->ar_wheels[wheel_id].wh_arg_side = meshwheel_def.side;
@@ -4702,7 +4688,7 @@ void ActorSpawner::ProcessMeshWheel2(RigDef::MeshWheel2 & def)
     // --- Args ---
     m_actor->ar_wheels[wheel_id].wh_arg_keyword = RigDef::Keyword::MESHWHEELS2;
     m_actor->ar_wheels[wheel_id].wh_arg_num_rays = def.num_rays;
-    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(def.rigidity_node);
+    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(def.rigidity_node, /* optional: */ true);
     m_actor->ar_wheels[wheel_id].wh_arg_simple_spring = def.spring;
     m_actor->ar_wheels[wheel_id].wh_arg_simple_damping = def.damping;
     m_actor->ar_wheels[wheel_id].wh_arg_side = def.side;
@@ -4983,7 +4969,7 @@ void ActorSpawner::ProcessWheel(RigDef::Wheel & wheel_def)
 
     m_actor->ar_wheels[wheel_id].wh_arg_keyword = RigDef::Keyword::WHEELS;
     m_actor->ar_wheels[wheel_id].wh_arg_num_rays = wheel_def.num_rays;
-    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(wheel_def.rigidity_node);
+    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(wheel_def.rigidity_node, /* optional: */ true);
     m_actor->ar_wheels[wheel_id].wh_arg_simple_spring =  wheel_def.springiness;
     m_actor->ar_wheels[wheel_id].wh_arg_simple_damping = wheel_def.damping;
     m_actor->ar_wheels[wheel_id].wh_arg_media1 = wheel_def.face_material_name;
@@ -5143,7 +5129,7 @@ void ActorSpawner::ProcessWheel2(RigDef::Wheel2 & wheel_2_def)
     m_actor->ar_wheels[wheel_id].wh_radius = wheel_2_def.tyre_radius;
     m_actor->ar_wheels[wheel_id].wh_rim_radius = wheel_2_def.rim_radius;
     m_actor->ar_wheels[wheel_id].wh_arg_num_rays = wheel_2_def.num_rays;    
-    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(wheel_2_def.rigidity_node);
+    m_actor->ar_wheels[wheel_id].wh_arg_rigidity_node = this->ResolveNodeRef(wheel_2_def.rigidity_node, /* optional: */ true);
     m_actor->ar_wheels[wheel_id].wh_arg_rim_spring =  wheel_2_def.rim_springiness;
     m_actor->ar_wheels[wheel_id].wh_arg_rim_damping = wheel_2_def.rim_damping;
     m_actor->ar_wheels[wheel_id].wh_arg_simple_spring =  wheel_2_def.tyre_springiness;
@@ -5637,37 +5623,21 @@ void ActorSpawner::ProcessCamera(RigDef::Camera & def)
     m_actor->ar_num_cameras++;
 };
 
-node_t* ActorSpawner::GetBeamNodePointer(RigDef::Node::Ref const & node_ref)
-{
-    node_t* node = GetNodePointer(node_ref);
-    if (node != nullptr)
-    {
-        return node;
-    }
-    return nullptr;
-}
-
 void ActorSpawner::ProcessBeam(RigDef::Beam & def)
 {
     // Nodes
-    node_t* ar_nodes[] = {nullptr, nullptr};
-    ar_nodes[0] = GetBeamNodePointer(def.nodes[0]);
-    if (ar_nodes[0] == nullptr)
+    const NodeNum_t n1 = this->ResolveNodeRef(def.nodes[0]);
+    const NodeNum_t n2 = this->ResolveNodeRef(def.nodes[1]);
+    if (n1 == NODENUM_INVALID || n2 == NODENUM_INVALID)
     {
-        AddMessage(Message::TYPE_WARNING, std::string("Ignoring beam, could not find node: ") + def.nodes[0].ToString());
-        return;
-    }
-    ar_nodes[1] = GetBeamNodePointer(def.nodes[1]);
-    if (ar_nodes[1] == nullptr)
-    {
-        AddMessage(Message::TYPE_WARNING, std::string("Ignoring beam, could not find node: ") + def.nodes[1].ToString());
+        AddMessage(Message::TYPE_WARNING, "Skipping beam, some nodes not found."); // Node IDs already logged by `ResolveNodeRef()`
         return;
     }
 
     // Beam
     int beam_index = m_actor->ar_num_beams;
     m_actor->ar_beams_user_defined[beam_index] = true;
-    beam_t & beam = AddBeam(*ar_nodes[0], *ar_nodes[1], def.defaults, def.detacher_group);
+    beam_t & beam = AddBeam(m_actor->ar_nodes[n1], m_actor->ar_nodes[n2], def.defaults, def.detacher_group);
     beam.bm_type = BEAM_NORMAL;
     beam.k = def.defaults->GetScaledSpringiness();
     beam.d = def.defaults->GetScaledDamping();
@@ -5932,11 +5902,14 @@ void ActorSpawner::AddMessage(ActorSpawner::Message type,	Ogre::String const & t
     RoR::App::GetConsole()->putMessage(RoR::Console::CONSOLE_MSGTYPE_ACTOR, cm_type, txt.ToCStr());
 }
 
-NodeNum_t ActorSpawner::ResolveNodeRef(RigDef::Node::Ref const & node_ref)
+NodeNum_t ActorSpawner::ResolveNodeRef(RigDef::Node::Ref const & node_ref, bool optional /* = false */)
 {
     if (!node_ref.IsValidAnyState())
     {
-        AddMessage(Message::TYPE_ERROR, std::string("Attempt to resolve invalid node reference: ") + node_ref.ToString());
+        if (!optional)
+        {
+            AddMessage(Message::TYPE_ERROR, std::string("Attempt to resolve invalid node reference: ") + node_ref.ToString());
+        }
         return NODENUM_INVALID;
     }
     bool is_imported = node_ref.GetImportState_IsValid();

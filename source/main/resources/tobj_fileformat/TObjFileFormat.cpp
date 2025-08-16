@@ -174,8 +174,13 @@ bool TObjParser::ProcessCurrentLine()
     {
         if (m_in_procedural_road)
         {
-            const char* value = m_cur_line_trimmed + 17; // C pointer arithmetic
-            m_cur_procedural_obj->collision_enabled = Ogre::StringConverter::parseBool(value, false);
+            char valuebuf[100] = {};
+            int result = sscanf(m_cur_line_trimmed, "collision_enabled %s", &valuebuf);
+            if (result != 1)
+            {
+                LOG(fmt::format("[RoR|TObj] not enough parameters at line '{}' ({}, line {})", m_cur_line, m_filename, m_line_number));
+            }
+            m_cur_procedural_obj->collision_enabled = Ogre::StringConverter::parseBool(valuebuf, false);
         }
         return true;
     }
@@ -577,10 +582,15 @@ void TObj::WriteToStream(TObjDocumentPtr doc, Ogre::DataStreamPtr stream)
                 }
             }
 
+            Ogre::Matrix3 point_rot_matrix;
+            point->rotation.ToRotationMatrix(point_rot_matrix);
+            Ogre::Radian yaw, pitch, roll;
+            point_rot_matrix.ToEulerAnglesYXZ(yaw, pitch, roll);
+
             std::string line = fmt::format(
                 "\t{:13f}, {:13f}, {:13f}, 0, {:13f}, 0, {:13f}, {:13f}, {:13f}, {}\n",
                 point->position.x, point->position.y, point->position.z,
-                point->rotation.getYaw(false).valueDegrees(),
+                yaw.valueDegrees(),
                 point->width, point->bwidth, point->bheight, type_str);
             stream->write(line.c_str(), line.length());
         }

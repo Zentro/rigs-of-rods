@@ -80,7 +80,8 @@ class TerrainEditor
 {
 public:
     void UpdateInputEvents(float dt);
-    void WriteOutputFile();
+    void WriteSeparateOutputFile(); //!< Writes 'editor_out.log' to 'config' directory - original solution, still used for zipped terrains.
+    void WriteEditsToTobjFiles(); //!< Updates existing TOBJ files - new solution, only for projects (unzipped terrains).
     void ClearSelectedObject();
     void SetSelectedObjectByID(TerrainEditorObjectID_t id);
     TerrainEditorObjectID_t GetSelectedObjectID() const;
@@ -89,6 +90,7 @@ public:
     static const TerrainEditorObjectPtr TERRAINEDITOROBJECTPTR_NULL; // Dummy value to be returned as const reference.
 
 private:
+
     bool                m_object_tracking = true;
     int                 m_rotation_axis = 1;        //!< 0=X, 1=Y, 2=Z
     std::string         m_last_object_name;

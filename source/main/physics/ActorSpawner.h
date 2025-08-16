@@ -348,9 +348,7 @@ private:
 
     /// @name Traversal
     /// @{
-    node_t*                       GetBeamNodePointer(RigDef::Node::Ref const & node_ref);
-    NodeNum_t                     FindNodeIndex(RigDef::Node::Ref & node_ref, bool silent = false);
-    NodeNum_t                     ResolveNodeRef(RigDef::Node::Ref const & node_ref);
+    NodeNum_t                     ResolveNodeRef(RigDef::Node::Ref const & node_ref, bool optional = false);
     node_t*                       GetNodePointer(RigDef::Node::Ref const & node_ref);
     node_t*                       GetNodePointerOrThrow(RigDef::Node::Ref const & node_ref);
     beam_t&                       GetBeam(unsigned int index);
@@ -457,7 +455,7 @@ private:
     Ogre::Vector3            m_spawn_position;
     bool                     m_apply_simple_materials;
     std::string              m_custom_resource_group;
-    bool                     m_generate_wing_position_lights;
+    bool                     m_generate_wing_position_lights = true;
     ActorMemoryRequirements  m_memory_requirements;
     /// @}
 

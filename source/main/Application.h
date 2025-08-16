@@ -44,7 +44,8 @@
 // OGRE resource group names
 #define RGN_TEMP "Temp"
 #define RGN_CACHE "Cache"
-#define RGN_REPO "Repo"
+#define RGN_THUMBNAILS "Thumbnails" // Repository UI - mod previews (one per resource)
+#define RGN_REPO_ATTACHMENTS "RepoAttachments" // Repository UI - images in description text (any number per resource)
 #define RGN_CONFIG "Config"
 #define RGN_CONTENT "Content"
 #define RGN_SAVEGAMES "Savegames"
@@ -149,6 +150,7 @@ enum MsgType
     MSG_EDI_MODIFY_GROUNDMODEL_REQUESTED,  //!< Payload = RoR::ground_model_t* (weak)
     MSG_EDI_ENTER_TERRN_EDITOR_REQUESTED,
     MSG_EDI_LEAVE_TERRN_EDITOR_REQUESTED,
+    MSG_EDI_SAVE_TERRN_CHANGES_REQUESTED,
     MSG_EDI_LOAD_BUNDLE_REQUESTED,         //!< Payload = RoR::CacheEntryPtr* (owner)
     MSG_EDI_RELOAD_BUNDLE_REQUESTED,       //!< Payload = RoR::CacheEntryPtr* (owner)
     MSG_EDI_UNLOAD_BUNDLE_REQUESTED,       //!< Payload = RoR::CacheEntryPtr* (owner)
@@ -708,6 +710,7 @@ extern CVar* sys_savegames_dir;
 extern CVar* sys_screenshot_dir;
 extern CVar* sys_scripts_dir;
 extern CVar* sys_projects_dir;
+extern CVar* sys_repo_attachments_dir;
 
 // OS command line
 extern CVar* cli_server_host;
