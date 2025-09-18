@@ -1542,7 +1542,7 @@ void ActorSpawner::ProcessFlexbody(RigDef::Flexbody& def)
     }
 
     // Collect 'forset' nodes
-    std::vector<unsigned int> node_indices;
+    std::vector<NodeNum_t> node_indices;
     bool nodes_found = true;
     for (auto& node_def: def.node_list)
     {
@@ -5339,7 +5339,7 @@ void ActorSpawner::CreateFlexBodyWheelVisuals(
         );
 
     int num_nodes = num_rays * 4;
-    std::vector<unsigned int> node_indices;
+    std::vector<NodeNum_t> node_indices;
     node_indices.reserve(num_nodes);
     for (int i = 0; i < num_nodes; ++i)
     {
