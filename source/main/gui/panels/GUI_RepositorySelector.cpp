@@ -1493,9 +1493,9 @@ void RepositorySelector::DownloadAttachment(int attachment_id, std::string const
         request->attachment_id = attachment_id;
         request->attachment_ext = attachment_ext;
         Ogre::Root::getSingleton().getWorkQueue()->addTask(
-            [this, request]()
+            [request]()
             {
-                this->DownloadImage(request);
+                RepositorySelector::DownloadImage(request);
             });
     }
 }
@@ -1789,10 +1789,12 @@ void RepositorySelector::DrawThumbnail(ResourceItemArrayPos_t resource_arraypos,
                 // Image is in visible screen area and not yet downloading.
                 RepoImageDownloadRequest* request = new RepoImageDownloadRequest();
                 request->thumb_resourceitem_idx = resource_arraypos;
+                request->thumb_resource_id = m_data.items[request->thumb_resourceitem_idx].resource_id;
+                request->thumb_url = m_data.items[request->thumb_resourceitem_idx].icon_url;
                 Ogre::Root::getSingleton().getWorkQueue()->addTask(
-                    [this, request]()
+                    [request]()
                     {
-                        this->DownloadImage(request);
+                        RepositorySelector::DownloadImage(request);
                     });
                 m_data.items[resource_arraypos].thumbnail_dl_queued = true;
             }
@@ -1871,19 +1873,20 @@ void RepositorySelector::DrawAttachment(BBCodeDrawingContext* context, int attac
     }
 }
 
-bool RepositorySelector::DownloadImage(RepoImageDownloadRequest* request)
+/*static*/ void RepositorySelector::DownloadImage(RepoImageDownloadRequest* request)
 {
     // This runs on background worker thread in Ogre::WorkQueue's thread pool.
     // Purpose: to fetch one thumbnail image using CURL.
     // -----------------------------------------------------------------------
 
+    ROR_ASSERT(request->thumb_resourceitem_idx != -1 || request->attachment_id != -1);
     std::string filename, filepath, rg_name, url;
     if (request->thumb_resourceitem_idx != -1)
     {
-        filename = std::to_string(m_data.items[request->thumb_resourceitem_idx].resource_id) + ".png";
+        filename = std::to_string(request->thumb_resource_id) + ".png";
         filepath = PathCombine(App::sys_thumbnails_dir->getStr(), filename);
         rg_name = RGN_THUMBNAILS;
-        url = m_data.items[request->thumb_resourceitem_idx].icon_url;
+        url = request->thumb_url;
 
     }
     else if (request->attachment_id != -1)
@@ -1897,14 +1900,14 @@ bool RepositorySelector::DownloadImage(RepoImageDownloadRequest* request)
     {
         // Invalid request, return empty response.
         LOG("[RoR|RepoUI] Invalid (empty) download request - ignoring it");
-        return /*success:*/false;
+        return;
     }
     long response_code = 0;
 
     if (FileExists(filepath))
     {
         App::GetGameContext()->PushMessage(Message(MSG_NET_DOWNLOAD_REPOIMAGE_SUCCESS, request));
-        return /*success:*/true;
+        return;
     }
     else
     {
@@ -1935,13 +1938,11 @@ bool RepositorySelector::DownloadImage(RepoImageDownloadRequest* request)
                     << " URL: '" << url << "',"
                     << " Error: '" << curl_easy_strerror(curl_result) << "',"
                     << " HTTP status code: " << response_code;
-
-                return /*success:*/false;
             }
             else
             {
                 App::GetGameContext()->PushMessage(Message(MSG_NET_DOWNLOAD_REPOIMAGE_SUCCESS, request));
-                return /*success:*/true;
+                return;
             }
         }
         catch (Ogre::Exception& oex)
@@ -1950,8 +1951,6 @@ bool RepositorySelector::DownloadImage(RepoImageDownloadRequest* request)
                 Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_ERROR,
                 fmt::format("Repository UI: cannot download image '{}' - {}",
                     url, oex.getDescription()));
-
-            return /*success:*/false;
         }
 
         // Remove any incomplete download before reporting failure
