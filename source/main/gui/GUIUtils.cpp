@@ -369,26 +369,26 @@ bool RoR::DrawGCombo(CVar* cvar, const char* label, const char* values)
     return false;
 }
 
-Ogre::TexturePtr RoR::FetchIcon(const char* name)
+Ogre::TexturePtr FetchTexInternal(const char* name, const char* rgn)
 {
     try
     {
-        Ogre::TexturePtr tex = Ogre::static_pointer_cast<Ogre::Texture>(
-            Ogre::TextureManager::getSingleton().createOrRetrieve(name, "FlagsRG").first);
-        
-        // Load the texture now to catch FileNotFoundException early. This is more efficient than
-        // lazy loading because: (1) the texture will be loaded on first use anyway, and
-        // (2) catching exceptions here is safer than during ImGui rendering.
-        if (!tex->isLoaded())
-        {
-            tex->load();
-        }
-        return tex;
+        return Ogre::TextureManager::getSingleton().load(name, rgn);
     }
-    catch (...) 
+    catch (...)
     {
         return Ogre::TexturePtr(); // null
     }
+}
+
+Ogre::TexturePtr RoR::FetchIcon(const char* name)
+{
+    return FetchTexInternal(name, "IconsRG");
+}
+
+Ogre::TexturePtr RoR::FetchFlag(const char* name)
+{
+    return FetchTexInternal(name, "FlagsRG");
 }
 
 ImDrawList* RoR::GetImDummyFullscreenWindow(const std::string& name /* = "RoR_TransparentFullscreenWindow"*/)
