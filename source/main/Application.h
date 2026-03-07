@@ -802,6 +802,7 @@ extern CVar* gfx_fov_internal;
 extern CVar* gfx_fov_internal_default;
 extern CVar* gfx_static_cam_fov_exp;
 extern CVar* gfx_fixed_cam_tracking;
+extern CVar* gfx_cam_lag_factor;
 extern CVar* gfx_fps_limit;
 extern CVar* gfx_speedo_imperial;
 extern CVar* gfx_flexbody_cache;

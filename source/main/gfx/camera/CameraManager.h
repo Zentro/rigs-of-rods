@@ -136,6 +136,8 @@ protected:
     Ogre::Vector3        m_staticcam_look_at;
     Ogre::Vector3        m_staticcam_position;
     Ogre::Timer          m_staticcam_update_timer;
+    // Free cam attributes
+    Ogre::Vector3        m_freecam_vel;
     // Character cam attributes
     bool                 m_charactercam_is_3rdperson;
     // Spline cam attributes

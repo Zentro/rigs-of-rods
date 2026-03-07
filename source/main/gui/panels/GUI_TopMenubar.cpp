@@ -620,16 +620,16 @@ void TopMenubar::Draw(float dt)
                 ImGui::TextColored(GRAY_HINT_TEXT, "%s", _LC("TopMenubar", "Camera:"));
                 if (App::GetCameraManager()->GetCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_VEHICLE_CINECAM)
                 {
-                    int fov = App::gfx_fov_internal->getInt();
-                    if (ImGui::SliderInt(_LC("TopMenubar", "FOV"), &fov, 10, 120))
+                    float fov = App::gfx_fov_internal->getFloat();
+                    if (ImGui::SliderFloat(_LC("TopMenubar", "FOV"), &fov, 10.f, 120.f, "%.1f"))
                     {
                         App::gfx_fov_internal->setVal(fov);
                     }
                 }
                 else
                 {
-                    int fov = App::gfx_fov_external->getInt();
-                    if (ImGui::SliderInt(_LC("TopMenubar", "FOV"), &fov, 10, 120))
+                    float fov = App::gfx_fov_external->getFloat();
+                    if (ImGui::SliderFloat(_LC("TopMenubar", "FOV"), &fov, 10.f, 120.f, "%.1f"))
                     {
                         App::gfx_fov_external->setVal(fov);
                     }

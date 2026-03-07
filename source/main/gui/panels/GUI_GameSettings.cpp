@@ -457,8 +457,9 @@ void GameSettings::DrawGraphicsSettings()
         m_combo_items_extcam_mode.c_str());
 
     DrawGIntSlider(App::gfx_camera_height, _LC("GameSettings", "Static camera height (meters)"), 1, 50);
-    DrawGIntSlider(App::gfx_fov_external_default, _LC("GameSettings", "Exterior field of view"), 10, 120);
-    DrawGIntSlider(App::gfx_fov_internal_default, _LC("GameSettings", "Interior field of view"), 10, 120);
+    DrawGFloatSlider(App::gfx_fov_external_default, _LC("GameSettings", "Exterior field of view"), 10.f, 120.f);
+    DrawGFloatSlider(App::gfx_fov_internal_default, _LC("GameSettings", "Interior field of view"), 10.f, 120.f);
+    DrawGFloatSlider(App::gfx_cam_lag_factor, _LC("GameSettings", "Camera lag factor (0=instant, 1=default, higher=more lag)"), 0.f, 5.f);
 }
 
 void GameSettings::DrawDiagSettings()

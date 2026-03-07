@@ -997,8 +997,8 @@ int main(int argc, char *argv[])
                             App::GetGuiManager()->MenuWallpaper->hide();
                             App::GetGuiManager()->LoadingWindow.SetVisible(false);
                             App::GetGuiManager()->SetMouseCursorVisibility(GUIManager::MouseCursorVisibility::VISIBLE);
-                            App::gfx_fov_external->setVal(App::gfx_fov_external_default->getInt());
-                            App::gfx_fov_internal->setVal(App::gfx_fov_internal_default->getInt());
+                            App::gfx_fov_external->setVal(App::gfx_fov_external_default->getFloat());
+                            App::gfx_fov_internal->setVal(App::gfx_fov_internal_default->getFloat());
     #ifdef USE_SOCKETW
                             if (App::mp_state->getEnum<MpState>() == MpState::CONNECTED)
                             {

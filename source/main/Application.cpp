@@ -256,6 +256,7 @@ CVar* gfx_fov_internal;
 CVar* gfx_fov_internal_default;
 CVar* gfx_static_cam_fov_exp;
 CVar* gfx_fixed_cam_tracking;
+CVar* gfx_cam_lag_factor;
 CVar* gfx_fps_limit;
 CVar* gfx_speedo_imperial;
 CVar* gfx_flexbody_cache;

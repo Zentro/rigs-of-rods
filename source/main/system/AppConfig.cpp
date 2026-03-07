@@ -350,8 +350,8 @@ void ParseHelper(CVar* cvar, std::string const & val)
     else if (cvar->getName() == App::gfx_fov_external_default->getName() ||
              cvar->getName() == App::gfx_fov_internal_default->getName())
     {
-        int fov = Ogre::StringConverter::parseInt(val);
-        if (fov >= 10) // FOV shouldn't be below 10
+        float fov = Ogre::StringConverter::parseReal(val);
+        if (fov >= 10.f) // FOV shouldn't be below 10
         {
             AssignHelper(cvar, fov);
         }

@@ -192,12 +192,13 @@ void Console::cVarSetupBuiltins()
     App::gfx_skidmarks_mode      = this->cVarCreate("gfx_skidmarks_mode",      "Skidmarks",                  CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_sight_range         = this->cVarCreate("gfx_sight_range",         "SightRange",                 CVAR_ARCHIVE | CVAR_TYPE_INT,     "5000");
     App::gfx_camera_height       = this->cVarCreate("gfx_camera_height",       "Static camera height",       CVAR_ARCHIVE | CVAR_TYPE_INT,     "5");
-    App::gfx_fov_external        = this->cVarCreate("gfx_fov_external",        "",                                          CVAR_TYPE_INT,     "60");
-    App::gfx_fov_external_default= this->cVarCreate("gfx_fov_external_default","FOV External",               CVAR_ARCHIVE | CVAR_TYPE_INT,     "60");
-    App::gfx_fov_internal        = this->cVarCreate("gfx_fov_internal",        "",                                          CVAR_TYPE_INT,     "75");
-    App::gfx_fov_internal_default= this->cVarCreate("gfx_fov_internal_default","FOV Internal",               CVAR_ARCHIVE | CVAR_TYPE_INT,     "75");
+    App::gfx_fov_external        = this->cVarCreate("gfx_fov_external",        "",                                          CVAR_TYPE_FLOAT,   "60");
+    App::gfx_fov_external_default= this->cVarCreate("gfx_fov_external_default","FOV External",               CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "60");
+    App::gfx_fov_internal        = this->cVarCreate("gfx_fov_internal",        "",                                          CVAR_TYPE_FLOAT,   "75");
+    App::gfx_fov_internal_default= this->cVarCreate("gfx_fov_internal_default","FOV Internal",               CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "75");
     App::gfx_static_cam_fov_exp  = this->cVarCreate("gfx_static_cam_fov_exp",  "",                           CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");
     App::gfx_fixed_cam_tracking  = this->cVarCreate("gfx_fixed_cam_tracking",  "",                           CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
+    App::gfx_cam_lag_factor      = this->cVarCreate("gfx_cam_lag_factor",      "Camera lag factor",          CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");
     App::gfx_fps_limit           = this->cVarCreate("gfx_fps_limit",           "FPS-Limiter",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_speedo_imperial     = this->cVarCreate("gfx_speedo_imperial",     "gfx_speedo_imperial",        CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
     App::gfx_flexbody_cache      = this->cVarCreate("gfx_flexbody_cache",      "Flexbody_UseCache",          CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
