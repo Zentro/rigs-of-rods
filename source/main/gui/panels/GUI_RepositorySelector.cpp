@@ -399,7 +399,7 @@ void RepositorySelector::Draw()
     GUIManager::GuiTheme const& theme = App::GetGuiManager()->GetTheme();
 
     ImGui::SetNextWindowSize(ImVec2((ImGui::GetIO().DisplaySize.x / 1.4), (ImGui::GetIO().DisplaySize.y / 1.2)), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowPosCenter(ImGuiCond_Appearing);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_Appearing);
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     bool keep_open = true;
     Ogre::TexturePtr tex1 = FetchIcon("arrow_rotate_anticlockwise.png");
@@ -410,7 +410,7 @@ void RepositorySelector::Draw()
     ImGui::Begin(_LC("RepositorySelector", "Rigs of Rods Repository"), &keep_open, window_flags);
 
     if (m_resourceview_item_arraypos != RESOURCEITEMARRAYPOS_INVALID
-        && ImGui::ImageButton(reinterpret_cast<ImTextureID>(tex4->getHandle()), ImVec2(16, 16)))
+        && ImGui::ImageButton("##back", reinterpret_cast<ImTextureID>(tex4->getHandle()), ImVec2(16, 16)))
     {
         if (m_gallery_mode_attachment_id != -1)
         {
@@ -422,7 +422,7 @@ void RepositorySelector::Draw()
         }
     }
     else if (m_resourceview_item_arraypos == RESOURCEITEMARRAYPOS_INVALID
-        && ImGui::ImageButton(reinterpret_cast<ImTextureID>(tex1->getHandle()), ImVec2(16, 16)))
+        && ImGui::ImageButton("##refresh", reinterpret_cast<ImTextureID>(tex1->getHandle()), ImVec2(16, 16)))
     {
         this->Refresh();
     }
@@ -578,7 +578,7 @@ void RepositorySelector::Draw()
         }
 
         const float table_height = ImGui::GetWindowHeight()
-                - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetItemsLineHeightWithSpacing())
+                - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetFrameHeightWithSpacing())
                 - ImGui::GetStyle().ItemSpacing.y);
 
         if (m_resourceview_item_arraypos != RESOURCEITEMARRAYPOS_INVALID)
@@ -597,10 +597,10 @@ void RepositorySelector::Draw()
         else
         {
 
-            float col0_width = 0.40f * ImGui::GetWindowContentRegionWidth();
-            float col1_width = 0.15f * ImGui::GetWindowContentRegionWidth();
-            float col2_width = 0.20f * ImGui::GetWindowContentRegionWidth();
-            float col3_width = 0.10f * ImGui::GetWindowContentRegionWidth();
+            float col0_width = 0.40f * ImGui::GetContentRegionAvail().x;
+            float col1_width = 0.15f * ImGui::GetContentRegionAvail().x;
+            float col2_width = 0.20f * ImGui::GetContentRegionAvail().x;
+            float col3_width = 0.10f * ImGui::GetContentRegionAvail().x;
 
             if (m_view_mode == "Basic")
             {
@@ -717,7 +717,7 @@ void RepositorySelector::Draw()
                         {
                             ImGui::SameLine();
                             ImGui::SetCursorPosX(ImGui::GetColumnWidth() + 16 * i);
-                            ImGui::Image(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(1.f, 1.f, 1.f, 0.2f));
+                            ImGui::ImageWithBg(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(0,0,0,0), ImVec4(1.f, 1.f, 1.f, 0.2f));
                         }
 
                         int rating = round(m_data.items[i].rating_avg);
@@ -820,7 +820,7 @@ void RepositorySelector::Draw()
                         for (int i = 1; i <= 5; i++)
                         {
                             pos_y = ImGui::GetCursorPosY();
-                            ImGui::Image(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(11, 11), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(1.f, 1.f, 1.f, 0.2f));
+                            ImGui::ImageWithBg(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(11, 11), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(0,0,0,0), ImVec4(1.f, 1.f, 1.f, 0.2f));
                             if (i < 5) { ImGui::SameLine(); }
                         }
 
@@ -910,7 +910,7 @@ void RepositorySelector::Draw()
                         // Rating
                         for (int i = 1; i <= 5; i++)
                         {
-                            ImGui::Image(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(1.f, 1.f, 1.f, 0.2f));
+                            ImGui::ImageWithBg(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(0,0,0,0), ImVec4(1.f, 1.f, 1.f, 0.2f));
                             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 16 * i);
                             ImGui::SameLine();
                         }
@@ -1127,7 +1127,7 @@ void RepositorySelector::DrawResourceView(float searchbox_x)
     {
         ImGui::SetCursorPosX(stars_cursor.x + 16 * (i-1));
         ImVec4 tint_color = (i <= rating) ? ImVec4(1, 1, 1, 1) : ImVec4(1.f, 1.f, 1.f, 0.2f);
-        ImGui::Image(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), tint_color);
+        ImGui::ImageWithBg(reinterpret_cast<ImTextureID>(tex3->getHandle()), ImVec2(16, 16), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImVec4(0,0,0,0), tint_color);
         ImGui::SameLine();
     }
     ImGui::SetCursorPosX(stars_cursor.x + 16 * 5 + ImGui::GetStyle().ItemSpacing.x);
@@ -1153,7 +1153,7 @@ void RepositorySelector::DrawResourceView(float searchbox_x)
     // --- content area ---
     ImGui::SetCursorPos(leftmost_cursor + ImVec2(0.f, backdrop_size.y + ImGui::GetStyle().ItemSpacing.y));
     const float table_height = ImGui::GetWindowHeight()
-        - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetItemsLineHeightWithSpacing() + backdrop_size.y + ImGui::GetStyle().ItemSpacing.y));
+        - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetFrameHeightWithSpacing() + backdrop_size.y + ImGui::GetStyle().ItemSpacing.y));
 
     // Scroll area
     // Make child windows use padding - only works when border is visible, so set it to transparent
@@ -1173,7 +1173,7 @@ void RepositorySelector::DrawResourceView(float searchbox_x)
     {
         // Downloading in progress - show spinner (centered)
         float spinner_radius = 25.f;
-        ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(ImGui::GetContentRegionAvailWidth() / 2 - spinner_radius, 200.f));
+        ImGui::SetCursorPos(ImGui::GetCursorPos() + ImVec2(ImGui::GetContentRegionAvail().x / 2 - spinner_radius, 200.f));
         LoadingIndicatorCircle("spinner", spinner_radius, theme.value_blue_text_color, theme.value_blue_text_color, 10, 10);
     }
     else
@@ -1195,10 +1195,10 @@ void RepositorySelector::DrawResourceViewRightColumn()
     ResourceItem& selected_item = m_data.items[m_resourceview_item_arraypos];
 
     const float table_height = ImGui::GetWindowHeight()
-        - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetItemsLineHeightWithSpacing())
+        - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetFrameHeightWithSpacing())
             - ImGui::GetStyle().ItemSpacing.y);
 
-    ImVec2 rightcol_size = ImVec2(ImGui::GetContentRegionAvailWidth(), table_height);
+    ImVec2 rightcol_size = ImVec2(ImGui::GetContentRegionAvail().x, table_height);
     // Make child windows use padding - only works when border is visible, so set it to transparent
     // see https://github.com/ocornut/imgui/issues/462
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.f, 0.f, 0.f, 0.f));
@@ -1750,7 +1750,7 @@ void RepositorySelector::DrawResourceDescriptionBBCode(const ResourceItem& item,
 
     ImVec2 text_pos = ImGui::GetCursorScreenPos();
     ImTextFeeder feeder(ImGui::GetWindowDrawList(), text_pos);
-    BBCodeDrawingContext bb_ctx(feeder, ImGui::GetWindowContentRegionWidth(), panel_screenpos, panel_size);
+    BBCodeDrawingContext bb_ctx(feeder, ImGui::GetContentRegionAvail().x, panel_screenpos, panel_size);
     bb_ctx.DrawBBCodeChildrenRecursive(*item.description);
     feeder.NextLine(); // Account correctly for last line height - there may be images on it.
 

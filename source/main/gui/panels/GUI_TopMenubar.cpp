@@ -324,7 +324,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + sim_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = sim_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Sim menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Sim menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             // TODO: Display hotkeys on the right side of the menu (with different text color)
 
@@ -476,7 +476,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + actors_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = actors_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Actors menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Actors menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             if (App::mp_state->getEnum<MpState>() != MpState::CONNECTED)
             {
@@ -507,7 +507,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + savegames_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = savegames_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Savegames"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Savegames"), nullptr, (ImGuiWindowFlags)flags))
         {
             if (ImGui::Button(_LC("TopMenubar", "Quicksave")))
             {
@@ -575,7 +575,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + settings_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = settings_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Settings menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Settings menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             // AUDIO SETTINGS
             ImGui::Separator();
@@ -704,7 +704,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + tools_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = tools_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Tools menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Tools menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             if (ImGui::Button(_LC("TopMenubar", "Friction settings")))
             {
@@ -845,7 +845,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + ai_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = ai_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "AI menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "AI menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             if (ImGui::IsWindowHovered())
             {
@@ -1454,7 +1454,7 @@ void TopMenubar::Draw(float dt)
         menu_pos.y = window_pos.y + tuning_cursor.y + MENU_Y_OFFSET;
         menu_pos.x = tuning_cursor.x + window_pos.x - ImGui::GetStyle().WindowPadding.x;
         ImGui::SetNextWindowPos(menu_pos);
-        if (ImGui::Begin(_LC("TopMenubar", "Tuning menu"), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
+        if (ImGui::Begin(_LC("TopMenubar", "Tuning menu"), nullptr, (ImGuiWindowFlags)flags))
         {
             this->RefreshTuningMenu(); // make sure our local context is valid
             if (!tuning_actor)
@@ -1498,7 +1498,7 @@ void TopMenubar::Draw(float dt)
                         tuning_rwidget_cursorx_min = ImGui::GetCursorPosX();
                     std::string delbtn_text = _LC("Tuning", "Delete");
                     float delbtn_w = ImGui::CalcTextSize(delbtn_text.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-                    float delbtn_cursorx = ImGui::GetWindowContentRegionWidth() - delbtn_w;
+                    float delbtn_cursorx = ImGui::GetContentRegionAvail().x - delbtn_w;
                     if (delbtn_cursorx < tuning_rwidget_cursorx_min)
                         delbtn_cursorx = tuning_rwidget_cursorx_min;
                     ImGui::SetCursorPosX(delbtn_cursorx);
@@ -1539,7 +1539,7 @@ void TopMenubar::Draw(float dt)
                         tuning_rwidget_cursorx_min = ImGui::GetCursorPosX();
                     std::string cancelbtn_text = _LC("Tuning", "Cancel");
                     float cancelbtn_w = ImGui::CalcTextSize(cancelbtn_text.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-                    float cancelbtn_cursorx = ImGui::GetWindowContentRegionWidth() - cancelbtn_w;
+                    float cancelbtn_cursorx = ImGui::GetContentRegionAvail().x - cancelbtn_w;
                     if (cancelbtn_cursorx < tuning_rwidget_cursorx_min)
                         cancelbtn_cursorx = tuning_rwidget_cursorx_min;
                     ImGui::SetCursorPosX(cancelbtn_cursorx);
@@ -1564,7 +1564,7 @@ void TopMenubar::Draw(float dt)
                     ImGui::AlignTextToFramePadding();
                     std::string resetbtn_text = _LC("Tuning", "Reset");
                     float delbtn_w = ImGui::CalcTextSize(resetbtn_text.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-                    float delbtn_cursorx = ImGui::GetWindowContentRegionWidth() - delbtn_w;
+                    float delbtn_cursorx = ImGui::GetContentRegionAvail().x - delbtn_w;
                     if (delbtn_cursorx < tuning_rwidget_cursorx_min)
                         delbtn_cursorx = tuning_rwidget_cursorx_min;
                     ImGui::SetCursorPosX(delbtn_cursorx);
@@ -1626,7 +1626,7 @@ void TopMenubar::Draw(float dt)
                             const ImVec2 min = checkbox_cursor;
                             const ImVec2 max = checkbox_cursor + ImVec2(square_sz + 0.5f, square_sz);
                             const ImColor SQ_COLOR(0.7f, 0.1f, 0.f);
-                            ImGui::GetWindowDrawList()->AddRect(min, max, SQ_COLOR, 0.f, ImDrawCornerFlags_None, 3.f);
+                            ImGui::GetWindowDrawList()->AddRect(min, max, SQ_COLOR, 0.f, ImDrawFlags_None, 3.f);
                         }                        
                         // Record when checkbox is hovered - for drawing conflict markers
                         if (ImGui::IsItemHovered())
@@ -1644,7 +1644,7 @@ void TopMenubar::Draw(float dt)
                         ImGui::AlignTextToFramePadding();
                         std::string reloadbtn_text = _LC("Tuning", "Reload");
                         const float reloadbtn_w = ImGui::CalcTextSize(reloadbtn_text.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-                        const float reloadbtn_cursorx = std::max(ImGui::GetWindowContentRegionWidth() - reloadbtn_w, tuning_rwidget_cursorx_min);
+                        const float reloadbtn_cursorx = std::max(ImGui::GetContentRegionAvail().x - reloadbtn_w, tuning_rwidget_cursorx_min);
                         ImGui::SetCursorPosX(reloadbtn_cursorx);
                         const bool reloadbtn_pressed = ImGui::SmallButton(reloadbtn_text.c_str());
                         if (reloadbtn_pressed)
@@ -2155,14 +2155,14 @@ void TopMenubar::DrawMpUserToActorList(RoRnet::UserInfo &user)
             ImGui::PushID(id.c_str());
             if (actor->ar_state == ActorState::NETWORKED_OK)
             {
-                if (ImGui::ImageButton(reinterpret_cast<ImTextureID>(tex1->getHandle()), ImVec2(16, 16)))
+                if (ImGui::ImageButton("##hide", reinterpret_cast<ImTextureID>(tex1->getHandle()), ImVec2(16, 16)))
                 {
                    App::GetGameContext()->PushMessage(Message(MSG_SIM_HIDE_NET_ACTOR_REQUESTED, static_cast<void*>(new ActorPtr(actor))));
                 }
             }
             else if (actor->ar_state == ActorState::NETWORKED_HIDDEN)
             {
-                if (ImGui::ImageButton(reinterpret_cast<ImTextureID>(tex2->getHandle()), ImVec2(16, 16)))
+                if (ImGui::ImageButton("##show", reinterpret_cast<ImTextureID>(tex2->getHandle()), ImVec2(16, 16)))
                 {
                    App::GetGameContext()->PushMessage(Message(MSG_SIM_UNHIDE_NET_ACTOR_REQUESTED, static_cast<void*>(new ActorPtr(actor))));
                 }
@@ -2379,7 +2379,7 @@ void TopMenubar::DrawSpecialStateBox(float top_offset)
         box_pos.x = (ImGui::GetIO().DisplaySize.x / 2) - ((content_width / 2) + ImGui::GetStyle().FramePadding.x);
         ImGui::SetNextWindowPos(box_pos);
         ImGui::SetNextWindowSize(ImVec2(0.f, 0.f));
-        ImGui::SetNextWindowContentWidth(content_width);
+        ImGui::SetNextWindowContentSize(ImVec2(content_width, 0.0f));
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize    | ImGuiWindowFlags_NoMove |
                                  ImGuiWindowFlags_NoTitleBar  | ImGuiWindowFlags_NoCollapse;
         ImGui::PushStyleColor(ImGuiCol_WindowBg, App::GetGuiManager()->GetTheme().semitransparent_window_bg);
@@ -2502,13 +2502,13 @@ void TopMenubar::DrawSpecialStateBox(float top_offset)
                 // notice text
                 std::string lbl_readonly = _LC("TopMenubar", "This terrain is read only.");
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX()
-                    + (ImGui::GetWindowContentRegionWidth() / 2 - ImGui::CalcTextSize(lbl_readonly.c_str()).x/2));
+                    + (ImGui::GetContentRegionAvail().x / 2 - ImGui::CalcTextSize(lbl_readonly.c_str()).x/2));
                 ImGui::TextDisabled("%s", lbl_readonly.c_str());
                 // import button
                 ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2, 0.2, 0.2, 1.0));
                 std::string btn_import = _LC("TopMenubar", "Import as editable project.");
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX()
-                    + ((ImGui::GetWindowContentRegionWidth() / 2 - ImGui::CalcTextSize(btn_import.c_str()).x / 2) - ImGui::GetStyle().FramePadding.x));
+                    + ((ImGui::GetContentRegionAvail().x / 2 - ImGui::CalcTextSize(btn_import.c_str()).x / 2) - ImGui::GetStyle().FramePadding.x));
                 if (!m_terrn_import_started && ImGui::Button(btn_import.c_str()))
                 {
                     RoR::LoadScriptRequest* rq = new LoadScriptRequest();
@@ -2524,7 +2524,7 @@ void TopMenubar::DrawSpecialStateBox(float top_offset)
                 // Info text
                 std::string lbl_usemenu = _LC("TopMenubar", "Use 'Simulation' menu to save changes.");
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX()
-                    + (ImGui::GetWindowContentRegionWidth() / 2 - ImGui::CalcTextSize(lbl_usemenu.c_str()).x / 2));
+                    + (ImGui::GetContentRegionAvail().x / 2 - ImGui::CalcTextSize(lbl_usemenu.c_str()).x / 2));
                 ImGui::TextDisabled("%s", lbl_usemenu.c_str());
             }
             const ImVec2 PAD = ImVec2(5, 5); // To bridge top menubar hoverbox and statebox hoverbox
@@ -2716,7 +2716,7 @@ void TopMenubar::DrawTuningProtectedChkRightAligned(const int subject_id, bool p
         tuning_rwidget_cursorx_min = ImGui::GetCursorPosX();
     std::string protectchk_text = _LC("Tuning", "Protected");
     float protectchk_w = ImGui::CalcTextSize(protectchk_text.c_str()).x + ImGui::GetStyle().FramePadding.x * 2;
-    float protectchk_cursorx = (ImGui::GetWindowContentRegionWidth() - protectchk_w) - 20.f;
+    float protectchk_cursorx = (ImGui::GetContentRegionAvail().x - protectchk_w) - 20.f;
     if (protectchk_cursorx < tuning_rwidget_cursorx_min)
         protectchk_cursorx = tuning_rwidget_cursorx_min;
     ImGui::SetCursorPosX(protectchk_cursorx);

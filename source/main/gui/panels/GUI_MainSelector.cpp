@@ -90,7 +90,7 @@ void MainSelector::Draw()
     GUIManager::GuiTheme const& theme = App::GetGuiManager()->GetTheme();
 
     ImGuiWindowFlags win_flags = ImGuiWindowFlags_NoCollapse;
-    ImGui::SetNextWindowPosCenter(ImGuiCond_FirstUseEver);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2((ImGui::GetIO().DisplaySize.x / 1.4), (ImGui::GetIO().DisplaySize.y / 1.2)), ImGuiCond_FirstUseEver);
     bool keep_open = true;
     if (!ImGui::Begin(_LC("MainSelector", "Loader"), &keep_open, win_flags))
@@ -104,7 +104,7 @@ void MainSelector::Draw()
     const int num_categories = static_cast<int>(m_display_categories.size());
     if (!m_searchbox_was_active || m_search_input == "")
     {
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_RightArrow)))
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow))
         {
             m_selected_category = (m_selected_category + 1) % num_categories; // select next item and wrap around at bottom.
             m_last_selected_category[m_loader_type] = m_selected_category;
@@ -112,7 +112,7 @@ void MainSelector::Draw()
             m_last_selected_cid[m_loader_type] = m_selected_cid;
             this->UpdateDisplayLists();
         }
-        else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_LeftArrow)))
+        else if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
         {
             m_selected_category = (m_selected_category > 0) ? (m_selected_category - 1) : (num_categories - 1); // select prev. item and wrap around on top
             m_last_selected_category[m_loader_type] = m_selected_category;
@@ -147,7 +147,7 @@ void MainSelector::Draw()
         m_kb_focused = false;
     }
 
-    if (!m_searchbox_was_active && (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Tab)) || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Slash))))
+    if (!m_searchbox_was_active && (ImGui::IsKeyPressed(ImGuiKey_Tab) || ImGui::IsKeyPressed(ImGuiKey_Slash)))
     {
         ImGui::SetKeyboardFocusHere();
     }
@@ -191,13 +191,13 @@ void MainSelector::Draw()
     // Entry list: handle keyboard
     if (m_selected_entry != -1) // -1 indicates empty entry-list
     {
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
         {
             m_selected_entry = (m_selected_entry + 1) % num_entries; // select next item and wrap around at bottom.
             m_last_selected_entry[m_loader_type] = m_selected_entry;
             scroll_to_selected = true;
         }
-        else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
+        else if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
         {
             m_selected_entry = (m_selected_entry > 0) ? (m_selected_entry - 1) : (num_entries - 1); // select prev. item and wrap around on top
             m_last_selected_entry[m_loader_type] = m_selected_entry;
@@ -238,7 +238,7 @@ void MainSelector::Draw()
         }
         if (is_selected && scroll_to_selected)
         {
-            ImGui::SetScrollHere();
+            ImGui::SetScrollHereY();
         }
         ImGui::PopID();
     }
@@ -254,7 +254,7 @@ void MainSelector::Draw()
     // right
     ImGui::BeginGroup();
 
-    ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
+    ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
 
     if (m_selected_entry != -1)
     {
@@ -413,13 +413,13 @@ void MainSelector::Draw()
         }
         ImGui::SameLine(ImGui::GetWindowWidth()-280);
         if (ImGui::Button(_LC("MainSelector", "OK"), ImVec2(120.f, 0.0f)) ||
-            ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
+            ImGui::IsKeyPressed(ImGuiKey_Enter))
         {
             this->Apply();
         }
     }
     ImGui::SameLine(ImGui::GetWindowWidth()-150);
-    if (ImGui::Button(_LC("MainSelector", "Cancel"), ImVec2(120.f, 0.0f)) || ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+    if (ImGui::Button(_LC("MainSelector", "Cancel"), ImVec2(120.f, 0.0f)) || ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
         this->Cancel();
     }

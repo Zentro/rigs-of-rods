@@ -50,6 +50,9 @@ void LoadingIndicatorCircle(const char* label, const float indicator_radius, con
 
 /// Add rotated textured quad to ImDrawList, source: https://github.com/ocornut/imgui/issues/1982#issuecomment-408834301
 void DrawImageRotated(ImTextureID tex_id, ImVec2 center, ImVec2 size, float angle);
+/// Draws a texture clipped to a circle, approximating the removed ImDrawList::AddCircularImage().
+void DrawCircularImage(ImDrawList* draw_list, ImTextureID tex_id, ImVec2 p_min, ImVec2 p_max,
+                       ImVec2 uv_min, ImVec2 uv_max, ImU32 col, float radius);
 
 /// Draw multiline text with '#rrggbb' color markers. Returns total text size.
 ImVec2 DrawColorMarkedText(ImDrawList* drawlist, ImVec2 text_cursor, ImVec4 default_color, float override_alpha, float wrap_width, std::string const& line);
@@ -100,5 +103,11 @@ bool ImMoveTextInputCursorToEnd(const char* label);
 /// Looks and behaves (mouuse cursor) like a hypertext, but doesn't open URL.
 void ImDummyHyperlink(std::string caption);
 void ImHyperlink(std::string url, std::string caption = "", bool tooltip = true);
+
+/// Replacement for removed ImGui::SetNextWindowPosCenter().
+inline void ImSetNextWindowPosCenter(ImGuiCond cond = 0)
+{
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), cond, ImVec2(0.5f, 0.5f));
+}
 
 } // namespace RoR

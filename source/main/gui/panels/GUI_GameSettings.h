@@ -54,6 +54,7 @@ private:
 
     // GUI state
     bool m_is_visible = false;
+    int  m_active_tab = 0;       // sidebar navigation: active section index
     ImVec2 m_window_size = ImVec2(0, 0);
 
     // Buffers for text input boxes

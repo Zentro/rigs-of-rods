@@ -135,7 +135,7 @@ void GameChatBox::Draw()
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0.0,0,0)); // Fully transparent background!
     ImGui::Begin("ChatBottomBar", nullptr, chat_flags);
 
-    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
     {
         this->SetVisible(false);
     }

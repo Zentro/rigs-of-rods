@@ -92,7 +92,7 @@ ImFont* ImGuiOverlay::addFont(const String& name, const String& group)
     }
 
     ImGuiIO& io = ImGui::GetIO();
-    const ImWchar* cprangePtr = io.Fonts->GetGlyphRangesAll();
+    const ImWchar* cprangePtr = io.Fonts->GetGlyphRangesDefault();
     if (!cprange.empty())
     {
         cprange.push_back(0); // terminate
@@ -122,6 +122,9 @@ void ImGuiOverlay::ImGUIRenderable::createFontTexture()
                                                            width, height, 1, 1, PF_BYTE_RGBA);
 
     mFontTex->getBuffer()->blitFromMemory(PixelBox(Box(0, 0, width, height), PF_BYTE_RGBA, pixels));
+
+    // Register the backend texture handle with imgui so GetTexID() works during rendering.
+    io.Fonts->SetTexID(reinterpret_cast<ImTextureID>(mFontTex->getHandle()));
 }
 void ImGuiOverlay::NewFrame(const FrameEvent& evt)
 {
@@ -129,10 +132,6 @@ void ImGuiOverlay::NewFrame(const FrameEvent& evt)
     io.DeltaTime = std::max<float>(
         evt.timeSinceLastFrame,
         1e-4f); // see https://github.com/ocornut/imgui/commit/3c07ec6a6126fb6b98523a9685d1f0f78ca3c40c
-
-    // Read keyboard modifiers inputs
-    io.KeyAlt = false;
-    io.KeySuper = false;
 
     OverlayManager& oMgr = OverlayManager::getSingleton();
 
@@ -202,9 +201,10 @@ bool ImGuiOverlay::ImGUIRenderable::preRender(SceneManager* sm, RenderSystem* rs
             // Clamp bounds to viewport dimensions
             scissor = scissor.intersect(Rect(0, 0, vpWidth, vpHeight));
 
-            if (drawCmd->TextureId)
+            ImTextureID tex_id = drawCmd->GetTexID();
+            if (tex_id && tex_id != reinterpret_cast<ImTextureID>(mFontTex->getHandle()))
             {
-                auto handle = (ResourceHandle)drawCmd->TextureId;
+                auto handle = (ResourceHandle)tex_id;
                 auto tex = static_pointer_cast<Texture>(TextureManager::getSingleton().getByHandle(handle));
                 if (tex)
                 {
@@ -221,7 +221,7 @@ bool ImGuiOverlay::ImGUIRenderable::preRender(SceneManager* sm, RenderSystem* rs
 
             rsys->_render(mRenderOp);
 
-            if (drawCmd->TextureId)
+            if (tex_id && tex_id != reinterpret_cast<ImTextureID>(mFontTex->getHandle()))
             {
                 // reset to pass state
                 rsys->_setTexture(0, true, mFontTex);

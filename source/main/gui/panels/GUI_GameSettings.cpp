@@ -23,7 +23,9 @@
 #include "CacheSystem.h"
 #include "GameContext.h"
 #include "GUIManager.h"
+#include "GUIStyle.h"
 #include "GUIUtils.h"
+#include "IconsFontAwesome6.h"
 #include "Language.h"
 #include "SoundManager.h"
 
@@ -36,90 +38,167 @@ using namespace GUI;
 
 void GameSettings::Draw()
 {
-    const int flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar;
-    ImGui::SetNextWindowSize(ImVec2(670.f, 400.f), ImGuiCond_FirstUseEver);
+    // Sidebar sections: icon, label, draw function
+    struct Section { const char* icon; const char* label; void (GameSettings::*fn)(); };
+    static const Section sections[] = {
+        { ICON_FA_DISPLAY,        "Render",      &GameSettings::DrawRenderSystemSettings },
+        { ICON_FA_SLIDERS,        "General",     &GameSettings::DrawGeneralSettings      },
+        { ICON_FA_FLAG_CHECKERED, "Gameplay",    &GameSettings::DrawGameplaySettings     },
+        { ICON_FA_PALETTE,        "Interface",   &GameSettings::DrawUiSettings           },
+        { ICON_FA_IMAGE,          "Graphics",    &GameSettings::DrawGraphicsSettings     },
+        { ICON_FA_VOLUME_HIGH,    "Audio",       &GameSettings::DrawAudioSettings        },
+        { ICON_FA_KEYBOARD,       "Controls",    &GameSettings::DrawControlSettings      },
+        { ICON_FA_WRENCH,         "Diagnostic",  &GameSettings::DrawDiagSettings         },
+    };
+    static const int NUM_SECTIONS = (int)(sizeof(sections) / sizeof(sections[0]));
+
+    const float SIDEBAR_W = 160.f;
+    const float BTN_H     = 42.f;
+    const float TITLE_H   = 48.f;
+    const float TITLE_PAD = 20.f;
+
+    ImGui::SetNextWindowSize(ImVec2(760.f, 520.f), ImGuiCond_FirstUseEver);
     if (m_bump_height != 0)
     {
         ImGui::SetNextWindowSize(m_window_size + ImVec2(0, m_bump_height));
         m_bump_height = 0.f;
     }
-    ImGui::SetNextWindowPosCenter(ImGuiCond_Appearing);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_Appearing);
+
     bool keep_open = true;
-    ImGui::Begin(_LC("GameSettings", "Game settings"), &keep_open, flags);
 
-    ImGui::BeginTabBar("GameSettingsTabs");
-
-    const float child_height = ImGui::GetWindowHeight()
-        - ((2.f * ImGui::GetStyle().WindowPadding.y) + (3.f * ImGui::GetItemsLineHeightWithSpacing())
-            + ImGui::GetStyle().ItemSpacing.y);
-
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Render System")))
+    // Outer window — no title bar, no padding, dark bg
     {
-        ImGui::BeginChild("Settings-Render-scroll", ImVec2(0.f, child_height), false);
-        this->DrawRenderSystemSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "General")))
-    {
-        ImGui::BeginChild("Settings-General-scroll", ImVec2(0.f, child_height), false);
-        this->DrawGeneralSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Gameplay")))
-    {
-        ImGui::BeginChild("Settings-Gameplay-scroll", ImVec2(0.f, child_height), false);
-        this->DrawGameplaySettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "UI")))
-    {
-        ImGui::BeginChild("Settings-UI-scroll", ImVec2(0.f, child_height), false);
-        this->DrawUiSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Graphics")))
-    {
-        ImGui::BeginChild("Settings-Graphics-scroll", ImVec2(0.f, child_height), false);
-        this->DrawGraphicsSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Audio")))
-    {
-        ImGui::BeginChild("Settings-Audio-scroll", ImVec2(0.f, child_height), false);
-        this->DrawAudioSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Controls")))
-    {
-        ImGui::BeginChild("Settings-Controls-scroll", ImVec2(0.f, child_height), false);
-        this->DrawControlSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem(_LC("GameSettings", "Diagnostic")))
-    {
-        ImGui::BeginChild("Settings-Diag-scroll", ImVec2(0.f, child_height), false);
-        this->DrawDiagSettings();
-        ImGui::EndChild();
-        ImGui::EndTabItem();
+        StylePush ws;
+        ws.Col(ImGuiCol_WindowBg, UIColor::BG_PANEL)
+          .Var(ImGuiStyleVar_WindowPadding,    ImVec2(0.f, 0.f))
+          .Var(ImGuiStyleVar_WindowBorderSize, 0.f)
+          .Var(ImGuiStyleVar_WindowRounding,   4.f);
+        ImGui::Begin("##Settings", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
     }
 
-    ImGui::EndTabBar();
+    const float total_h = ImGui::GetContentRegionAvail().y;
 
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4.f);
+    // -----------------------------------------------------------------------
+    // Sidebar
+    // -----------------------------------------------------------------------
+    {
+        StylePush sc;
+        sc.Col(ImGuiCol_ChildBg,              UIColor::BG_DARK)
+          .Col(ImGuiCol_Button,               UIColor::BTN_BG)
+          .Col(ImGuiCol_ButtonHovered,        UIColor::ACCENT)
+          .Col(ImGuiCol_ButtonActive,         UIColor::ACCENT_ACTIVE)
+          .Var(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f))
+          .Var(ImGuiStyleVar_FrameRounding,   0.f)
+          .Var(ImGuiStyleVar_FramePadding,    ImVec2(12.f, 0.f))
+          .Var(ImGuiStyleVar_ItemSpacing,     ImVec2(0.f, 0.f))
+          .Var(ImGuiStyleVar_ChildBorderSize, 0.f);
+        ImGui::BeginChild("##settings_sidebar", ImVec2(SIDEBAR_W, total_h), false,
+            ImGuiWindowFlags_NoScrollbar);
+
+        ImFont* sidebar_font = App::GetGuiManager()->GetImGui().FontBold;
+        if (sidebar_font) ImGui::PushFont(sidebar_font);
+
+        for (int i = 0; i < NUM_SECTIONS; i++)
+        {
+            bool selected = (m_active_tab == i);
+            if (selected)
+                ImGui::PushStyleColor(ImGuiCol_Button, UIColor::ACCENT);
+
+            std::string lbl = fmt::format("  {} {}##nav{}", sections[i].icon, sections[i].label, i);
+            if (ImGui::Button(lbl.c_str(), ImVec2(SIDEBAR_W, BTN_H)))
+                m_active_tab = i;
+
+            if (selected)
+                ImGui::PopStyleColor(); // Button
+        }
+
+        if (sidebar_font) ImGui::PopFont();
+
+        ImGui::EndChild();
+    }
+
+    // -----------------------------------------------------------------------
+    // Content area (right of sidebar)
+    // -----------------------------------------------------------------------
+    ImGui::SameLine(0.f, 0.f);
+
+    // Thin vertical separator between sidebar and content
+    {
+        ImVec2 sep_p = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddLine(
+            sep_p, ImVec2(sep_p.x, sep_p.y + total_h),
+            IM_COL32(40, 40, 40, 255), 1.f);
+    }
+
+    {
+        StylePush cc;
+        cc.Col(ImGuiCol_ChildBg,             UIColor::BG_PANEL)
+          .Var(ImGuiStyleVar_ChildBorderSize, 0.f)
+          .Var(ImGuiStyleVar_WindowPadding,   ImVec2(0.f, 0.f));
+        ImGui::BeginChild("##settings_content", ImVec2(0.f, total_h),
+            ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_None);
+
+        // ---- Title row ----
+        ImFont* bold_font = App::GetGuiManager()->GetImGui().FontBoldLarge;
+        if (bold_font) ImGui::PushFont(bold_font);
+
+        // Title text — vertically centered in TITLE_H
+        float text_h = ImGui::GetTextLineHeight();
+        ImGui::SetCursorPos(ImVec2(TITLE_PAD, (TITLE_H - text_h) * 0.5f));
+        if (m_active_tab >= 0 && m_active_tab < NUM_SECTIONS)
+            ImGui::TextUnformatted(sections[m_active_tab].label);
+
+        if (bold_font) ImGui::PopFont();
+
+        // Close [X] button — right edge, vertically centered
+        {
+            StylePush xbtn;
+            xbtn.Col(ImGuiCol_Button,        UIColor::BTN_BG)
+                .Col(ImGuiCol_ButtonHovered,  UIColor::ACCENT)
+                .Col(ImGuiCol_ButtonActive,   UIColor::ACCENT_ACTIVE)
+                .Var(ImGuiStyleVar_FrameRounding, 0.f)
+                .Var(ImGuiStyleVar_FramePadding,  ImVec2(10.f, 6.f));
+
+            float frame_h    = ImGui::GetFrameHeight();
+            float btn_x      = ImGui::GetContentRegionAvail().x - frame_h - TITLE_PAD;
+            ImGui::SameLine(btn_x);
+            ImGui::SetCursorPosY((TITLE_H - frame_h) * 0.5f);
+            if (ImGui::Button(ICON_FA_XMARK "##close_settings"))
+                keep_open = false;
+        }
+
+        // Separator line under title
+        {
+            ImVec2 wp  = ImGui::GetWindowPos();
+            float  ww  = ImGui::GetWindowWidth();
+            ImGui::GetWindowDrawList()->AddLine(
+                ImVec2(wp.x, wp.y + TITLE_H),
+                ImVec2(wp.x + ww, wp.y + TITLE_H),
+                IM_COL32(40, 40, 40, 255), 1.f);
+        }
+
+        // ---- Scrollable page content ----
+        ImGui::SetCursorPos(ImVec2(0.f, TITLE_H + 1.f));
+        ImGui::BeginChild("##settings_page", ImVec2(0.f, 0.f),
+            ImGuiChildFlags_NavFlattened, ImGuiWindowFlags_None);
+
+        ImGui::SetCursorPosY(12.f);
+        ImGui::Indent(TITLE_PAD);
+        if (m_active_tab >= 0 && m_active_tab < NUM_SECTIONS)
+            (this->*sections[m_active_tab].fn)();
+        ImGui::Unindent(TITLE_PAD);
+
+        ImGui::EndChild();
+
+        ImGui::EndChild();
+    }
+
     m_window_size = ImGui::GetWindowSize();
-
     ImGui::End();
     if (!keep_open)
-    {
         this->SetVisible(false);
-    }
 }
 
 void GameSettings::DrawRenderSystemSettings()
@@ -130,13 +209,13 @@ void GameSettings::DrawRenderSystemSettings()
     {
         std::string text = _LC("GameSettings", "You must restart the game to make changes effective.");
         ImVec2 box_size = ImGui::CalcTextSize(text.c_str()) + ImGui::GetStyle().FramePadding * 2;
-        ImVec2 box_pos = ImGui::GetCursorPos() + ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f - box_size.x * 0.5f, 0.f);
+        ImVec2 box_pos = ImGui::GetCursorPos() + ImVec2(ImGui::GetContentRegionAvail().x * 0.5f - box_size.x * 0.5f, 0.f);
         ImGui::SetCursorPos(box_pos);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.8f, 0.7f, 0.1f, 1.f));
-        ImGui::BeginChildFrame(ImGuiID(123), box_size);
-        ImGui::TextColored(ImVec4(0.1f, 0.1f, 0.1f, 1.f), text.c_str());
-        ImGui::EndChildFrame();
-        ImGui::PopStyleColor(); // FrameBg
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.8f, 0.7f, 0.1f, 1.f));
+        ImGui::BeginChild(ImGuiID(123), box_size, ImGuiChildFlags_None);
+        ImGui::TextColored(ImVec4(0.1f, 0.1f, 0.1f, 1.f), "%s", text.c_str());
+        ImGui::EndChild();
+        ImGui::PopStyleColor(); // ChildBg
     }
 
     const auto ogre_root = App::GetAppContext()->GetOgreRoot();

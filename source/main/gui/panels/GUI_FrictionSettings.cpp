@@ -26,6 +26,7 @@
 
 
 #include "GUI_FrictionSettings.h"
+#include "GUIUtils.h"
 
 #include "Application.h"
 #include "SimData.h"
@@ -41,7 +42,7 @@ using namespace GUI;
 
 void FrictionSettings::Draw()
 {
-    ImGui::SetNextWindowPosCenter(ImGuiCond_FirstUseEver);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_FirstUseEver);
     ImGuiWindowFlags win_flags = ImGuiWindowFlags_NoCollapse;
     bool keep_open = true;
     ImGui::Begin(_LC("FrictionSettings", "Friction Settings"), &keep_open, win_flags);

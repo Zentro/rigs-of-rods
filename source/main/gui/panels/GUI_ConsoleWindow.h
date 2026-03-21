@@ -52,8 +52,8 @@ public:
 
 private:
 
-    static int TextEditCallback(ImGuiTextEditCallbackData *data);
-    void TextEditCallbackProc(ImGuiTextEditCallbackData *data);
+    static int TextEditCallback(ImGuiInputTextCallbackData *data);
+    void TextEditCallbackProc(ImGuiInputTextCallbackData *data);
 
     // Window state
     bool                     m_is_visible = false;

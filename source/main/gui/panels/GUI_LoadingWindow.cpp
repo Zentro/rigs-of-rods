@@ -94,7 +94,7 @@ void LoadingWindow::Draw()
                    ImGui::GetStyle().WindowPadding.y;
 
     ImGui::SetNextWindowSize(ImVec2(500.f, height));
-    ImGui::SetNextWindowPosCenter();
+    RoR::ImSetNextWindowPosCenter();
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
     ImGui::Begin(_LC("LoadingWindow", "Please wait"), nullptr, flags);
     ImGui::Text("%s", m_text.c_str());

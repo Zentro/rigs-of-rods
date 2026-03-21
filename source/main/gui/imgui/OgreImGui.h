@@ -32,18 +32,7 @@
 #include <OISMouse.h>
 #include <OISKeyboard.h>
 #include <memory>
-
-// DearIMGUI math functions, copypasted from <imgui_internal.h>
-static inline ImVec2 operator*(const ImVec2& lhs, const float rhs)              { return ImVec2(lhs.x*rhs, lhs.y*rhs); }
-static inline ImVec2 operator/(const ImVec2& lhs, const float rhs)              { return ImVec2(lhs.x/rhs, lhs.y/rhs); }
-static inline ImVec2 operator+(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x+rhs.x, lhs.y+rhs.y); }
-static inline ImVec2 operator-(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x-rhs.x, lhs.y-rhs.y); }
-static inline ImVec2 operator*(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x*rhs.x, lhs.y*rhs.y); }
-static inline ImVec2 operator/(const ImVec2& lhs, const ImVec2& rhs)            { return ImVec2(lhs.x/rhs.x, lhs.y/rhs.y); }
-static inline ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
-static inline ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)                { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
-static inline ImVec2& operator*=(ImVec2& lhs, const float rhs)                  { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
-static inline ImVec2& operator/=(ImVec2& lhs, const float rhs)                  { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
+#include <vector>
 
 /// DearIMGUI integration.
 /// Input handling is done by injecting OIS events to ImGUI
@@ -67,6 +56,20 @@ public:
     virtual void renderQueueStarted(Ogre::uint8 queueGroupId,
         const Ogre::String& invocation, bool& skipThisInvocation) override;
 
+    // Font pointers for different sizes (Maven Pro + FontAwesome merged)
+    ImFont* FontRegular   = nullptr;  // 16px regular  - default UI font
+    ImFont* FontSmall     = nullptr;  // 13px regular  - dense info text
+    ImFont* FontMedium    = nullptr;  // 20px regular  - section headers
+    ImFont* FontLarge     = nullptr;  // 32px regular  - large icons/text
+    ImFont* FontBold      = nullptr;  // 20px bold     - emphasis text
+    ImFont* FontBoldLarge = nullptr;  // 28px bold     - tile labels
+    ImFont* FontIconHuge  = nullptr;  // 52px regular  - main menu tile icons
+
 private:
+    static ImGuiKey OisKeyToImGuiKey(OIS::KeyCode key);
+
     std::unique_ptr<Ogre::ImGuiOverlay> m_imgui_overlay;
+    std::vector<uint8_t> m_font_data_maven;
+    std::vector<uint8_t> m_font_data_bold;
+    std::vector<uint8_t> m_font_data_fa;
 };

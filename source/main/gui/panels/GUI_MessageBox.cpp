@@ -25,6 +25,7 @@
 /// @author Petr Ohlidal, 2021 - extended config.
 
 #include "GUI_MessageBox.h"
+#include "GUIUtils.h"
 
 #include "Application.h"
 #include "Language.h"
@@ -99,8 +100,8 @@ void MessageBoxDialog::Draw()
     const bool was_visible = m_is_visible;
 
     // Draw window
-    ImGui::SetNextWindowContentWidth(m_cfg.mbc_content_width); // Hard limit, actually
-    ImGui::SetNextWindowPosCenter(ImGuiCond_Appearing); // Initial pos. only
+    ImGui::SetNextWindowContentSize(ImVec2(m_cfg.mbc_content_width, 0.0f)); // Hard limit, actually
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_Appearing); // Initial pos. only
     ImGui::Begin(m_cfg.mbc_title.c_str(), m_close_handle);
     ImGui::TextWrapped("%s", m_cfg.mbc_text.c_str());
 

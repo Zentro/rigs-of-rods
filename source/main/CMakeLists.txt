@@ -105,6 +105,7 @@ set(SOURCE_FILES
         gui/imgui/imgui.{h,cpp}
         gui/imgui/imgui_demo.cpp
         gui/imgui/imgui_draw.cpp
+        gui/imgui/imgui_tables.cpp
         gui/imgui/imgui_widgets.cpp
         gui/imgui/OgreImGuiOverlay.{h,cpp}
         gui/imgui/OgreImGui.{h,cpp}
@@ -113,6 +114,7 @@ set(SOURCE_FILES
         gui/imgui/imstb_rectpack.h
         gui/imgui/imstb_textedit.h
         gui/imgui/imstb_truetype.h
+        gui/imgui/IconsFontAwesome6.h
         gui/panels/GUI_AngelScriptExamples.{h,cpp}
         gui/panels/GUI_CollisionsDebug.{h,cpp}
         gui/panels/GUI_ConsoleView.{h,cpp}

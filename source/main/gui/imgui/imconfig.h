@@ -45,6 +45,12 @@
         operator MyVec4() const { return MyVec4(x,y,z,w); }
 */
 
+//---- Enable ImVec2/ImVec4 math operators (operator+, operator*, etc.)
+#define IMGUI_DEFINE_MATH_OPERATORS
+
+//---- Keep ImTextureID as void* (legacy OGRE backend: textures are identified by resource handles cast to void*)
+#define ImTextureID void*
+
 //---- Use 32-bit vertex indices (instead of default: 16-bit) to allow meshes with more than 64K vertices
 #define ImDrawIdx unsigned int
 

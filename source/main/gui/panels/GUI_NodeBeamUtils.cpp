@@ -19,6 +19,7 @@
 
 
 #include "GUI_NodeBeamUtils.h"
+#include "GUIUtils.h"
 
 #include "Application.h"
 #include "Actor.h"
@@ -39,7 +40,7 @@ void NodeBeamUtils::Draw()
     }
     const bool is_project = actor->getUsedActorEntry()->resource_bundle_type != "Zip";
 
-    ImGui::SetNextWindowPosCenter(ImGuiCond_FirstUseEver);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(600.f, 675.f), ImGuiCond_FirstUseEver);
     int flags = ImGuiWindowFlags_NoCollapse;
     if (is_project)

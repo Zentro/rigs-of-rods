@@ -23,7 +23,7 @@
 #include "Utils.h"
 #include "PlatformUtils.h"
 
-#include "imgui_internal.h" // ImTextCharFromUtf8
+#include "imgui_internal.h" // ImTextCharFromUtf8, ImGuiInputTextState
 #include <regex>
 #include <stdio.h> // sscanf
 
@@ -222,6 +222,14 @@ void RoR::DrawImageRotated(ImTextureID tex_id, ImVec2 center, ImVec2 size, float
     draw_list->AddImageQuad(tex_id, pos[0], pos[1], pos[2], pos[3], uvs[0], uvs[1], uvs[2], uvs[3], IM_COL32_WHITE);
 }
 
+void RoR::DrawCircularImage(ImDrawList* draw_list, ImTextureID tex_id, ImVec2 p_min, ImVec2 p_max,
+                            ImVec2 uv_min, ImVec2 uv_max, ImU32 col, float radius)
+{
+    // Use AddImageRounded with a radius equal to half the smallest dimension for a circular crop.
+    float r = radius > 0.f ? radius : (std::min(p_max.x - p_min.x, p_max.y - p_min.y) * 0.5f);
+    draw_list->AddImageRounded(tex_id, p_min, p_max, uv_min, uv_max, col, r);
+}
+
 std::string RoR::StripColorMarksFromText(std::string const& text)
 {
     return std::regex_replace(text, TEXT_COLOR_REGEX, "");
@@ -276,7 +284,7 @@ void RoR::ImTextWrappedColorMarked(std::string const& text)
                                                 text_pos,
                                                 ImGui::GetStyle().Colors[ImGuiCol_Text],
                                                 /*override_alpha=*/1.f,
-                                                ImGui::GetWindowContentRegionWidth() - ImGui::GetCursorPosX(),
+                                                ImGui::GetContentRegionAvail().x - ImGui::GetCursorPosX(),
                                                 text);
     // From `ImGui::TextEx()` ...
     ImRect bb(text_pos, text_pos + text_size);
@@ -453,9 +461,11 @@ void RoR::ImDrawEventHighlighted(events input_event)
     std::string text = App::GetInputEngine()->getEventCommandTrimmed(input_event);
     const ImVec2 PAD = ImVec2(2.f, 0.f);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, PAD);
-    ImGui::BeginChildFrame(ImGuiID(input_event), ImGui::CalcTextSize(text.c_str()) + PAD*2);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
+    ImGui::BeginChild(ImGuiID(input_event), ImGui::CalcTextSize(text.c_str()) + PAD*2, ImGuiChildFlags_None);
     ImGui::TextColored(col, "%s", text.c_str());
-    ImGui::EndChildFrame();
+    ImGui::EndChild();
+    ImGui::PopStyleColor(); // ChildBg
     ImGui::PopStyleVar(); // FramePadding
 }
 
@@ -496,9 +506,11 @@ void RoR::ImDrawModifierKeyHighlighted(OIS::KeyCode key)
     std::string text = App::GetInputEngine()->getModifierKeyName(key);
     const ImVec2 PAD = ImVec2(2.f, 0.f);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, PAD);
-    ImGui::BeginChildFrame(ImGuiID(key), ImGui::CalcTextSize(text.c_str()) + PAD*2);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyleColorVec4(ImGuiCol_FrameBg));
+    ImGui::BeginChild(ImGuiID(key), ImGui::CalcTextSize(text.c_str()) + PAD*2, ImGuiChildFlags_None);
     ImGui::TextColored(col, "%s", text.c_str());
-    ImGui::EndChildFrame();
+    ImGui::EndChild();
+    ImGui::PopStyleColor(); // ChildBg
     ImGui::PopStyleVar(); // FramePadding
 }
 
@@ -555,23 +567,16 @@ bool RoR::ImButtonHoldToConfirm(const std::string& btn_idstr, const bool smallbu
 
 bool RoR::ImMoveTextInputCursorToEnd(const char* label)
 {
+    // NOTE: ImStbTexteditState internals changed in imgui 1.87+, using simpler approach.
     ImGuiWindow* window = ImGui::GetCurrentWindow();
     const ImGuiID id = window->GetID(label);
     ImGuiContext& g = *GImGui;
 
-    // NB: we are only allowed to access 'edit_state' if we are the active widget.
-    ImGuiInputTextState* state = NULL;
     if (g.InputTextState.ID != id)
-    {
         return false;
-    }
 
-    state = &g.InputTextState;
-    // based on `ImGuiInputTextState::CursorClamp()`
-    state->Stb.cursor = state->CurLenW;
-    state->Stb.select_start = 0;
-    state->Stb.select_end = 0;
-
+    // Queue End key press to move cursor to end of line.
+    ImGui::SetKeyboardFocusHere(-1);
     return true;
 }
 

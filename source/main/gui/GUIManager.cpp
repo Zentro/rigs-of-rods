@@ -324,15 +324,6 @@ void GUIManager::UpdateMouseCursorVisibility()
 
 void GUIManager::NewImGuiFrame(float dt)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    OIS::Keyboard* kb = App::GetInputEngine()->GetOisKeyboard();
-
-     // Read keyboard modifiers inputs
-    io.KeyCtrl = kb->isKeyDown(OIS::KC_LCONTROL);
-    io.KeyShift = kb->isKeyDown(OIS::KC_LSHIFT);
-    io.KeyAlt = kb->isKeyDown(OIS::KC_LMENU);
-    io.KeySuper = false;
-
     // Call IMGUI
     Ogre::FrameEvent ev;
     ev.timeSinceLastFrame = dt;
@@ -350,7 +341,7 @@ void GUIManager::SetupImGui()
     style.Colors[ImGuiCol_Text]                  = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
     style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
     style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.06f, 0.06f, 0.06f, 0.90f);
-    style.Colors[ImGuiCol_ChildWindowBg]         = ImVec4(0.00f, 0.00f, 0.00f, 0.1f);
+    style.Colors[ImGuiCol_ChildBg]               = ImVec4(0.00f, 0.00f, 0.00f, 0.1f);
     style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.05f, 0.05f, 0.10f, 0.90f);
     style.Colors[ImGuiCol_Border]                = ImVec4(0.20f, 0.20f, 0.20f, 0.90f);
     style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.90f);
@@ -382,7 +373,7 @@ void GUIManager::SetupImGui()
     style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.18f, 0.53f, 0.79f, 0.90f);
     style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(0.13f, 0.40f, 0.60f, 0.90f);
     style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.00f, 0.00f, 1.00f, 0.90f);
-    style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.90f);
+    style.Colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.20f, 0.20f, 0.20f, 0.90f);
     // Styles
     style.WindowPadding         = ImVec2(10.f, 10.f);
     style.FrameRounding         = 2.f;

@@ -98,11 +98,11 @@ void VehicleInfoTPanel::Draw(RoR::GfxActor* actorx)
 
     if (m_current_focus == TPANELFOCUS_COMMANDS)
     {
-      ImGui::SetNextWindowContentWidth(this->GetPanelWidth());
+      ImGui::SetNextWindowContentSize(ImVec2(this->GetPanelWidth(), 0.0f));
     }
     else
     {
-      ImGui::SetNextWindowContentWidth(MIN_PANEL_WIDTH);
+      ImGui::SetNextWindowContentSize(ImVec2(MIN_PANEL_WIDTH, 0.0f));
     }
 
     switch (m_visibility_mode)
@@ -286,7 +286,7 @@ void VehicleInfoTPanel::DrawVehicleCommandsUI(RoR::GfxActor* actorx)
 
             // The line-highlighting: Done manually because `ImGui::Selectable()` blocks buttons under it (or gets blocked by buttons with the `_AllowItemOverlap` flag).
             ImVec2 highlight_mouse_min = initial_cursor - ImGui::GetStyle().ItemSpacing/2;
-            ImVec2 highlight_mouse_max = highlight_mouse_min + ImVec2(ImGui::GetWindowContentRegionWidth()+MOUSEHIGHLIGHT_MAGICPADRIGHT, ImGui::GetTextLineHeightWithSpacing());
+            ImVec2 highlight_mouse_max = highlight_mouse_min + ImVec2(ImGui::GetContentRegionAvail().x+MOUSEHIGHLIGHT_MAGICPADRIGHT, ImGui::GetTextLineHeightWithSpacing());
             if (!single_line)
             {
                 highlight_mouse_max.y += ImGui::GetTextLineHeightWithSpacing() - BUMP_HEIGHT;
@@ -363,7 +363,7 @@ void DrawStatsLineColored(const char* name, const std::string& value, ImVec4 val
     ImVec2 label_size = ImGui::CalcTextSize(name);
     ImVec2 value_size = ImGui::CalcTextSize(value.c_str());
     float cursor_x_desired =  - ImGui::CalcTextSize(value.c_str()).x;
-    if (label_size.x + value_size.x + ImGui::GetStyle().ItemSpacing.x < ImGui::GetWindowContentRegionWidth())
+    if (label_size.x + value_size.x + ImGui::GetStyle().ItemSpacing.x < ImGui::GetContentRegionAvail().x)
     {
         ImGui::SameLine();
     }
@@ -683,7 +683,7 @@ void DrawSingleBulletRow(const char* name, RoR::events ev)
     ImGui::Dummy(BUTTONDUMMY_SIZE); ImGui::SameLine(); ImGui::Bullet(); ImGui::Text("%s", name);
     ImGui::SameLine();
     const ImVec2 btn_size = ImCalcEventHighlightedSize(ev);
-    ImGui::SetCursorPosX(ImGui::GetWindowContentRegionWidth() - btn_size.x);
+    ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - btn_size.x);
     ImDrawEventHighlighted(ev);
 }
 

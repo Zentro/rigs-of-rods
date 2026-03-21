@@ -20,6 +20,7 @@
 
 
 #include "GUI_TextureToolWindow.h"
+#include "GUIUtils.h"
 
 #include <Ogre.h>
 
@@ -37,7 +38,7 @@ using namespace GUI;
 
 void TextureToolWindow::Draw()
 {
-    ImGui::SetNextWindowPosCenter(ImGuiCond_FirstUseEver);
+    RoR::ImSetNextWindowPosCenter(ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, 550.f), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin(_LC("TextureToolWindow", "Texture Tool"), &m_is_visible))
     {
@@ -91,7 +92,7 @@ void TextureToolWindow::Draw()
         ImGui::Image(reinterpret_cast<ImTextureID>(m_display_tex->getHandle()), size);
 
         // Draw image info
-        ImGui::BeginChild("tex info", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing())); // Leave room for 1 line below us
+        ImGui::BeginChild("tex info", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
 
         ImGui::Text("Res: %u x %u pixels", m_display_tex->getWidth(), m_display_tex->getHeight());
         ImGui::Text("Size: %s", formatBytes(m_display_tex->getSize()).c_str());

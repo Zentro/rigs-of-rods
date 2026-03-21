@@ -29,9 +29,11 @@
 #include "Application.h"
 #include "GameContext.h"
 #include "GUIManager.h"
+#include "GUIStyle.h"
 #include "GUIUtils.h"
-#include "GUI_MainSelector.h"
+#include "IconsFontAwesome6.h"
 #include "Language.h"
+#include "OgreImGui.h"
 
 #include "PlatformUtils.h"
 #include "RoRVersion.h"
@@ -40,195 +42,343 @@
 using namespace RoR;
 using namespace GUI;
 
+// ---------------------------------------------------------------------------
+// Public
+// ---------------------------------------------------------------------------
+
 void GameMainMenu::Draw()
 {
-    this->DrawMenuPanel();
     if (App::app_state->getEnum<AppState>() == AppState::MAIN_MENU)
     {
+        this->DrawMainMenuTiles();
         this->DrawVersionBox();
         if (cache_updated)
-        {
             this->DrawNoticeBox();
-        }
+    }
+    else
+    {
+        this->DrawPauseMenuPanel();
     }
 }
 
 void GameMainMenu::CacheUpdatedNotice()
 {
-  cache_updated = true;
+    cache_updated = true;
 }
 
-void GameMainMenu::DrawMenuPanel()
+// ---------------------------------------------------------------------------
+// BeamNG-style tile grid (main menu state only)
+// ---------------------------------------------------------------------------
+
+bool GameMainMenu::DrawTile(const char* icon, const std::string& label, int index)
 {
-    if (App::app_state->getEnum<AppState>() == AppState::MAIN_MENU)
+    bool kb_hovered    = (m_kb_focus_index == index);
+    bool enter_pressed = (m_kb_enter_index == index);
+
+    ImGui::PushID(index);
+
+    bool clicked    = ImGui::InvisibleButton("##tile", ImVec2(TILE_W, TILE_H));
+    bool is_hovered = ImGui::IsItemHovered();
+
+    ImVec2 tile_min = ImGui::GetItemRectMin();
+    ImVec2 tile_max = ImGui::GetItemRectMax();
+    ImDrawList* dl  = ImGui::GetWindowDrawList();
+
+    // Square tile, no border - flat color, bright on hover
+    if (is_hovered || kb_hovered)
     {
-        title = "Main menu";
-        m_num_buttons = 7;
-        if (FileExists(PathCombine(App::sys_savegames_dir->getStr(), "autosave.sav")))
-        {
-            m_num_buttons++;
-        }
+        dl->AddRectFilled(tile_min, tile_max,
+            IM_COL32(30, 100, 200, 235));
     }
     else
     {
-        m_num_buttons = 5;
-        if (App::mp_state->getEnum<MpState>() == MpState::CONNECTED)
+        dl->AddRectFilled(tile_min, tile_max,
+            IM_COL32(28, 28, 28, 220));
+    }
+
+    ImFont* font_large  = App::GetGuiManager()->GetImGui().FontIconHuge;
+    ImFont* font_medium = App::GetGuiManager()->GetImGui().FontBoldLarge;
+
+    // Icon centered, vertically filling upper 60% of tile
+    if (font_large)
+    {
+        ImGui::PushFont(font_large);
+        ImVec2 icon_sz  = ImGui::CalcTextSize(icon);
+        ImVec2 icon_pos = ImVec2(
+            tile_min.x + (TILE_W - icon_sz.x) * 0.5f,
+            tile_min.y + (TILE_H * 0.60f - icon_sz.y) * 0.5f);
+        dl->AddText(icon_pos, IM_COL32(255, 255, 255, 230), icon);
+        ImGui::PopFont();
+    }
+
+    // Label (bold font) centered in lower 30% of tile
+    if (font_medium)
+    {
+        ImGui::PushFont(font_medium);
+        ImVec2 lbl_sz  = ImGui::CalcTextSize(label.c_str());
+        ImVec2 lbl_pos = ImVec2(
+            tile_min.x + (TILE_W - lbl_sz.x) * 0.5f,
+            tile_min.y + TILE_H * 0.72f);
+        dl->AddText(lbl_pos, IM_COL32(255, 255, 255, 255), label.c_str());
+        ImGui::PopFont();
+    }
+
+    ImGui::PopID();
+    return clicked || enter_pressed;
+}
+
+void GameMainMenu::DrawMainMenuTiles()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 screen_sz = io.DisplaySize;
+
+    // Full-screen transparent window
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(screen_sz);
+    ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollWithMouse;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+    if (ImGui::Begin("##MainMenuBg", nullptr, flags))
+    {
+        this->HandleInputEvents(/* num_buttons set inside */0);
+
+        // Build button list depending on savegame presence
+        // NOTE: labels must be std::string - _LC() returns .c_str() of a temporary
+        struct TileEntry { const char* icon; std::string label; };
+        TileEntry tiles[10];
+        int n = 0;
+
+        bool has_autosave = FileExists(PathCombine(App::sys_savegames_dir->getStr(), "autosave.sav"));
+        if (has_autosave)
+            tiles[n++] = { ICON_FA_ROTATE_LEFT, _LC("MainMenu", "Resume game") };
+
+        tiles[n++] = { ICON_FA_PLAY,        _LC("MainMenu", "Single player") };
+        tiles[n++] = { ICON_FA_USERS,       _LC("MainMenu", "Multiplayer")   };
+        tiles[n++] = { ICON_FA_FOLDER_OPEN, _LC("MainMenu", "Repository")    };
+        tiles[n++] = { ICON_FA_GEAR,        _LC("MainMenu", "Settings")      };
+        tiles[n++] = { ICON_FA_GAMEPAD,     _LC("MainMenu", "Controls")      };
+        tiles[n++] = { ICON_FA_CIRCLE_INFO, _LC("MainMenu", "About")         };
+        tiles[n++] = { ICON_FA_POWER_OFF,   _LC("MainMenu", "Exit game")     };
+
+        // Center the grid on screen
+        const float grid_w = TILE_COLS * TILE_W + (TILE_COLS - 1) * TILE_GAP;
+        int rows = (n + TILE_COLS - 1) / TILE_COLS;
+        const float grid_h = rows * TILE_H + (rows - 1) * TILE_GAP;
+
+        float start_x = (screen_sz.x - grid_w) * 0.5f;
+        float start_y = (screen_sz.y - grid_h) * 0.5f;
+
+        ImGui::SetCursorPos(ImVec2(start_x, start_y));
+
+        // Handle keyboard navigation (tile count known now)
+        m_kb_enter_index = -1;
         {
-            title = "Menu";
+            bool kb_ok = !App::GetGuiManager()->IsGuiCaptureKeyboardRequested()
+                      || ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+            if (kb_ok)
+            {
+                if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+                    m_kb_focus_index = (m_kb_focus_index < TILE_COLS) ? (n - 1) : (m_kb_focus_index - TILE_COLS);
+                if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+                    m_kb_focus_index = (m_kb_focus_index >= n - TILE_COLS) ? 0 : (m_kb_focus_index + TILE_COLS);
+                if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
+                    m_kb_focus_index = (m_kb_focus_index <= 0) ? (n - 1) : (m_kb_focus_index - 1);
+                if (ImGui::IsKeyPressed(ImGuiKey_RightArrow))
+                    m_kb_focus_index = (m_kb_focus_index >= n - 1) ? 0 : (m_kb_focus_index + 1);
+                if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+                    m_kb_enter_index = m_kb_focus_index;
+            }
         }
-        else
+
+        // Draw tiles in row-major order
+        for (int i = 0; i < n; i++)
         {
-            title = "Pause";
-        }
-    }
+            int col = i % TILE_COLS;
+            int row = i / TILE_COLS;
+            float tx = start_x + col * (TILE_W + TILE_GAP);
+            float ty = start_y + row * (TILE_H + TILE_GAP);
+            ImGui::SetCursorPos(ImVec2(tx, ty));
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, BUTTON_PADDING);
-    ImGui::PushStyleColor(ImGuiCol_TitleBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive]);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, WINDOW_BG_COLOR);
-    ImGui::PushStyleColor(ImGuiCol_Button, BUTTON_BG_COLOR);
+            bool clicked = DrawTile(tiles[i].icon, tiles[i].label, i);
+            if (!clicked) continue;
 
-    // Display in bottom left corner for single-screen setups and centered for multi-screen (typically 3-screen) setups.
-    ImVec2 display_size = ImGui::GetIO().DisplaySize;
-    if ((display_size.x > 2200.f) && (display_size.y < 1100.f)) // Silly approximate values
-    {
-        ImGui::SetNextWindowPosCenter();
-    }
-    else
-    {
-        const float btn_height = ImGui::GetTextLineHeight() + (BUTTON_PADDING.y * 2);
-        const float window_height = (m_num_buttons*btn_height) + (m_num_buttons*ImGui::GetStyle().ItemSpacing.y) + (2*ImGui::GetStyle().WindowPadding.y); // buttons + titlebar; 2x spacing around separator
-        const float margin = display_size.y / 15.f;
-        const float top = display_size.y - window_height - margin;
-        ImGui::SetNextWindowPos(ImVec2(margin, top));
-    }
-    ImGui::SetNextWindowContentWidth(WINDOW_WIDTH);
-    int flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
-    if (ImGui::Begin(_LC("MainMenu", title), nullptr, static_cast<ImGuiWindowFlags_>(flags)))
-    {
-        this->HandleInputEvents();
+            // Map index back to action
+            int action = i;
+            int idx = 0;
 
-        int button_index = 0;
-        ImVec2 btn_size(WINDOW_WIDTH, 0.f);
-
-        if (App::app_state->getEnum<AppState>() == AppState::MAIN_MENU)
-        {
-            if (HighlightButton(_LC("MainMenu", "Single player"), btn_size, button_index++))
+            if (has_autosave && action == idx++)
+            {
+                App::GetGameContext()->PushMessage(Message(MSG_SIM_LOAD_SAVEGAME_REQUESTED, "autosave.sav"));
+                this->SetVisible(false);
+            }
+            else if (action == idx++)
             {
                 this->SetVisible(false);
                 RoR::Message m(MSG_GUI_OPEN_SELECTOR_REQUESTED);
                 m.payload = reinterpret_cast<void*>(new LoaderType(LT_Terrain));
                 App::GetGameContext()->PushMessage(m);
             }
-
-            if (FileExists(PathCombine(App::sys_savegames_dir->getStr(), "autosave.sav")))
-            {
-                if ( HighlightButton(_LC("MainMenu", "Resume game"), btn_size, button_index++))
-                {
-                    App::GetGameContext()->PushMessage(Message(MSG_SIM_LOAD_SAVEGAME_REQUESTED, "autosave.sav"));
-                    this->SetVisible(false);
-                }
-            }
-        }
-        else if (App::app_state->getEnum<AppState>() == AppState::SIMULATION)
-        {
-            if (HighlightButton(_LC("MainMenu", "Resume game"), btn_size, button_index++))
-            {
-                App::GetGameContext()->PushMessage(Message(MSG_SIM_UNPAUSE_REQUESTED));
-                this->SetVisible(false);
-            }
-        }
-
-        if (App::app_state->getEnum<AppState>() == AppState::MAIN_MENU)
-        {
-            if (HighlightButton(_LC("MainMenu", "Multiplayer"), btn_size, button_index++))
+            else if (action == idx++)
             {
                 App::GetGuiManager()->MultiplayerSelector.SetVisible(true);
                 this->SetVisible(false);
             }
-
-            if (HighlightButton(_LC("MainMenu", "Repository"), btn_size, button_index++))
+            else if (action == idx++)
             {
                 App::GetGuiManager()->RepositorySelector.SetVisible(true);
                 this->SetVisible(false);
             }
-
-            if (HighlightButton(_LC("MainMenu", "Settings"), btn_size, button_index++))
+            else if (action == idx++)
             {
                 App::GetGuiManager()->GameSettings.SetVisible(true);
                 this->SetVisible(false);
             }
-
-            if (HighlightButton(_LC("MainMenu", "Controls"), btn_size, button_index++))
+            else if (action == idx++)
             {
                 App::GetGuiManager()->GameControls.SetVisible(true);
                 this->SetVisible(false);
             }
-
-            if (HighlightButton(_LC("MainMenu", "About"), btn_size, button_index++))
+            else if (action == idx++)
             {
                 App::GetGuiManager()->GameAbout.SetVisible(true);
                 this->SetVisible(false);
             }
-        }
-        else if (App::app_state->getEnum<AppState>() == AppState::SIMULATION)
-        {
-            if (HighlightButton(_LC("MainMenu", "Repository"), btn_size, button_index++))
+            else // Exit game
             {
-                App::GetGuiManager()->RepositorySelector.SetVisible(true);
+                App::GetGameContext()->PushMessage(Message(MSG_APP_SHUTDOWN_REQUESTED));
                 this->SetVisible(false);
             }
-
-            if (HighlightButton(_LC("MainMenu", "Controls"), btn_size, button_index++))
-            {
-                App::GetGuiManager()->GameControls.SetVisible(true);
-                this->SetVisible(false);
-            }
-
-            if (HighlightButton(_L("Return to menu"), btn_size, button_index++))
-            {
-                App::GetGameContext()->PushMessage(Message(MSG_SIM_UNLOAD_TERRN_REQUESTED));
-                if (App::mp_state->getEnum<MpState>() == MpState::CONNECTED)
-                {
-                    App::GetGameContext()->PushMessage(Message(MSG_NET_DISCONNECT_REQUESTED));
-                }
-                App::GetGameContext()->PushMessage(Message(MSG_GUI_OPEN_MENU_REQUESTED));
-            }
         }
 
-        if (HighlightButton(_LC("MainMenu", "Exit game"), btn_size, button_index))
-        {
-            App::GetGameContext()->PushMessage(Message(MSG_APP_SHUTDOWN_REQUESTED));
-            this->SetVisible(false);
-        }
-    }
-
-    if (App::app_state->getEnum<AppState>() == AppState::SIMULATION && App::mp_state->getEnum<MpState>() == MpState::CONNECTED)
-    {
-        // Prevent key presses from propagating to simulation.
-        // Otherwise navigating menu with keys also moves/steers in game.
-        // CAUTION: This queues the request! It becomes effective next frame.
-        App::GetGuiManager()->RequestGuiCaptureKeyboard(true);
-
-        // Before reading keys via IMGUI, make sure keyboard capturing is requested (not just queued).
-        // Otherwise game event might already have been invoked and duplicate actions may happen.
-        if (App::GetGuiManager()->IsGuiCaptureKeyboardRequested() &&
-            ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
-        {
-            this->SetVisible(false);
-        }
+        App::GetGuiManager()->RequestGuiCaptureKeyboard(
+            ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows));
     }
 
     if (!this->IsVisible())
-    {
         cache_updated = false;
-    }
 
-    App::GetGuiManager()->RequestGuiCaptureKeyboard(ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows));
     ImGui::End();
-    ImGui::PopStyleVar();
-    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar();  // WindowPadding
+    ImGui::PopStyleColor(); // WindowBg
     m_kb_enter_index = -1;
 }
+
+// ---------------------------------------------------------------------------
+// Pause menu — xemu-inspired dark flat style
+// ---------------------------------------------------------------------------
+
+void GameMainMenu::DrawPauseMenuPanel()
+{
+    bool is_mp = (App::mp_state->getEnum<MpState>() == MpState::CONNECTED);
+
+    struct PauseEntry { const char* icon; std::string label; int id; };
+    PauseEntry entries[5];
+    int n = 0;
+    entries[n++] = { ICON_FA_PLAY,        _LC("MainMenu", "Resume"),     0 };
+    entries[n++] = { ICON_FA_FOLDER_OPEN, _LC("MainMenu", "Repository"), 1 };
+    entries[n++] = { ICON_FA_GAMEPAD,     _LC("MainMenu", "Controls"),   2 };
+    entries[n++] = { ICON_FA_HOUSE,       _L("Return to menu"),          3 };
+    entries[n++] = { ICON_FA_POWER_OFF,   _LC("MainMenu", "Exit game"),  4 };
+
+    HandleInputEvents(n);
+
+    ImFont* font = App::GetGuiManager()->GetImGui().FontBold; // 20px bold + icons
+    const float BTN_H  = 42.f;
+    const float W      = 300.f;
+    const float total_h = (float)n * BTN_H;
+
+    ImVec2 display = ImGui::GetIO().DisplaySize;
+    ImGui::SetNextWindowPos(
+        ImVec2((display.x - W) * 0.5f, (display.y - total_h) * 0.5f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(W, total_h), ImGuiCond_Always);
+
+    // Only override hover/active + layout — keep everything else default
+    StylePush ws;
+    ws.Col(ImGuiCol_ButtonHovered, ImVec4(0.14f, 0.42f, 0.82f, 1.00f))  // solid primary blue
+      .Col(ImGuiCol_ButtonActive,  ImVec4(0.10f, 0.33f, 0.68f, 1.00f))  // slightly darker
+      .Var(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.0f, 0.5f))            // left-align
+      .Var(ImGuiStyleVar_FrameRounding,   0.f)                           // no radius
+      .Var(ImGuiStyleVar_FramePadding,    ImVec2(12.f, 0.f))             // no vertical padding
+      .Var(ImGuiStyleVar_ItemSpacing,     ImVec2(0.f, 0.f))              // no gap between buttons
+      .Var(ImGuiStyleVar_WindowPadding,   ImVec2(0.f, 0.f));
+
+    ImGuiWindowFlags wflags =
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove     | ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    if (font) ImGui::PushFont(font);
+
+    m_kb_enter_index = -1;
+    if (ImGui::Begin("##PauseMenu", nullptr, wflags))
+    {
+        for (int i = 0; i < n; i++)
+        {
+            // Separator line before Exit (last entry)
+            if (i == n - 1)
+            {
+                ImGui::Spacing();
+                ImGui::Separator();
+                ImGui::Spacing();
+            }
+
+            std::string lbl = fmt::format("   {}   {}", entries[i].icon, entries[i].label);
+            bool clicked = ImGui::Button(lbl.c_str(), ImVec2(W, BTN_H));
+            bool activated = clicked || (m_kb_enter_index == entries[i].id);
+            if (!activated) continue;
+
+            switch (entries[i].id)
+            {
+            case 0:
+                App::GetGameContext()->PushMessage(Message(MSG_SIM_UNPAUSE_REQUESTED));
+                this->SetVisible(false);
+                break;
+            case 1:
+                App::GetGuiManager()->RepositorySelector.SetVisible(true);
+                this->SetVisible(false);
+                break;
+            case 2:
+                App::GetGuiManager()->GameControls.SetVisible(true);
+                this->SetVisible(false);
+                break;
+            case 3:
+                App::GetGameContext()->PushMessage(Message(MSG_SIM_UNLOAD_TERRN_REQUESTED));
+                if (is_mp)
+                    App::GetGameContext()->PushMessage(Message(MSG_NET_DISCONNECT_REQUESTED));
+                App::GetGameContext()->PushMessage(Message(MSG_GUI_OPEN_MENU_REQUESTED));
+                break;
+            case 4:
+                App::GetGameContext()->PushMessage(Message(MSG_APP_SHUTDOWN_REQUESTED));
+                this->SetVisible(false);
+                break;
+            }
+        }
+    }
+
+    if (font) ImGui::PopFont();
+
+    if (!this->IsVisible())
+        cache_updated = false;
+
+    App::GetGuiManager()->RequestGuiCaptureKeyboard(
+        ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows));
+
+    if (App::GetGuiManager()->IsGuiCaptureKeyboardRequested() &&
+        ImGui::IsKeyPressed(ImGuiKey_Escape))
+    {
+        this->SetVisible(false);
+    }
+
+    ImGui::End();
+    m_kb_enter_index = -1;
+}
+
+// ---------------------------------------------------------------------------
+// Version & notice boxes
+// ---------------------------------------------------------------------------
 
 void GameMainMenu::DrawVersionBox()
 {
@@ -236,7 +386,8 @@ void GameMainMenu::DrawVersionBox()
     std::string game_ver   = fmt::format("{}: {}", _LC("MainMenu", "Game version"), ROR_VERSION_STRING);
     std::string rornet_ver = fmt::format("{}: {}", _LC("MainMenu", "Net. protocol"), RORNET_VERSION);
     float text_w = std::max(
-        ImGui::CalcTextSize(game_ver.c_str()).x, ImGui::CalcTextSize(rornet_ver.c_str()).x);
+        ImGui::CalcTextSize(game_ver.c_str()).x,
+        ImGui::CalcTextSize(rornet_ver.c_str()).x);
     ImVec2 box_size(
         (2 * ImGui::GetStyle().WindowPadding.y) + text_w,
         (2 * ImGui::GetStyle().WindowPadding.y) + (2 * ImGui::GetTextLineHeight()));
@@ -261,14 +412,15 @@ void GameMainMenu::DrawNoticeBox()
     Ogre::TexturePtr tex = FetchIcon("accept.png");
 
     const float margin = ImGui::GetIO().DisplaySize.y / 30.f;
-    std::string game_ver   = fmt::format("{}: {}", _LC("MainMenu", "Game version"), ROR_VERSION_STRING); // needed to align with VersionBox
-    std::string rornet_ver = fmt::format("{}: {}", _LC("MainMenu", "Net. protocol"), RORNET_VERSION); // needed to align with VersionBox
-    std::string cache_ntc = fmt::format("{}", _LC("MainMenu", "Cache updated"));
+    std::string game_ver   = fmt::format("{}: {}", _LC("MainMenu", "Game version"), ROR_VERSION_STRING);
+    std::string rornet_ver = fmt::format("{}: {}", _LC("MainMenu", "Net. protocol"), RORNET_VERSION);
+    std::string cache_ntc  = fmt::format("{}", _LC("MainMenu", "Cache updated"));
     float text_w = std::max(
-        ImGui::CalcTextSize(game_ver.c_str()).x, ImGui::CalcTextSize(rornet_ver.c_str()).x);
+        ImGui::CalcTextSize(game_ver.c_str()).x,
+        ImGui::CalcTextSize(rornet_ver.c_str()).x);
     ImVec2 box_size(
         (2 * ImGui::GetStyle().WindowPadding.y) + text_w,
-        (2 * ImGui::GetStyle().WindowPadding.y) + (4.5 * ImGui::GetTextLineHeight()));
+        (2 * ImGui::GetStyle().WindowPadding.y) + (4.5f * ImGui::GetTextLineHeight()));
     ImGui::SetNextWindowPos(ImGui::GetIO().DisplaySize - (box_size + ImVec2(margin, margin)));
 
     ImGui::PushStyleColor(ImGuiCol_WindowBg, WINDOW_BG_COLOR);
@@ -286,30 +438,27 @@ void GameMainMenu::DrawNoticeBox()
     ImGui::PopStyleColor(1);
 }
 
-bool GameMainMenu::HighlightButton(const std::string& txt,ImVec2 btn_size, int index) const{
-    std::string button_txt = (m_kb_focus_index == index) ? fmt::format("--> {} <--", txt) : txt;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+bool GameMainMenu::HighlightButton(const std::string& txt, ImVec2 btn_size, int index) const
+{
+    std::string button_txt = (m_kb_focus_index == index)
+        ? fmt::format("--> {} <--", txt) : txt;
     return ImGui::Button(button_txt.c_str(), btn_size) || (m_kb_enter_index == index);
 }
 
-void GameMainMenu::HandleInputEvents()
+void GameMainMenu::HandleInputEvents(int num_buttons)
 {
-    // Only handle keystrokes if keyboard capture is not requested or requested by us.
-    bool kb_capture_req = App::GetGuiManager()->IsGuiCaptureKeyboardRequested();
-    bool window_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
-    if (!kb_capture_req || window_hovered)
-    {
-        // Keyboard updates - move up/down and wrap on top/bottom. Initial index is '-1' which means "no focus"
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
-        {
-            m_kb_focus_index = (m_kb_focus_index <= 0) ? (m_num_buttons - 1) : (m_kb_focus_index - 1);
-        }
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
-        {
-            m_kb_focus_index = (m_kb_focus_index < (m_num_buttons - 1)) ? (m_kb_focus_index + 1) : 0;
-        }
-        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter)))
-        {
-            m_kb_enter_index = m_kb_focus_index;
-        }
-    }
+    bool kb_ok = !App::GetGuiManager()->IsGuiCaptureKeyboardRequested()
+              || ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+    if (!kb_ok) return;
+
+    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+        m_kb_focus_index = (m_kb_focus_index <= 0) ? (num_buttons - 1) : (m_kb_focus_index - 1);
+    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+        m_kb_focus_index = (m_kb_focus_index < (num_buttons - 1)) ? (m_kb_focus_index + 1) : 0;
+    if (ImGui::IsKeyPressed(ImGuiKey_Enter))
+        m_kb_enter_index = m_kb_focus_index;
 }

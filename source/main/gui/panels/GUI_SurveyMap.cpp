@@ -112,7 +112,7 @@ void SurveyMap::Draw()
     if (mMapMode == SurveyMapMode::BIG)
     {
         ImGui::PushStyleColor(ImGuiCol_WindowBg, theme.semitransparent_window_bg);
-        ImGui::SetNextWindowPosCenter();
+        RoR::ImSetNextWindowPosCenter();
     }
     else if (mMapMode == SurveyMapMode::SMALL)
     {
@@ -199,7 +199,7 @@ void SurveyMap::Draw()
         drawlist->AddCircle(ImVec2(p_min.x + view_size.x/2,  p_min.y + view_size.y/2), view_size.x/2 - 2*p_offset.x, ImGui::GetColorU32(theme.semitransparent_window_bg), 96, 20);
 
         // The texture
-        drawlist->AddCircularImage(reinterpret_cast<ImTextureID>(mMapTexture->getHandle()), _min, _max, uv_min, uv_max, ImGui::GetColorU32(ImVec4(1,1,1,1)), m_circle_radius);
+        RoR::DrawCircularImage(drawlist, reinterpret_cast<ImTextureID>(mMapTexture->getHandle()), _min, _max, uv_min, uv_max, ImGui::GetColorU32(ImVec4(1,1,1,1)), m_circle_radius);
 
         // An invisible button so we can catch it below
         ImGui::InvisibleButton("circle", view_size);

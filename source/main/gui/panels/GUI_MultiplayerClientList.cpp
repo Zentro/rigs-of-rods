@@ -87,7 +87,7 @@ void MpClientList::Draw()
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar;
     const float content_width = 225.f;
-    ImGui::SetNextWindowContentWidth(content_width);
+    ImGui::SetNextWindowContentSize(ImVec2(content_width, 0.0f));
     ImGui::SetNextWindowPos(ImVec2(
         ImGui::GetIO().DisplaySize.x - (content_width + (2*ImGui::GetStyle().WindowPadding.x) + theme.screen_edge_padding.x),
         theme.screen_edge_padding.y));
@@ -323,7 +323,7 @@ void MpClientList::DrawPeerOptionsMenu()
 
     // Draw UI
     ImGui::SetNextWindowPos(m_peeropts_menu_corner_tl);
-    ImGui::SetNextWindowContentWidth(PEEROPTS_MENU_CONTENT_WIDTH);
+    ImGui::SetNextWindowContentSize(ImVec2(PEEROPTS_MENU_CONTENT_WIDTH, 0.0f));
     const int flags = ImGuiWindowFlags_NoDecoration;
     if (ImGui::Begin("PeerOptions", nullptr, flags))
     {

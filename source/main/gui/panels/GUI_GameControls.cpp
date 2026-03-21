@@ -20,6 +20,7 @@
 
 
 #include "GUI_GameControls.h"
+#include "GUIUtils.h"
 
 #include "Actor.h"
 #include "Application.h"
@@ -59,7 +60,7 @@ void GameControls::Draw()
         }
         else
         {
-            ImGui::SetNextWindowPosCenter();
+            RoR::ImSetNextWindowPosCenter();
             ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize;
             bool open = true;
             ImGui::Begin(_LC("GameControls", "Press a new key"), &open, flags);
@@ -102,7 +103,7 @@ void GameControls::Draw()
     {
         // regular window display
 
-        ImGui::SetNextWindowPosCenter(ImGuiCond_FirstUseEver);
+        RoR::ImSetNextWindowPosCenter(ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(800.f, 600.f), ImGuiCond_FirstUseEver);
         bool keep_open = true;
         ImGui::Begin(_LC("GameControls", "Game Controls"), &keep_open);
