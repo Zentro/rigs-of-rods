@@ -30,6 +30,7 @@
 #include <Overlay/OgreOverlayContainer.h>
 #include <OgreMaterialManager.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
+#include <RTShaderSystem/OgreShaderSubRenderState.h>
 
 using namespace Ogre;
 using namespace RoR;
@@ -44,17 +45,19 @@ RTSSManager::~RTSSManager()
 
 void RTSSManager::SetupRTSS()
 {
+    auto* mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
+    auto* schemRenderState = mShaderGenerator->getRenderState(Ogre::MSN_SHADERGEN);
+
     // RTSS PSSM3
     if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
     {
         App::GetGfxScene()->GetSceneManager()->setShadowTechnique(SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
         App::GetGfxScene()->GetSceneManager()->setShadowFarDistance(350);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, 3);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, 3);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, 3);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, 0);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, 0);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureSettings(2048, 3, PF_DEPTH16);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(true);
-
 
         pssmSetup = new PSSMShadowCameraSetup();
         pssmSetup->calculateSplitPoints(3, 1, 500, 1);
@@ -63,13 +66,11 @@ void RTSSManager::SetupRTSS()
         pssmSetup->setOptimalAdjustFactor(1, 1);
         pssmSetup->setOptimalAdjustFactor(2, 0.5);
 
-        auto* mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
-        auto* schemRenderState = mShaderGenerator->getRenderState(Ogre::MSN_SHADERGEN);
-
         App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(ShadowCameraSetupPtr(pssmSetup));
-        auto subRenderState = mShaderGenerator->createSubRenderState(RTShader::SRS_INTEGRATED_PSSM3);
-        schemRenderState->addTemplateSubRenderState(subRenderState);
+        auto pssmState = mShaderGenerator->createSubRenderState(RTShader::SRS_INTEGRATED_PSSM3);
+        schemRenderState->addTemplateSubRenderState(pssmState);
     }
+
 }
 
 void RTSSManager::EnableRTSS(const MaterialPtr& mat)

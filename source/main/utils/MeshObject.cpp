@@ -149,8 +149,6 @@ void MeshObject::createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre
 
             if (lod_available)
                 Ogre::MeshLodGenerator::getSingleton().generateLodLevels(config);
-            else if (App::gfx_auto_lod->getBool())
-                Ogre::MeshLodGenerator::getSingleton().generateAutoconfiguredLodLevels(m_mesh);
         }
 
         // now create an entity around the mesh and attach it to the scene graph

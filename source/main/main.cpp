@@ -59,6 +59,37 @@
 
 #include <Ogre.h>
 #include <OGRE/Bites/OgreSGTechniqueResolverListener.h>
+
+/// Extends SGTechniqueResolverListener to skip RTSS generation for materials
+/// that already have custom vertex/fragment programs. Those materials handle
+/// their own shading and would break if RTSS wraps around them.
+class RoRSGTechniqueResolverListener : public OgreBites::SGTechniqueResolverListener
+{
+public:
+    using OgreBites::SGTechniqueResolverListener::SGTechniqueResolverListener;
+
+    Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex,
+                                          const Ogre::String& schemeName,
+                                          Ogre::Material* originalMaterial,
+                                          unsigned short lodIndex,
+                                          const Ogre::Renderable* rend) override
+    {
+        // If any pass in the default technique has a custom GPU program,
+        // skip RTSS and let OGRE fall back to the original technique.
+        Ogre::Technique* defaultTech = originalMaterial->getTechnique(0);
+        if (defaultTech)
+        {
+            for (unsigned short i = 0; i < defaultTech->getNumPasses(); ++i)
+            {
+                Ogre::Pass* pass = defaultTech->getPass(i);
+                if (pass->hasVertexProgram() || pass->hasFragmentProgram())
+                    return nullptr;
+            }
+        }
+        return OgreBites::SGTechniqueResolverListener::handleSchemeNotFound(
+            schemeIndex, schemeName, originalMaterial, lodIndex, rend);
+    }
+};
 #include <Overlay/OgreOverlaySystem.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
 #include <ctime>
@@ -216,7 +247,7 @@ int main(int argc, char *argv[])
         mShaderGenerator->setShaderCachePath(App::sys_cache_dir->getStr());
         mShaderGenerator->addSceneManager(App::GetGfxScene()->GetSceneManager());
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::MSN_SHADERGEN);
-        auto* schemeNotFoundHandler = new OgreBites::SGTechniqueResolverListener(mShaderGenerator);
+        auto* schemeNotFoundHandler = new RoRSGTechniqueResolverListener(mShaderGenerator);
         Ogre::MaterialManager::getSingleton().setActiveScheme(Ogre::MSN_SHADERGEN);
         Ogre::MaterialManager::getSingleton().addListener(schemeNotFoundHandler);
 

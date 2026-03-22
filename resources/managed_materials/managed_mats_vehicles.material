@@ -11,6 +11,10 @@ material managed/flexmesh_standard/simple
 			{
 				texture unknown.dds
 			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
+			}
 		}
 	}
 }
@@ -31,7 +35,11 @@ material managed/flexmesh_standard/damageonly
 			texture_unit Dmg_Diffuse_Map
 			{
 				texture unknown.dds
-				colour_op_ex blend_diffuse_alpha src_texture src_current 
+				colour_op_ex blend_diffuse_alpha src_texture src_current
+			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
 			}
 		}
 	}
@@ -48,6 +56,10 @@ material managed/flexmesh_standard/specularonly
 			texture_unit Diffuse_Map
 			{
 				texture unknown.dds
+			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
 			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
@@ -73,7 +85,11 @@ material managed/flexmesh_standard/speculardamage
 			texture_unit Dmg_Diffuse_Map
 			{
 				texture unknown.dds
-				colour_op_ex blend_diffuse_alpha src_texture src_current 
+				colour_op_ex blend_diffuse_alpha src_texture src_current
+			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
 			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
@@ -94,6 +110,10 @@ material managed/mesh_standard/simple
 			{
 				texture unknown.dds
 			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
+			}
 		}
 	}
 }
@@ -109,10 +129,14 @@ material managed/mesh_standard/specular
 			{
 				texture unknown.dds
 			}
+			rtshader_system
+			{
+				lighting_stage cook_torrance
+			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
 		{
-		
+
 		}
 	}
 }

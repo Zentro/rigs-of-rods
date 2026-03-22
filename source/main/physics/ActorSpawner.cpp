@@ -74,6 +74,7 @@
 #include "VehicleAI.h"
 
 #include <OgreMaterialManager.h>
+#include <RTShaderSystem/OgreRTShaderSystem.h>
 #include <OgreSceneManager.h>
 #include <OgreMovableObject.h>
 #include <OgreParticleSystem.h>
@@ -2701,6 +2702,15 @@ void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
     }
 
     material->compile();
+
+    // Apply RTSS (per-pixel lighting + PSSM3 shadows) to the managed material.
+    // Must be done after compile() so the technique is finalized.
+    if (App::gfx_alt_actor_materials->getBool())
+    {
+        Ogre::RTShader::ShaderGenerator::getSingletonPtr()->createShaderBasedTechnique(
+            *material, Ogre::MaterialManager::DEFAULT_SCHEME_NAME, Ogre::MSN_SHADERGEN);
+    }
+
     m_managed_materials.insert(std::make_pair(def.name, material));
 }
 

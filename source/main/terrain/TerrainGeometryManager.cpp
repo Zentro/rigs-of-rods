@@ -35,6 +35,7 @@
 
 #include <Ogre.h>
 #include <Terrain/OgreTerrain.h>
+#include <Terrain/OgreTerrainMaterialGeneratorA.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
 
 using namespace Ogre;
@@ -475,9 +476,12 @@ void TerrainGeometryManager::configureTerrainDefaults()
         }
     }
 
-    // Enable multiple lights in RTSS Terrain.
-    // See https://ogrecave.github.io/ogre/api/13/class_ogre_1_1_r_t_shader_1_1_render_state.html#acb10ca9d88182aa3051086c5acee656f for light types 
-    static_cast<TerrainMaterialGeneratorA*>(terrainOptions->getDefaultMaterialGenerator().get())->getMainRenderState()->setLightCount(16);
+    // Limit RTSS terrain shader to sun + a few dynamic lights.
+    // 16 lights is extremely expensive when terrain fills the screen (e.g. character cam at ground level).
+    if (custom_mat.empty())
+    {
+        static_cast<TerrainMaterialGeneratorA*>(terrainOptions->getDefaultMaterialGenerator().get())->getMainRenderState()->setLightCount(2);
+    }
     terrainOptions->setLayerBlendMapSize   (m_spec->layer_blendmap_size);
     terrainOptions->setCompositeMapSize    (m_spec->composite_map_size);
     terrainOptions->setCompositeMapDistance(m_spec->composite_map_distance);
