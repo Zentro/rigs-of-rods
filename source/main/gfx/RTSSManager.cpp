@@ -68,6 +68,7 @@ void RTSSManager::SetupRTSS()
 
         App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(ShadowCameraSetupPtr(pssmSetup));
         auto pssmState = mShaderGenerator->createSubRenderState(RTShader::SRS_INTEGRATED_PSSM3);
+        pssmState->setParameter("split_points", Ogre::Any(pssmSetup->getSplitPoints()));
         schemRenderState->addTemplateSubRenderState(pssmState);
     }
 

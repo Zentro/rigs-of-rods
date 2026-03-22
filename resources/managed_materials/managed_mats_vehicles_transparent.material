@@ -1,9 +1,8 @@
-import * from "shadows.material"
 import * from "texture_manager.material"
 
 material managed/flexmesh_transparent/simple
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -14,17 +13,13 @@ material managed/flexmesh_transparent/simple
 			{
 				texture unknown.dds
 			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
-			}
 		}
 	}
 }
 
 material managed/flexmesh_transparent/damageonly
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -45,10 +40,6 @@ material managed/flexmesh_transparent/damageonly
 				colour_op_ex blend_diffuse_alpha src_texture src_current
 				alpha_op_ex blend_diffuse_alpha src_texture src_current
 			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
-			}
 		}
 	}
 }
@@ -56,7 +47,7 @@ material managed/flexmesh_transparent/damageonly
 
 material managed/flexmesh_transparent/specularonly
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -73,10 +64,6 @@ material managed/flexmesh_transparent/specularonly
 					texture unknown.dds 2d
 					tex_coord_set 0
 			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
-			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
 		{
@@ -87,7 +74,7 @@ material managed/flexmesh_transparent/specularonly
 
 material managed/flexmesh_transparent/speculardamage
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -111,10 +98,6 @@ material managed/flexmesh_transparent/speculardamage
 					texture unknown.dds 2d
 					tex_coord_set 2
 			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
-			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
 		{
@@ -125,7 +108,7 @@ material managed/flexmesh_transparent/speculardamage
 
 material managed/mesh_transparent/simple
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -136,17 +119,13 @@ material managed/mesh_transparent/simple
 			{
 				texture unknown.dds
 			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
-			}
 		}
 	}
 }
 
 material managed/mesh_transparent/specular
 {
-	technique BaseTechnique: Shadows/managed_transparent/base_receiver //Include shadows
+	technique BaseTechnique
 	{
 		pass BaseRender
 		{
@@ -160,10 +139,6 @@ material managed/mesh_transparent/specular
 					// This pass will use this 2D texture as its input
 					texture unknown.dds 2d
 					tex_coord_set 0
-			}
-			rtshader_system
-			{
-				lighting_stage cook_torrance
 			}
 		}
 		pass SpecularMapping1: Texture/managed/SpecularMapping
