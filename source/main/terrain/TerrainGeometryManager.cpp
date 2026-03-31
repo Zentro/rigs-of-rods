@@ -436,7 +436,9 @@ void TerrainGeometryManager::configureTerrainDefaults()
             terrainOptions->setCompositeMapDiffuse(light->getDiffuseColour());
         }
     }
-    terrainOptions->setCompositeMapAmbient(App::GetGfxScene()->GetSceneManager()->getAmbientLight());
+    // Use a moderate ambient for the composite map (baked at a distance).
+    // The scene ambient is set AFTER terrain loading in main.cpp, so getAmbientLight() would return black here.
+    terrainOptions->setCompositeMapAmbient(Ogre::ColourValue(0.3f, 0.3f, 0.3f));
 
     // Configure default import settings for if we use imported image
     Ogre::Terrain::ImportData& defaultimp = m_ogre_terrain_group->getDefaultImportSettings();

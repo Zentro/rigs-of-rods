@@ -175,7 +175,6 @@ namespace RoR
     class  SkidmarkConfig;
     struct SkinDocument;
     class  SkinManager;
-    class  SkyManager;
     class  SkyXManager;
     class  SlideNode;
     class  Sound;

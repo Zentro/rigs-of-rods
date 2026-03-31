@@ -56,7 +56,10 @@ void RTSSManager::SetupRTSS()
         App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, 3);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, 0);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, 0);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureSettings(2048, 3, PF_DEPTH16);
+        // D3D9 cannot clear a PF_DEPTH16 surface as a color render target; use a float format instead.
+        const bool isD3D9 = Root::getSingleton().getRenderSystem()->getName().find("Direct3D9") != std::string::npos;
+        const Ogre::PixelFormat shadowFmt = isD3D9 ? PF_FLOAT32_R : PF_DEPTH16;
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureSettings(2048, 3, shadowFmt);
         App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(true);
 
         pssmSetup = new PSSMShadowCameraSetup();
@@ -68,8 +71,24 @@ void RTSSManager::SetupRTSS()
 
         App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(ShadowCameraSetupPtr(pssmSetup));
         auto pssmState = mShaderGenerator->createSubRenderState(RTShader::SRS_INTEGRATED_PSSM3);
-        pssmState->setParameter("split_points", Ogre::Any(pssmSetup->getSplitPoints()));
+        // PSSMShadowCameraSetup::SplitPointList is vector<Real> (double on 64-bit),
+        // but IntegratedPSSM3 expects vector<float>. Convert explicitly to avoid bad_any_cast crash.
+        const auto& srcSplits = pssmSetup->getSplitPoints();
+        std::vector<float> splits(srcSplits.begin(), srcSplits.end());
+        pssmState->setParameter("split_points", Ogre::Any(splits));
         schemRenderState->addTemplateSubRenderState(pssmState);
+
+        // Propagate the computed split points to the hand-written PSSM shadow shaders
+        // (general.hlsl / general_diffuse_fp.glsl). The hardcoded values in general.program
+        // are stale; the actual splits come from pssmSetup->getSplitPoints().
+        Ogre::Vector4 splitPts(splits[0], splits[1], splits[2], splits[3]);
+        for (const char* progName : {"diffuse_sh_ps_HLSL", "diffuse_sh_ps_GLSL",
+                                     "diffuse_sh_a_ps_HLSL", "diffuse_sh_a_ps_GLSL"})
+        {
+            Ogre::GpuProgramPtr prog = Ogre::GpuProgramManager::getSingleton().getByName(progName);
+            if (prog && prog->getDefaultParameters())
+                prog->getDefaultParameters()->setNamedConstant("pssmSplitPoints", splitPts);
+        }
     }
 
 }

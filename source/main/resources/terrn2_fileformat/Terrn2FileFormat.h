@@ -66,9 +66,6 @@ struct Terrn2Document
     std::list<std::string>   assetpack_files;
     std::list<std::string>   ai_presets_files;
     std::list<Terrn2Telepoint> telepoints;
-    std::string              caelum_config;
-    int                      caelum_fog_start = 0;
-    int                      caelum_fog_end = 0;
     std::string              cubemap_config;
     bool                     has_water = false;
     std::string              hydrax_conf_file;

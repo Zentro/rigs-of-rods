@@ -33,7 +33,6 @@
 #include "GUIUtils.h"
 #include "GUI_DirectionArrow.h"
 #include "OverlayWrapper.h"
-#include "SkyManager.h"
 #include "SkyXManager.h"
 #include "TerrainGeometryManager.h"
 #include "Terrain.h"
@@ -165,15 +164,6 @@ void GfxScene::UpdateScene(float dt)
         }
         gfx_water->FrameStepWater(dt);
     }
-
-    // Terrain - sky
-#ifdef USE_CAELUM
-    SkyManager* sky = App::GetGameContext()->GetTerrain()->getSkyManager();
-    if (sky != nullptr)
-    {
-        sky->DetectSkyUpdate();
-    }
-#endif
 
     SkyXManager* skyx_man = App::GetGameContext()->GetTerrain()->getSkyXManager();
     if (skyx_man != nullptr)

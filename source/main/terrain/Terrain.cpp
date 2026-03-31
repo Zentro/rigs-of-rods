@@ -35,7 +35,6 @@
 #include "Language.h"
 #include "ScriptEngine.h"
 #include "RTSSManager.h"
-#include "SkyManager.h"
 #include "SkyXManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
@@ -56,7 +55,6 @@ RoR::Terrain::Terrain(CacheEntryPtr entry, Terrn2DocumentPtr def)
     , m_geometry_manager(0)
     , m_object_manager(0)
     , m_rtss_manager(0)
-    , m_sky_manager(0)
     , SkyX_manager(0)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
@@ -84,14 +82,6 @@ void RoR::Terrain::dispose()
     }
 
     //I think that the order is important
-
-#ifdef USE_CAELUM
-    if (m_sky_manager != nullptr)
-    {
-        delete(m_sky_manager);
-        m_sky_manager = nullptr;
-    }
-#endif // USE_CAELUM
 
     if (SkyX_manager != nullptr)
     {
@@ -172,11 +162,8 @@ bool RoR::Terrain::initialize()
     loading_window->SetProgress(27, _L("Initializing Light Subsystem"));
     this->initLight();
 
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() != GfxSkyMode::CAELUM) //Caelum has its own fog management
-    {
-        loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
-        this->initFog();
-    }
+    loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
+    this->initFog();
 
     loading_window->SetProgress(31, _L("Initializing Vegetation Subsystem"));
     this->initVegetation();
@@ -238,26 +225,6 @@ void RoR::Terrain::initCamera()
 
 void RoR::Terrain::initSkySubSystem()
 {
-#ifdef USE_CAELUM
-    // Caelum skies
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-        m_sky_manager = new SkyManager();
-
-        // try to load caelum config
-        if (!m_def->caelum_config.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def->caelum_config))
-        {
-            // config provided and existing, use it :)
-            m_sky_manager->LoadCaelumScript(m_def->caelum_config, m_def->caelum_fog_start, m_def->caelum_fog_end);
-        }
-        else
-        {
-            // no config provided, fall back to the default one
-            m_sky_manager->LoadCaelumScript("ror_default_sky");
-        }
-    }
-    else
-#endif //USE_CAELUM
     // SkyX skies
     if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
     {
@@ -284,13 +251,7 @@ void RoR::Terrain::initSkySubSystem()
 
 void RoR::Terrain::initLight()
 {
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-#ifdef USE_CAELUM
-        m_main_light = m_sky_manager->GetSkyMainLight();
-#endif
-    }
-    else if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
+    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
     {
         m_main_light = SkyX_manager->getMainLight();
     }
@@ -303,8 +264,10 @@ void RoR::Terrain::initLight()
         //directional light for shadow
         m_main_light->setType(Light::LT_DIRECTIONAL);
 
-        m_main_light->setDiffuseColour(m_def->ambient_color);
-        m_main_light->setSpecularColour(m_def->ambient_color);
+        // Use a warm-white sunlight. m_def->ambient_color is the terrain's sky/fog tint,
+        // not the sun color; using it for light diffuse made the sun color wrong on most terrains.
+        m_main_light->setDiffuseColour(Ogre::ColourValue(0.9f, 0.85f, 0.8f));
+        m_main_light->setSpecularColour(Ogre::ColourValue(0.5f, 0.5f, 0.5f));
         m_main_light->setCastShadows(true);
         m_main_light->setShadowFarDistance(1000.0f);
         m_main_light->setShadowNearClipDistance(-1);
@@ -501,11 +464,6 @@ float RoR::Terrain::getHeightAt(float x, float z)
 Ogre::Vector3 RoR::Terrain::GetNormalAt(float x, float y, float z)
 {
     return m_geometry_manager->getNormalAt(x, y, z);
-}
-
-SkyManager* RoR::Terrain::getSkyManager()
-{
-    return m_sky_manager;
 }
 
 bool RoR::Terrain::isFlat()

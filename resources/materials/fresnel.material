@@ -2,27 +2,51 @@
 // Distortion effects
 //----------------------------
 
-vertex_program Examples/FresnelRefractReflectVP cg
+vertex_program Examples/FresnelRefractReflectVP_HLSL hlsl
 {
-	source Example_Fresnel.cg
+	source Example_Fresnel.hlsl
 	entry_point main_vp
-	profiles vs_1_1 arbvp1
+	target vs_3_0
 }
 
-fragment_program Examples/FresnelRefractReflectFP cg
+fragment_program Examples/FresnelRefractReflectFP_HLSL hlsl
 {
-	source Example_Fresnel.cg
+	source Example_Fresnel.hlsl
 	entry_point main_fp
-	// sorry, ps_1_1 and fp20 can't do this
-	profiles ps_2_0 arbfp1
+	target ps_3_0
 }
 
-fragment_program Examples/FresnelRefractReflectPS asm
+vertex_program Examples/FresnelRefractReflectVP_GLSL glsl
 {
-	source Example_FresnelPS.asm
-	// sorry, only for ps_1_4 :)
-	syntax ps_1_4
+	source Example_Fresnel_vp.glsl
+	default_params
+	{
+		param_named worldViewProjMatrix mat4 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1
+	}
+}
 
+fragment_program Examples/FresnelRefractReflectFP_GLSL glsl
+{
+	source Example_Fresnel_fp.glsl
+	preprocessor_defines HAS_REFRACT=1
+	default_params
+	{
+		param_named noiseMap   int 0
+		param_named reflectMap int 1
+		param_named refractMap int 2
+	}
+}
+
+vertex_program Examples/FresnelRefractReflectVP unified
+{
+	delegate Examples/FresnelRefractReflectVP_GLSL
+	delegate Examples/FresnelRefractReflectVP_HLSL
+}
+
+fragment_program Examples/FresnelRefractReflectFP unified
+{
+	delegate Examples/FresnelRefractReflectFP_GLSL
+	delegate Examples/FresnelRefractReflectFP_HLSL
 }
 
 material Examples/FresnelReflectionRefraction
@@ -151,12 +175,28 @@ material Examples/FresnelReflectionRefractioninverted
 
 }
 
-fragment_program Examples/ReflectFP cg
+fragment_program Examples/ReflectFP_HLSL hlsl
 {
-	source Example_Fresnel.cg
+	source Example_Fresnel.hlsl
 	entry_point main_simplerfp
-	// sorry, ps_1_1 and fp20 can't do this
-	profiles ps_2_0 arbfp1
+	target ps_3_0
+}
+
+fragment_program Examples/ReflectFP_GLSL glsl
+{
+	source Example_Fresnel_fp.glsl
+	preprocessor_defines HAS_REFRACT=0
+	default_params
+	{
+		param_named noiseMap   int 0
+		param_named reflectMap int 1
+	}
+}
+
+fragment_program Examples/ReflectFP unified
+{
+	delegate Examples/ReflectFP_GLSL
+	delegate Examples/ReflectFP_HLSL
 }
 
 material Examples/FresnelReflection

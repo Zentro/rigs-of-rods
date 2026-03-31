@@ -266,7 +266,9 @@ void GUIManager::SetUpMenuWallpaper()
     Ogre::TexturePtr wp_tex = Ogre::static_pointer_cast<Ogre::Texture>(wp_tex_result.first);
     // ...material...
     Ogre::MaterialPtr wp_mat = Ogre::MaterialManager::getSingleton().create("rigsofrods/WallpaperMat", Ogre::RGN_DEFAULT);
-    Ogre::TextureUnitState* wp_tus = wp_mat->getTechnique(0)->getPass(0)->createTextureUnitState();
+    Ogre::Pass* wp_pass = wp_mat->getTechnique(0)->getPass(0);
+    wp_pass->setLightingEnabled(false);
+    Ogre::TextureUnitState* wp_tus = wp_pass->createTextureUnitState();
     wp_tus->setTexture(wp_tex);
     wp_mat->compile();
     // ...panel...

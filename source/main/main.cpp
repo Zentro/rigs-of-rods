@@ -175,12 +175,6 @@ int main(int argc, char *argv[])
             return -1; // Error already displayed
         }
 
-#ifdef USE_CAELUM
-        // Initialize CaelumPlugin, must happen before initialising resource groups
-        new Caelum::CaelumPlugin();
-        Caelum::CaelumPlugin::getSingleton().initialise();
-#endif //USE_CAELUM
-
         Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
         // Deploy base config files from 'skeleton.zip'
@@ -208,10 +202,13 @@ int main(int argc, char *argv[])
 
         if (!App::diag_warning_texture->getBool())
         {
-            // We overwrite the default warning texture (yellow stripes) with something unobtrusive
-            Ogre::uchar data[3] = {0};
-            Ogre::PixelBox pixels(1, 1, 1, Ogre::PF_BYTE_RGB, &data);
-            Ogre::TextureManager::getSingleton()._getWarningTexture()->getBuffer()->blitFromMemory(pixels);
+            // We overwrite the default warning texture (yellow stripes) with something unobtrusive.
+            // D3D11 requires source and destination sizes to match exactly.
+            auto warnBuf = Ogre::TextureManager::getSingleton()._getWarningTexture()->getBuffer();
+            const uint32_t w = warnBuf->getWidth(), h = warnBuf->getHeight();
+            std::vector<Ogre::uchar> data(w * h * 3, 0);
+            Ogre::PixelBox pixels(w, h, 1, Ogre::PF_BYTE_RGB, data.data());
+            warnBuf->blitFromMemory(pixels);
         }
 
         App::GetContentManager()->AddResourcePack(ContentManager::ResourcePack::FLAGS);

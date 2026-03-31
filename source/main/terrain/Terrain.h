@@ -79,7 +79,6 @@ public:
     TerrainGeometryManager* getGeometryManager()          { return m_geometry_manager; }
     TerrainObjectManager*   getObjectManager()            { return m_object_manager; }
     HydraxWater*            getHydraxManager()            { return m_hydrax_water; }
-    SkyManager*             getSkyManager();
     SkyXManager*            getSkyXManager()              { return SkyX_manager; }
     RTSSManager*            getRTSSManager()              { return m_rtss_manager; }
     TerrainEditor*          GetTerrainEditor()            { return &m_terrain_editor; }
@@ -138,7 +137,6 @@ private:
     TerrainEditor           m_terrain_editor;
     Collisions*             m_collisions = nullptr;
     RTSSManager*            m_rtss_manager;
-    SkyManager*             m_sky_manager = nullptr;
     SkyXManager*            SkyX_manager = nullptr;
     HydraxWater*            m_hydrax_water = nullptr;
 

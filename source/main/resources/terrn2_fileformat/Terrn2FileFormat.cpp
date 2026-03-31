@@ -66,10 +66,7 @@ Terrn2DocumentPtr Terrn2Parser::LoadTerrn2(Ogre::DataStreamPtr &ds)
     def->guid                 = file.getString     ("GUID",             "General");
     def->version              = file.getInt        ("Version",          "General", 1);
     def->gravity              = file.getFloat      ("Gravity",          "General", -9.81);
-    def->caelum_config        = file.getString     ("CaelumConfigFile", "General");
     def->cubemap_config       = file.getString     ("SandStormCubeMap", "General");
-    def->caelum_fog_start     = file.getInt        ("CaelumFogStart",   "General", -1);
-    def->caelum_fog_end       = file.getInt        ("CaelumFogEnd",     "General", -1);
     def->has_water            = file.getBool       ("Water",            "General", false);
     def->hydrax_conf_file     = file.getString     ("HydraxConfigFile", "General");
     def->skyx_config          = file.getString     ("SkyXConfigFile",   "General");

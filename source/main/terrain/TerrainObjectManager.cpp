@@ -727,9 +727,31 @@ bool TerrainObjectManager::LoadTerrainObject(const Ogre::String& name, const Ogr
 
     if (mo)
     {
-        for (Ogre::SubEntity* subent : mo->getEntity()->getSubEntities())
+        // Only enable RTSS for meshes that have normals - RTSS lighting shaders require NORMAL0
+        // and D3D11 strictly validates input signatures against vertex declarations.
+        Ogre::MeshPtr mesh = mo->getEntity()->getMesh();
+        bool has_normals = false;
+        if (mesh->sharedVertexData)
+            has_normals = (mesh->sharedVertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL) != nullptr);
+        if (!has_normals)
         {
-            App::GetGameContext()->GetTerrain()->getRTSSManager()->EnableRTSS(subent->getMaterial());
+            for (unsigned i = 0; i < mesh->getNumSubMeshes(); ++i)
+            {
+                Ogre::SubMesh* sm = mesh->getSubMesh(i);
+                if (!sm->useSharedVertices && sm->vertexData &&
+                    sm->vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_NORMAL) != nullptr)
+                {
+                    has_normals = true;
+                    break;
+                }
+            }
+        }
+        if (has_normals)
+        {
+            for (Ogre::SubEntity* subent : mo->getEntity()->getSubEntities())
+            {
+                App::GetGameContext()->GetTerrain()->getRTSSManager()->EnableRTSS(subent->getMaterial());
+            }
         }
     }
 

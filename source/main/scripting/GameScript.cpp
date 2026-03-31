@@ -55,7 +55,6 @@
 #include "RoRVersion.h"
 #include "ScriptEngine.h"
 #include "ScriptUtils.h"
-#include "SkyManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "TerrainGeometryManager.h"
@@ -154,38 +153,6 @@ Radian GameScript::getPersonRotation()
     Radian result(0);
     if (App::GetGameContext()->GetPlayerCharacter())
         result = App::GetGameContext()->GetPlayerCharacter()->getRotation();
-    return result;
-}
-
-String GameScript::getCaelumTime()
-{
-    String result = "";
-#ifdef USE_CAELUM
-    if (App::GetGameContext()->GetTerrain())
-    {
-        result = App::GetGameContext()->GetTerrain()->getSkyManager()->GetPrettyTime();
-    }
-#endif // USE_CAELUM
-    return result;
-}
-
-void GameScript::setCaelumTime(float value)
-{
-#ifdef USE_CAELUM
-    if (!this->HaveSimTerrain(__FUNCTION__))
-        return;
-
-    App::GetGameContext()->GetTerrain()->getSkyManager()->SetSkyTimeFactor(value);
-#endif // USE_CAELUM
-}
-
-bool GameScript::getCaelumAvailable()
-{
-    bool result = false;
-#ifdef USE_CAELUM
-    if (App::GetGameContext()->GetTerrain())
-        result = App::GetGameContext()->GetTerrain()->getSkyManager() != 0;
-#endif // USE_CAELUM
     return result;
 }
 

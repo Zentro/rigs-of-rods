@@ -40,7 +40,6 @@ set(SOURCE_FILES
         gfx/RTSSManager.{h,cpp}
         gfx/SimBuffers.{h,cpp}
         gfx/Skidmark.{h,cpp}
-        gfx/SkyManager.{h,cpp}
         gfx/SkyXManager.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}
         gfx/GfxWater.{h,cpp}
@@ -451,11 +450,6 @@ if (ROR_USE_CURL)
     if (WIN32)
         target_compile_definitions(${BINNAME} PRIVATE WIN32_LEAN_AND_MEAN)
     endif ()
-endif ()
-
-if (ROR_USE_CAELUM)
-    target_link_libraries(${BINNAME} PRIVATE Caelum::Caelum)
-    target_compile_definitions(${BINNAME} PRIVATE USE_CAELUM)
 endif ()
 
 if (ROR_USE_PAGED)
