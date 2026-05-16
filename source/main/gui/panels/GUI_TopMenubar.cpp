@@ -637,6 +637,15 @@ void TopMenubar::Draw(float dt)
                 if (App::GetCameraManager()->GetCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_FIXED)
                 {
                     DrawGCheckbox(App::gfx_fixed_cam_tracking, _LC("TopMenubar", "Tracking"));
+                    if (App::gfx_fixed_cam_tracking->getBool())
+                    {
+                        DrawGFloatSlider(App::gfx_fixed_cam_tracking_rate, _LC("TopMenubar", "Tracking rate"), 0.5f, 30.0f);
+                        DrawGFloatSlider(App::gfx_fixed_cam_shake, _LC("TopMenubar", "Handheld shake"), 0.0f, 1.0f);
+                    }
+                }
+                if (App::GetCameraManager()->GetCurrentBehavior() == CameraManager::CAMERA_BEHAVIOR_FREE)
+                {
+                    DrawGFloatSlider(App::gfx_freecam_smoothing, _LC("TopMenubar", "Rotation smoothing"), 0.0f, 0.99f);
                 }
             }
 

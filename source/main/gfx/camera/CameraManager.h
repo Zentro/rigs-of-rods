@@ -147,6 +147,13 @@ protected:
     bool                 m_splinecam_auto_tracking;
     std::deque<node_t*>  m_splinecam_spline_nodes;
     unsigned int         m_splinecam_num_linked_beams;
+    // FreeCam smoothing
+    Ogre::Quaternion     m_freecam_target_orient;
+    bool                 m_freecam_target_init = false;
+    // Fixed-cam tracking leniency / handheld shake
+    Ogre::Vector3        m_fixedcam_look_smooth = Ogre::Vector3::ZERO;
+    bool                 m_fixedcam_look_init = false;
+    float                m_fixedcam_shake_time = 0.0f;
 };
 
 /// @} // addtogroup Camera

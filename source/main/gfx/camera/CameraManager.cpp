@@ -390,11 +390,13 @@ void CameraManager::ActivateNewBehavior(CameraBehaviors new_behavior, bool reset
     switch (new_behavior)
     {
     case CAMERA_BEHAVIOR_FREE:
+        m_freecam_target_init = false;
         RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE, _L("Free camera"), "camera_go.png");
         break;
 
     case CAMERA_BEHAVIOR_ISOMETRIC:
     case CAMERA_BEHAVIOR_FIXED:
+        m_fixedcam_look_init = false;
         RoR::App::GetConsole()->putMessage(RoR::Console::CONSOLE_MSGTYPE_INFO, RoR::Console::CONSOLE_SYSTEM_NOTICE, _L("Fixed camera"), "camera_link.png");
         break;
 
@@ -582,8 +584,14 @@ bool CameraManager::handleMouseMoved()
     case CAMERA_BEHAVIOR_VEHICLE_CINECAM: return CameraBehaviorOrbitMouseMoved();
     case CAMERA_BEHAVIOR_FREE: {
 
-        App::GetCameraManager()->GetCameraNode()->yaw(Degree(-ms.X.rel * 0.13f), Ogre::Node::TS_WORLD);
-        App::GetCameraManager()->GetCameraNode()->pitch(Degree(-ms.Y.rel * 0.13f));
+        if (!m_freecam_target_init)
+        {
+            m_freecam_target_orient = this->GetCameraNode()->getOrientation();
+            m_freecam_target_init = true;
+        }
+        Quaternion qYaw(Degree(-ms.X.rel * 0.13f), Vector3::UNIT_Y);
+        Quaternion qPitch(Degree(-ms.Y.rel * 0.13f), Vector3::UNIT_X);
+        m_freecam_target_orient = qYaw * m_freecam_target_orient * qPitch;
 
         App::GetGuiManager()->SetMouseCursorVisibility(GUIManager::MouseCursorVisibility::HIDDEN);
 
@@ -1056,20 +1064,77 @@ void CameraManager::UpdateCameraBehaviorFree()
         mRotY -= cct_rot_scale;
     }
 
-    App::GetCameraManager()->GetCameraNode()->yaw(mRotX, Ogre::Node::TS_WORLD);
-    App::GetCameraManager()->GetCameraNode()->pitch(mRotY);
+    if (!m_freecam_target_init)
+    {
+        m_freecam_target_orient = this->GetCameraNode()->getOrientation();
+        m_freecam_target_init = true;
+    }
 
-    Vector3 camPosition = this->GetCameraNode()->getPosition() + this->GetCameraNode()->getOrientation() * mTrans.normalisedCopy() * cct_trans_scale;
+    // Apply rotation inputs to the TARGET orientation (yaw in world, pitch in local — matches old behavior).
+    Quaternion qYaw(mRotX, Vector3::UNIT_Y);
+    Quaternion qPitch(mRotY, Vector3::UNIT_X);
+    m_freecam_target_orient = qYaw * m_freecam_target_orient * qPitch;
+
+    // Smooth the camera orientation toward the target. 0 = instant (old behavior), ~1 = heavy floaty smoothing.
+    float smoothing = Math::Clamp(App::gfx_freecam_smoothing->getFloat(), 0.0f, 0.99f);
+    Quaternion newOrient;
+    if (smoothing <= 0.0f)
+    {
+        newOrient = m_freecam_target_orient;
+    }
+    else
+    {
+        // Rate falls off with smoothing; clamp dt so big stalls don't snap.
+        float rate = (1.0f - smoothing) * 30.0f;
+        float alpha = 1.0f - std::exp(-std::min(m_cct_dt, 0.1f) * rate);
+        newOrient = Quaternion::Slerp(alpha, this->GetCameraNode()->getOrientation(), m_freecam_target_orient, true);
+    }
+    this->GetCameraNode()->setOrientation(newOrient);
+
+    Vector3 camPosition = this->GetCameraNode()->getPosition() + newOrient * mTrans.normalisedCopy() * cct_trans_scale;
 
     this->GetCameraNode()->setPosition(camPosition);
 }
 
 void CameraManager::UpdateCameraBehaviorFixed()
 {
-	if (App::gfx_fixed_cam_tracking->getBool())
+    if (App::gfx_fixed_cam_tracking->getBool())
     {
-        Vector3 look_at = m_cct_player_actor ? m_cct_player_actor->getPosition() : App::GetGameContext()->GetPlayerCharacter()->getPosition();
-        App::GetCameraManager()->GetCameraNode()->lookAt(look_at, Ogre::Node::TS_WORLD);
+        Vector3 target = m_cct_player_actor ? m_cct_player_actor->getPosition() : App::GetGameContext()->GetPlayerCharacter()->getPosition();
+
+        if (!m_fixedcam_look_init)
+        {
+            m_fixedcam_look_smooth = target;
+            m_fixedcam_shake_time = 0.0f;
+            m_fixedcam_look_init = true;
+        }
+
+        // Tracking leniency: lag the look-at behind the target. Higher rate = snappier.
+        float rate = std::max(0.05f, App::gfx_fixed_cam_tracking_rate->getFloat());
+        float alpha = 1.0f - std::exp(-std::min(m_cct_dt, 0.1f) * rate);
+        m_fixedcam_look_smooth += (target - m_fixedcam_look_smooth) * alpha;
+
+        Vector3 look = m_fixedcam_look_smooth;
+
+        // Handheld-camera shake: layered low-frequency sines, scaled by distance so far shots aren't violent.
+        float shake = Math::Clamp(App::gfx_fixed_cam_shake->getFloat(), 0.0f, 1.0f);
+        if (shake > 0.0f)
+        {
+            m_fixedcam_shake_time += m_cct_dt;
+            float t = m_fixedcam_shake_time;
+            Vector3 noise(
+                std::sin(t * 0.7f) * 0.6f + std::sin(t * 1.7f + 0.4f) * 0.3f,
+                std::sin(t * 0.9f + 1.3f) * 0.6f + std::sin(t * 2.1f + 0.7f) * 0.3f,
+                std::sin(t * 0.6f + 2.5f) * 0.6f + std::sin(t * 1.5f + 2.1f) * 0.3f);
+            float dist = (look - this->GetCameraNode()->getPosition()).length();
+            look += noise * shake * (dist * 0.015f);
+        }
+
+        this->GetCameraNode()->lookAt(look, Ogre::Node::TS_WORLD);
+    }
+    else
+    {
+        m_fixedcam_look_init = false;
     }
 }
 

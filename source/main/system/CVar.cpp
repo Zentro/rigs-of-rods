@@ -198,6 +198,9 @@ void Console::cVarSetupBuiltins()
     App::gfx_fov_internal_default= this->cVarCreate("gfx_fov_internal_default","FOV Internal",               CVAR_ARCHIVE | CVAR_TYPE_INT,     "75");
     App::gfx_static_cam_fov_exp  = this->cVarCreate("gfx_static_cam_fov_exp",  "",                           CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");
     App::gfx_fixed_cam_tracking  = this->cVarCreate("gfx_fixed_cam_tracking",  "",                           CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
+    App::gfx_freecam_smoothing       = this->cVarCreate("gfx_freecam_smoothing",       "FreeCam rotation smoothing (0=instant,1=heavy)", CVAR_ARCHIVE | CVAR_TYPE_FLOAT, "0.0");
+    App::gfx_fixed_cam_tracking_rate = this->cVarCreate("gfx_fixed_cam_tracking_rate", "Fixed-cam tracking responsiveness (Hz, lower=lazier)", CVAR_ARCHIVE | CVAR_TYPE_FLOAT, "30.0");
+    App::gfx_fixed_cam_shake         = this->cVarCreate("gfx_fixed_cam_shake",         "Fixed-cam handheld shake amount (0..1)",         CVAR_ARCHIVE | CVAR_TYPE_FLOAT, "0.0");
     App::gfx_fps_limit           = this->cVarCreate("gfx_fps_limit",           "FPS-Limiter",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_speedo_imperial     = this->cVarCreate("gfx_speedo_imperial",     "gfx_speedo_imperial",        CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
     App::gfx_flexbody_cache      = this->cVarCreate("gfx_flexbody_cache",      "Flexbody_UseCache",          CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "false");
