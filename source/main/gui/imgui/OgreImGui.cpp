@@ -95,7 +95,7 @@ void OgreImGui::ReloadFonts(float font_scale)
 void OgreImGui::AddFonts(float font_scale)
 {
     m_imgui_overlay->addFont("rigsofrods/fonts/Roboto-Medium",
-        ContentManager::ResourcePack::FONTS.resource_group_name, font_scale);
+        Ogre::RGN_DEFAULT, font_scale); // 'fonts' pack is loaded into 'General' (see main.cpp)
 }
 
 void OgreImGui::InjectMouseMoved( const OIS::MouseEvent &arg )
