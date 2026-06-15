@@ -611,12 +611,12 @@ void ProceduralRoad::createMesh(const std::string& materialName /*= "" */)
     // Make sure custom material exists
     if (materialName == "")
     {
-        mainsub->setMaterialName(PROROAD_DEFAULT_MATERIAL, ContentManager::ResourcePack::MATERIALS.resource_group_name);
+        mainsub->setMaterialName(PROROAD_DEFAULT_MATERIAL, App::GetGameContext()->GetTerrain()->getTerrainFileResourceGroup());
     }
     else if (!MaterialManager::getSingleton().resourceExists(materialName, App::GetGameContext()->GetTerrain()->getTerrainFileResourceGroup()))
     {
         LOG(fmt::format("[RoR|ProceduralRoad] Custom material '{}' does not exist. Using default.", materialName));
-        mainsub->setMaterialName(PROROAD_DEFAULT_MATERIAL, ContentManager::ResourcePack::MATERIALS.resource_group_name);
+        mainsub->setMaterialName(PROROAD_DEFAULT_MATERIAL, App::GetGameContext()->GetTerrain()->getTerrainFileResourceGroup());
     }
     else
     {
