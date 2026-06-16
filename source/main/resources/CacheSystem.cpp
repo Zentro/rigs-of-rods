@@ -1592,7 +1592,7 @@ void CacheSystem::LoadResource(CacheEntryPtr& entry)
     //   They must be initialized before any content is loaded,
     //   otherwise material links are unresolved and loading ends with an exception
     if (!inGlobalPool) // Managed materials in the global pool would clash between bundles
-        App::GetContentManager()->InitManagedMaterials(group);
+        App::GetContentManager()->InitBaseManagedMaterials(group);
 
     // Make "FileSystem" (directory) bundles writable (Default is read-only), except if it's a root directory.
     // See explanation of `readOnly` OGRE flag in `ContentManager::InitModCache()`.
@@ -1656,6 +1656,8 @@ void CacheSystem::LoadResource(CacheEntryPtr& entry)
         }
         else
         {
+            // This is an actor bundle (.truck, .load etc..)
+            App::GetContentManager()->InitActorManagedMaterials(group);
             ResourceGroupManager::getSingleton().addResourceLocation(
                 entry->resource_bundle_path, entry->resource_bundle_type, group, recursive, readonly);
 
