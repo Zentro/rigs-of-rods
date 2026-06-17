@@ -1614,6 +1614,12 @@ void CacheSystem::LoadResource(CacheEntryPtr& entry)
             App::GetContentManager()->AddResourcePack("meshes", group);
             App::GetContentManager()->AddResourcePack("particles", group);
             App::GetContentManager()->AddResourcePack("scripts", group);
+
+            // Terrain bundles often contain actors (loads/fixes/machines etc...), so include actor gamefiles, too.
+            App::GetContentManager()->InitActorManagedMaterials(group);
+            App::GetContentManager()->AddResourcePack("actor_textures", group);
+            App::GetContentManager()->AddResourcePack("actor_materials", group);
+            App::GetContentManager()->AddResourcePack("actor_meshes", group);
         }
         else if (entry->fext == "race")
         {
@@ -1662,9 +1668,9 @@ void CacheSystem::LoadResource(CacheEntryPtr& entry)
                 entry->resource_bundle_path, entry->resource_bundle_type, group, recursive, readonly);
 
             // Add game files which may be referenced by the actor
-            App::GetContentManager()->AddResourcePack("textures", group);
-            App::GetContentManager()->AddResourcePack("materials", group);
-            App::GetContentManager()->AddResourcePack("meshes", group);
+            App::GetContentManager()->AddResourcePack("actor_textures", group);
+            App::GetContentManager()->AddResourcePack("actor_materials", group);
+            App::GetContentManager()->AddResourcePack("actor_meshes", group);
             App::GetContentManager()->AddResourcePack("airfoils", group);
             App::GetContentManager()->AddResourcePack("particles", group);
             App::GetContentManager()->AddResourcePack("scripts", group);
