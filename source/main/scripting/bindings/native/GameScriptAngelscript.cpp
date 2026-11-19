@@ -90,6 +90,7 @@ void RoR::RegisterGameScriptNative(asIScriptEngine *engine)
     // > Terrain
     result = engine->RegisterObjectMethod("GameScriptClass", "void loadTerrain(const string &in)", asMETHOD(GameScript, loadTerrain), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "int getLoadedTerrain(string &out)", asMETHOD(GameScript, getLoadedTerrain), asCALL_THISCALL); ROR_ASSERT(result >= 0);
+    // TODO: Remove these 3 Caelum stubs (see GameScript.cpp) - Caelum was removed.
     result = engine->RegisterObjectMethod("GameScriptClass", "bool getCaelumAvailable()", asMETHOD(GameScript, getCaelumAvailable), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "string getCaelumTime()", asMETHOD(GameScript, getCaelumTime), asCALL_THISCALL); ROR_ASSERT(result >= 0);
     result = engine->RegisterObjectMethod("GameScriptClass", "void setCaelumTime(float)", asMETHOD(GameScript, setCaelumTime), asCALL_THISCALL); ROR_ASSERT(result >= 0);

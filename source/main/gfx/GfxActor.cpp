@@ -33,7 +33,6 @@
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "GUIUtils.h"
-#include "HydraxWater.h"
 #include "FlexAirfoil.h"
 #include "FlexBody.h"
 #include "FlexMeshWheel.h"
@@ -45,7 +44,6 @@
 #include "RoRnet.h"
 #include "ActorSpawner.h"
 #include "SlideNode.h"
-#include "SkyManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "TurboJet.h"
@@ -472,15 +470,6 @@ void RoR::GfxActor::UpdateVideoCameras(float dt)
 
     for (VideoCamera& vidcam: m_videocameras)
     {
-#ifdef USE_CAELUM
-        // caelum needs to know that we changed the cameras
-        SkyManager* sky = App::GetGameContext()->GetTerrain()->getSkyManager();
-        if ((sky != nullptr) && (RoR::App::app_state->getEnum<AppState>() == RoR::AppState::SIMULATION))
-        {
-            sky->NotifySkyCameraChanged(vidcam.vcam_ogre_camera);
-        }
-#endif // USE_CAELUM
-
         if ((vidcam.vcam_role == VCAM_ROLE_MIRROR_PROP_LEFT)
             || (vidcam.vcam_role == VCAM_ROLE_MIRROR_PROP_RIGHT))
         {

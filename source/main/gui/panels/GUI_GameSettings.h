@@ -71,7 +71,6 @@ private:
     std::string m_combo_items_gearbox_mode;
     std::string m_combo_items_light_sources;
     std::string m_combo_items_shadow_type;
-    std::string m_combo_items_sky_mode;
     std::string m_combo_items_tex_filter;
     std::string m_combo_items_vegetation;
     std::string m_combo_items_water_mode;

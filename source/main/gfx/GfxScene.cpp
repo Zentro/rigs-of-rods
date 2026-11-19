@@ -27,14 +27,12 @@
 #include "ApproxMath.h"
 #include "Console.h"
 #include "DustPool.h"
-#include "HydraxWater.h"
 #include "GameContext.h"
+#include "IGfxWater.h"
 #include "GUIManager.h"
 #include "GUIUtils.h"
 #include "GUI_DirectionArrow.h"
 #include "OverlayWrapper.h"
-#include "SkyManager.h"
-#include "SkyXManager.h"
 #include "TerrainGeometryManager.h"
 #include "Terrain.h"
 #include "TerrainObjectManager.h"
@@ -165,21 +163,6 @@ void GfxScene::UpdateScene(float dt)
             gfx_water->SetReflectionPlaneHeight(water->GetStaticWaterHeight());
         }
         gfx_water->FrameStepWater(dt);
-    }
-
-    // Terrain - sky
-#ifdef USE_CAELUM
-    SkyManager* sky = App::GetGameContext()->GetTerrain()->getSkyManager();
-    if (sky != nullptr)
-    {
-        sky->DetectSkyUpdate();
-    }
-#endif
-
-    SkyXManager* skyx_man = App::GetGameContext()->GetTerrain()->getSkyXManager();
-    if (skyx_man != nullptr)
-    {
-       skyx_man->update(dt); // Light update
     }
 
     // GUI - race
