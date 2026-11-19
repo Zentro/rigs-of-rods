@@ -73,11 +73,7 @@ const char* CONF_WATER_BASIC        = "Basic (fastest)";
 const char* CONF_WATER_REFLECT      = "Reflection";
 const char* CONF_WATER_FULL_FAST    = "Reflection + refraction (speed optimized)";
 const char* CONF_WATER_FULL_HQ      = "Reflection + refraction (quality optimized)";
-const char* CONF_WATER_HYDRAX       = "Hydrax";
-
-const char* CONF_SKY_CAELUM         = "Caelum (best looking, slower)";
-const char* CONF_SKY_SKYX           = "SkyX (best looking, slower)";
-const char* CONF_SKY_SANDSTORM      = "Sandstorm (fastest)";
+const char* CONF_WATER_HYDRAX       = "Hydrax"; // Hydrax was removed - read as FULL_FAST, never written
 
 const char* CONF_EFX_REVERB_ENGINE_EAXREVERB = "EAXREVERB (more realistic effects, slower)";
 const char* CONF_EFX_REVERB_ENGINE_REVERB    = "REVERB";
@@ -152,16 +148,8 @@ GfxWaterMode ParseGfxWaterMode(std::string const & s)
     if (s == CONF_WATER_REFLECT  )    { return GfxWaterMode::REFLECT   ; }
     if (s == CONF_WATER_FULL_FAST)    { return GfxWaterMode::FULL_FAST ; }
     if (s == CONF_WATER_FULL_HQ  )    { return GfxWaterMode::FULL_HQ   ; }
-    if (s == CONF_WATER_HYDRAX   )    { return GfxWaterMode::HYDRAX    ; }
+    if (s == CONF_WATER_HYDRAX   )    { return GfxWaterMode::FULL_FAST ; }
     else                              { return GfxWaterMode::BASIC     ; }
-}
-
-GfxSkyMode ParseGfxSkyMode(std::string const & s)
-{
-    if (s == CONF_SKY_SANDSTORM)      { return GfxSkyMode::SANDSTORM ; }
-    if (s == CONF_SKY_CAELUM   )      { return GfxSkyMode::CAELUM    ; }
-    if (s == CONF_SKY_SKYX     )      { return GfxSkyMode::SKYX      ; }
-    else                              { return GfxSkyMode::SANDSTORM ; }
 }
 
 EfxReverbEngine ParseEfxReverbEngine(std::string const & s)
@@ -263,19 +251,7 @@ const char* GfxWaterModeToStr(GfxWaterMode v)
     case GfxWaterMode::REFLECT  : return CONF_WATER_REFLECT;
     case GfxWaterMode::FULL_FAST: return CONF_WATER_FULL_FAST;
     case GfxWaterMode::FULL_HQ  : return CONF_WATER_FULL_HQ;
-    case GfxWaterMode::HYDRAX   : return CONF_WATER_HYDRAX;
     default                     : return "";
-    }
-}
-
-const char* GfxSkyModeToStr(GfxSkyMode v)
-{
-    switch(v)
-    {
-    case GfxSkyMode::CAELUM   : return CONF_SKY_CAELUM;
-    case GfxSkyMode::SKYX     : return CONF_SKY_SKYX;
-    case GfxSkyMode::SANDSTORM: return CONF_SKY_SANDSTORM;
-    default                   : return "";
     }
 }
 
@@ -338,10 +314,6 @@ void ParseHelper(CVar* cvar, std::string const & val)
     else if (cvar->getName() == App::gfx_water_mode->getName())
     {
         AssignHelper(App::gfx_water_mode, (int)ParseGfxWaterMode(val));
-    }
-    else if (cvar->getName() == App::gfx_sky_mode->getName())
-    {
-        AssignHelper(App::gfx_sky_mode, (int)ParseGfxSkyMode(val));
     }
     else if (cvar->getName() == App::sim_gearbox_mode->getName())
     {
@@ -422,7 +394,6 @@ void WriteVarsHelper(std::stringstream& f, const char* label, const char* prefix
             else if (pair.second->getName() == App::gfx_vegetation_mode->getName() ){ f << GfxVegetationToStr(App::gfx_vegetation_mode ->getEnum<GfxVegetation>()); }
             else if (pair.second->getName() == App::gfx_flares_mode->getName()     ){ f << GfxFlaresModeToStr(App::gfx_flares_mode     ->getEnum<GfxFlaresMode>()); }
             else if (pair.second->getName() == App::gfx_water_mode->getName()      ){ f << GfxWaterModeToStr (App::gfx_water_mode      ->getEnum<GfxWaterMode>());  }
-            else if (pair.second->getName() == App::gfx_sky_mode->getName()        ){ f << GfxSkyModeToStr   (App::gfx_sky_mode        ->getEnum<GfxSkyMode>());    }
             else if (pair.second->getName() == App::sim_gearbox_mode->getName()    ){ f << SimGearboxModeToStr(App::sim_gearbox_mode->getEnum<SimGearboxMode>());    }
             else if (pair.second->getName() == App::audio_efx_reverb_engine->getName() ) {f << EfxReverbEngineToStr(App::audio_efx_reverb_engine->getEnum<EfxReverbEngine>());}
             else                                                                    { f << pair.second->getStr(); }

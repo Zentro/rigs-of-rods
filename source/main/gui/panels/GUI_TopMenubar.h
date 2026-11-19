@@ -144,7 +144,6 @@ private:
 
     bool    m_confirm_remove_all = false;
 
-    float   m_daytime = 0.f;
     float   m_waves_height;
     bool    m_quickload = false;
     bool    m_terrn_import_started = false;

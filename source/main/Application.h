@@ -62,7 +62,6 @@
 #define TOSTRING(x)     Ogre::StringConverter::toString(x)
 #define PARSEINT(x)     Ogre::StringConverter::parseInt(x)
 #define PARSEREAL(x)    Ogre::StringConverter::parseReal(x)
-#define HydraxLOG(msg)  Ogre::LogManager::getSingleton().logMessage("[Hydrax] " + Ogre::String(msg));
 
 namespace RoR {
 
@@ -413,17 +412,8 @@ enum class GfxWaterMode
     REFLECT,    //!< Reflection
     FULL_FAST,  //!< Reflection + refraction (speed optimized)
     FULL_HQ,    //!< Reflection + refraction (quality optimized)
-    HYDRAX,     //!< HydraX
 };
 std::string ToLocalizedString(GfxWaterMode e);
-
-enum class GfxSkyMode
-{
-    SANDSTORM,  //!< Sandstorm (fastest)
-    CAELUM,     //!< Caelum (best looking, slower)
-    SKYX,       //!< SkyX (best looking, slower)
-};
-std::string ToLocalizedString(GfxSkyMode e);
 
 enum class EfxReverbEngine
 {
@@ -787,9 +777,6 @@ extern CVar* gfx_flares_mode;
 extern CVar* gfx_polygon_mode;
 extern CVar* gfx_shadow_type;
 extern CVar* gfx_extcam_mode;
-extern CVar* gfx_sky_mode;
-extern CVar* gfx_sky_time_cycle;
-extern CVar* gfx_sky_time_speed;
 extern CVar* gfx_texture_filter;
 extern CVar* gfx_vegetation_mode;
 extern CVar* gfx_water_mode;

@@ -33,66 +33,20 @@ set(SOURCE_FILES
         gfx/GfxActor.{h,cpp}
         gfx/GfxData.{h,cpp}
         gfx/GfxScene.{h,cpp}
-        gfx/HydraxWater.{h,cpp}
         gfx/IGfxWater.h
         gfx/MovableText.{h,cpp}
         gfx/ShadowManager.{h,cpp}
         gfx/SimBuffers.{h,cpp}
         gfx/Skidmark.{h,cpp}
-        gfx/SkyManager.{h,cpp}
-        gfx/SkyXManager.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}
         gfx/GfxWater.{h,cpp}
         gfx/camera/CameraManager.{h,cpp}
         gfx/camera/PerVehicleCameraContext.h
-        gfx/hydrax/CfgFileManager.{h,cpp}
-        gfx/hydrax/DecalsManager.{h,cpp}
-        gfx/hydrax/Enums.{h,cpp}
-        gfx/hydrax/FFT.{h,cpp}
-        gfx/hydrax/GodRaysManager.{h,cpp}
-        gfx/hydrax/GPUNormalMapManager.{h,cpp}
-        gfx/hydrax/Help.{h,cpp}
-        gfx/hydrax/Hydrax.{h,cpp}
-        gfx/hydrax/Image.{h,cpp}
-        gfx/hydrax/MaterialManager.{h,cpp}
-        gfx/hydrax/Mesh.{h,cpp}
-        gfx/hydrax/Module.{h,cpp}
-        gfx/hydrax/Noise.{h,cpp}
-        gfx/hydrax/Perlin.{h,cpp}
-        gfx/hydrax/Prerequisites.{h,cpp}
-        gfx/hydrax/PressurePoint.{h,cpp}
-        gfx/hydrax/ProjectedGrid.{h,cpp}
-        gfx/hydrax/RadialGrid.{h,cpp}
-        gfx/hydrax/Real.{h,cpp}
-        gfx/hydrax/RttManager.{h,cpp}
-        gfx/hydrax/SimpleGrid.{h,cpp}
-        gfx/hydrax/TextureManager.{h,cpp}
-        gfx/hydrax/Wave.{h,cpp}
         gfx/particle/ExtinguishableFireAffector.{h,cpp}
         gfx/particle/ExtinguishableFireAffectorFactory.h
         gfx/particle/FireExtinguisherAffector.{h,cpp}
         gfx/particle/FireExtinguisherAffectorFactory.h
         gfx/particle/OgreShaderParticleRenderer.{h,cpp}
-        gfx/skyx/AtmosphereManager.{h,cpp}
-        gfx/skyx/BasicController.{h,cpp}
-        gfx/skyx/CloudsManager.{h,cpp}
-        gfx/skyx/ColorGradient.{h,cpp}
-        gfx/skyx/Controller.h
-        gfx/skyx/GPUManager.{h,cpp}
-        gfx/skyx/MeshManager.{h,cpp}
-        gfx/skyx/MoonManager.{h,cpp}
-        gfx/skyx/Prerequisites.{h,cpp}
-        gfx/skyx/SCfgFileManager.{h,cpp}
-        gfx/skyx/SkyX.{h,cpp}
-        gfx/skyx/VCloudsManager.{h,cpp}
-        gfx/skyx/VClouds/DataManager.{h,cpp}
-        gfx/skyx/VClouds/Ellipsoid.{h,cpp}
-        gfx/skyx/VClouds/FastFakeRandom.{h,cpp}
-        gfx/skyx/VClouds/GeometryBlock.{h,cpp}
-        gfx/skyx/VClouds/GeometryManager.{h,cpp}
-        gfx/skyx/VClouds/Lightning.{h,cpp}
-        gfx/skyx/VClouds/LightningManager.{h,cpp}
-        gfx/skyx/VClouds/VClouds.{h,cpp}
         gui/DashBoardManager.{h,cpp}
         gui/GUIManager.{h,cpp}
         gui/GUIUtils.{h,cpp}
@@ -343,9 +297,7 @@ target_include_directories(${BINNAME} PRIVATE
         gameplay
         gfx
         gfx/camera
-        gfx/hydrax
         gfx/particle
-        gfx/skyx
         gui
         gui/imgui
         gui/mygui
@@ -457,11 +409,6 @@ if (ROR_USE_CURL)
     if (WIN32)
         target_compile_definitions(${BINNAME} PRIVATE WIN32_LEAN_AND_MEAN)
     endif ()
-endif ()
-
-if (ROR_USE_CAELUM)
-    target_link_libraries(${BINNAME} PRIVATE Caelum::Caelum)
-    target_compile_definitions(${BINNAME} PRIVATE USE_CAELUM)
 endif ()
 
 if (ROR_USE_PAGED)

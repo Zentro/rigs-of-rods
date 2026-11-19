@@ -303,18 +303,21 @@ public:
      */
     int getLoadedTerrain(Ogre::String& result);
 
+    /// @deprecated Caelum was removed - always returns false. TODO: remove.
     bool getCaelumAvailable();
 
     /**
      * gets the time of the day in seconds
      * @return string with HH::MM::SS format
      */
+    /// @deprecated Caelum was removed - always returns "". TODO: remove.
     Ogre::String getCaelumTime();
 
     /**
      * sets the time of the day in seconds
      * @param value day time in seconds
      */
+    /// @deprecated Caelum was removed - does nothing. TODO: remove.
     void setCaelumTime(float value);
 
     /**

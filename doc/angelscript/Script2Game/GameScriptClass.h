@@ -387,20 +387,17 @@ public:
 	TerrainClass@ getTerrain();
     
 	/**
-	 * Checks if Caleum is enabled.
-	 * @return true if Caleum is available
+	 * @deprecated Caelum was removed; always returns false. Will be removed.
 	 */
 	bool getCaelumAvailable();
     
 	/**
-	 * gets the time of the day in seconds
-	 * @return string with HH::MM::SS format
+	 * @deprecated Caelum was removed; always returns an empty string. Will be removed.
 	 */
 	string getCaelumTime();
 	
 	/**
-	 * sets the time of the day in seconds
-	 * @param value day time in seconds
+	 * @deprecated Caelum was removed; does nothing. Will be removed.
 	 */
 	void setCaelumTime(float value);
     
