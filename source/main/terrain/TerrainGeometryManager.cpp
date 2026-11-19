@@ -35,7 +35,7 @@
 
 #include <OgreLight.h>
 #include <Terrain/OgreTerrainGroup.h>
-#include <terrain/OgreTerrainMaterialGeneratorA.h>
+#include <Terrain/OgreTerrainMaterialGeneratorA.h>
 #include <OgreRTShaderSystem.h>
 
 using namespace Ogre;

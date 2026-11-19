@@ -60,11 +60,12 @@ function(fast_copy FROM_DIR TO_DIR)
 
         add_custom_command(
                 COMMENT "Copying ${output_file}"
-                OUTPUT ${dest}
-                DEPENDS ${file}
-                COMMAND ${CMAKE_COMMAND} -E copy ${file} ${dest}
+                OUTPUT "${dest}"
+                DEPENDS "${file}"
+                COMMAND ${CMAKE_COMMAND} -E copy "${file}" "${dest}"
+                VERBATIM
         )
-        list(APPEND ALL_FILES ${dest})
+        list(APPEND ALL_FILES "${dest}")
     endforeach ()
 
     add_custom_target(

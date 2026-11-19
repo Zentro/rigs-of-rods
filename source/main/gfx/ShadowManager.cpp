@@ -30,7 +30,6 @@
 #include <Overlay/OgreOverlayContainer.h>
 #include <Overlay/OgreOverlay.h>
 #include <OgreMaterialManager.h>
-#include <RTShaderSystem/OgreRTShaderSystem.h>
 
 using namespace Ogre;
 using namespace RoR;
@@ -97,26 +96,6 @@ void ShadowManager::processPSSM()
 
 }
 
-// from Paroj on Gitter chat:
-// PSSM are woking w/o MSN_SHADERGEN, but only the first split is rendered.
-//the issue is that the RTSS does not call updateGpuProgramsParams if it is not active on that viewport, 
-// so the PSSM splits are stale
-//you can override that **for testing purposes only** like:
-struct RTSSParamsUpdater : public Ogre::RenderObjectListener
-{
-    void notifyRenderSingleObject(Ogre::Renderable* rend, const Ogre::Pass* pass,
-                                  const Ogre::AutoParamDataSource* source,
-                                  const Ogre::LightList* pLightList, bool suppressRenderStateChanges) override
-    {
-        auto userData = pass->getUserObjectBindings().getUserAny(Ogre::RTShader::TargetRenderState::UserKey);
-        if (userData.has_value())
-        {
-            auto renderState = Ogre::any_cast<Ogre::RTShader::TargetRenderStatePtr>(userData);
-            renderState->updateGpuProgramsParams(rend, pass, source, pLightList);
-        }
-    }
-};
-
 void ShadowManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile)
 {
     if (pssmSetup)
@@ -128,8 +107,6 @@ void ShadowManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* 
         App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(false);
 
         App::GetGameContext()->GetTerrain()->getMainLight()->setCastShadows(true);
-
-        App::GetGfxScene()->GetSceneManager()->addRenderObjectListener(new RTSSParamsUpdater());
     }
 }
 

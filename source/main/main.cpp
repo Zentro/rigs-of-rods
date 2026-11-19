@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
         App::GetContentManager()->AddResourcePack("OgreCore");
         App::GetContentManager()->AddResourcePack("caelum");
         App::GetContentManager()->AddResourcePack("hydrax");
-        App::GetContentManager()->AddResourcePack("skyx");
+        App::GetContentManager()->AddResourcePack("SkyX");
         App::GetContentManager()->AddResourcePack("paged");
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");
@@ -227,6 +227,8 @@ int main(int argc, char *argv[])
         auto mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
         mShaderGenerator->setShaderCachePath(App::sys_cache_dir->getStr());
         mShaderGenerator->addSceneManager(App::GetGfxScene()->GetSceneManager());
+
+        App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME); // RTSS scheme
 
         App::CreateGuiManager(); // Needs scene manager
 
