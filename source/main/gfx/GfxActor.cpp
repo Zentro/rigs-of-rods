@@ -336,7 +336,7 @@ void RoR::GfxActor::SetMaterialFlareOn(int flare_index, bool state_on)
         for (int i = 0; i < num_techniques; i++)
         {
             Ogre::Technique* tech = entry.mat_instance->getTechnique(i);
-            if (!tech)
+            if (!tech || tech->getNumPasses() == 0)
                 continue;
 
             if (tech->getSchemeName() == "glow")
@@ -367,9 +367,9 @@ void RoR::GfxActor::SetMaterialFlareOn(int flare_index, bool state_on)
                 if (!p)
                     continue;
 
-                Ogre::TextureUnitState* tus = p->getTextureUnitState(0);
-                if (!tus)
+                if (p->getNumTextureUnitStates() == 0)
                     continue;
+                Ogre::TextureUnitState* tus = p->getTextureUnitState(0);
 
                 if (tus->getNumFrames() < 2)
                     continue;
