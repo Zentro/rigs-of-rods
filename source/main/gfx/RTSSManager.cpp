@@ -240,12 +240,9 @@ void RTSSManager::processPSSM()
     }
 
     // shadow camera setup
-    pssmSetup = new Ogre::PSSMShadowCameraSetup();
+    pssmSetup = new StableCSMShadowCameraSetup();
     pssmSetup->calculateSplitPoints(NUM_SPLITS, App::GetCameraManager()->GetCamera()->getNearClipDistance(), App::GetGfxScene()->GetSceneManager()->getShadowFarDistance());
     pssmSetup->setSplitPadding(App::GetCameraManager()->GetCamera()->getNearClipDistance() * 2);
-    pssmSetup->setOptimalAdjustFactor(0, 2);
-    pssmSetup->setOptimalAdjustFactor(1, 1);
-    pssmSetup->setOptimalAdjustFactor(2, 0.5);
     App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(pssmSetup));
 
     // Log what OGRE actually created - it falls back to other formats silently
@@ -270,4 +267,74 @@ void RTSSManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* ma
     }
 }
 
+void StableCSMShadowCameraSetup::getShadowCamera(const SceneManager* sm, const Camera* cam, const Viewport* vp,
+                                                 const Light* light, Camera* texCam, size_t iteration) const
+{
+    if (light->getType() != Light::LT_DIRECTIONAL)
+    {
+        DefaultShadowCameraSetup::getShadowCamera(sm, cam, vp, light, texCam, iteration);
+        return;
+    }
 
+    // This cascade's slice of the view frustum (with padding, so neighbouring cascades overlap a little)
+    const SplitPointList& splits = this->getSplitPoints();
+    Real nearDist = splits[iteration];
+    Real farDist = splits[iteration + 1];
+    if (iteration > 0)
+        nearDist -= this->getSplitPadding();
+    if (iteration < this->getSplitCount() - 1)
+        farDist += this->getSplitPadding();
+
+    // Bounding sphere of the slice. Its radius only depends on FOV/aspect/split distances, so the shadow map
+    // always covers the same world area - no resizing when the camera turns.
+    const Real tanY = Math::Tan(cam->getFOVy() * 0.5f);
+    const Real tanX = tanY * cam->getAspectRatio();
+    const Real kNear = (tanX * tanX + tanY * tanY) * nearDist * nearDist;
+    const Real kFar = (tanX * tanX + tanY * tanY) * farDist * farDist;
+    // Centre on the view axis at the distance `z` that minimizes the radius
+    Real z = (farDist * farDist - nearDist * nearDist + kFar - kNear) / (2.f * (farDist - nearDist));
+    z = Math::Clamp(z, nearDist, farDist);
+    Real radius = Math::Sqrt(std::max((farDist - z) * (farDist - z) + kFar, (z - nearDist) * (z - nearDist) + kNear));
+    radius = Math::Ceil(radius * 16.f) / 16.f; // Quantize against float noise
+
+    Vector3 center = cam->getDerivedPosition() + cam->getDerivedDirection() * z;
+
+    // Light-space basis; the shadow camera looks along the light direction
+    const Vector3 dir = light->getDerivedDirection().normalisedCopy();
+    const Vector3 up = (Math::Abs(dir.dotProduct(Vector3::UNIT_Y)) > 0.99f) ? Vector3::UNIT_Z : Vector3::UNIT_Y;
+    const Matrix3 rot = Math::lookRotation(-dir, up);
+
+    // Snap the centre to whole shadow texels in light space, so texels don't crawl over the ground as the camera moves
+    const auto& configs = sm->getShadowTextureConfigList();
+    const Real texSize = (iteration < configs.size()) ? (Real)configs[iteration].width : 1024.f;
+    const Real texel = (2.f * radius) / texSize;
+    Vector3 ls = rot.transpose() * center;
+    ls.x = Math::Floor(ls.x / texel) * texel;
+    ls.y = Math::Floor(ls.y / texel) * texel;
+    center = rot * ls;
+
+    // Pull the camera back towards the light so casters outside the slice (hills, tall buildings) still cast into it
+    const Real backoff = radius + 500.f;
+
+    texCam->setCustomViewMatrix(false);
+    texCam->setCustomProjectionMatrix(false);
+    texCam->setProjectionType(PT_ORTHOGRAPHIC);
+    texCam->setOrthoWindow(2.f * radius, 2.f * radius);
+    texCam->setNearClipDistance(1.f);
+    texCam->setFarClipDistance(backoff + radius);
+    texCam->getParentNode()->setPosition(center - dir * backoff);
+    texCam->getParentNode()->setOrientation(rot);
+
+    // OGRE finds the casters with a separate culling camera that shares texCam's node. DefaultShadowCameraSetup
+    // gives it a box of twice the light's shadow far distance around the camera - the same for every cascade,
+    // so each cascade drew every caster in range. Give it this cascade's own projection instead.
+    if (Camera* cullCam = dynamic_cast<Camera*>(texCam->getCullingFrustum()))
+    {
+        cullCam->setCustomViewMatrix(false);
+        cullCam->setCustomProjectionMatrix(false);
+        cullCam->setProjectionType(PT_ORTHOGRAPHIC);
+        cullCam->setOrthoWindow(2.f * radius, 2.f * radius);
+        cullCam->setNearClipDistance(1.f);
+        cullCam->setFarClipDistance(backoff + radius);
+    }
+}
