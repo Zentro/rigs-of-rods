@@ -447,7 +447,6 @@ void GameSettings::DrawGraphicsSettings()
 
     DrawGCheckbox(App::gfx_enable_videocams, _LC("GameSettings", "Render video cameras"));
     DrawGCheckbox(App::gfx_water_waves,      _LC("GameSettings", "Waves on water"));
-    DrawGCheckbox(App::gfx_alt_actor_materials,      _LC("GameSettings", "Use alternate vehicle materials"));
 
     DrawGCombo(App::gfx_extcam_mode, "Exterior camera mode",
         m_combo_items_extcam_mode.c_str());

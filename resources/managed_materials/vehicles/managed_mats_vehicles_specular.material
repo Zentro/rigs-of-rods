@@ -1,3 +1,4 @@
+import * from "shadows.material"
 import * from "texture_manager.material"
 
 
@@ -41,21 +42,6 @@ material managed/flexmesh_standard/speculardamage
 		pass SpecularMapping1: Texture/managed/SpecularMapping
 		{
 
-		}
-	}
-}
-
-
-material managed/mesh_standard/simple
-{
-	technique BaseTechnique
-	{
-		pass BaseRender
-		{
-			texture_unit Diffuse_Map
-			{
-                texture FilledAtSpawn
-			}
 		}
 	}
 }
