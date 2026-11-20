@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME); // RTSS scheme
         RTSSManager::InstallTechniqueResolver(); // RTSS shades all classic materials, not only those with `rtshader_system`
-        RTSSManager::InstallShadowCasterRules(); // Invisible and see-through materials cast no shadow
+        RTSSManager::InstallMaterialRules(); // Cg rescue; invisible and see-through materials cast no shadow
 
         App::CreateGuiManager(); // Needs scene manager
 

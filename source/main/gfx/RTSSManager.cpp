@@ -33,6 +33,7 @@
 #include <Bites/OgreSGTechniqueResolverListener.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
 
+#include <regex>
 #include <unordered_set>
 
 using namespace Ogre;
@@ -67,24 +68,71 @@ bool IsShadowCasterMaterial(const Ogre::Material* mat)
     return mat->getName() == "Ogre/TextureShadowCaster" || mat->getName() == NO_SHADOW_CASTER_MAT;
 }
 
-/// Resource group listener: applies the shadow caster rules to every material of a newly parsed group
-class ShadowCasterRulesListener: public Ogre::ResourceGroupListener
+/// Applies the material rules (Cg rescue, shadow casters) to all materials of a group, or all materials if empty
+void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
+{
+    int rescued = 0, no_caster = 0;
+    auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
+    while (it.hasMoreElements())
+    {
+        Ogre::MaterialPtr mat = Ogre::static_pointer_cast<Ogre::Material>(it.getNext());
+        if (!groupName.empty() && mat->getGroup() != groupName)
+            continue;
+        if (RTSSManager::RescueMaterial(*mat))
+            rescued++;
+        if (RTSSManager::SetupShadowCaster(*mat))
+            no_caster++;
+    }
+    if (rescued > 0)
+        LOG(fmt::format("[RoR|Cg rescue] {} materials in {} have no runnable shaders, using fallbacks", rescued, what));
+    if (no_caster > 0)
+        LOG(fmt::format("[RoR|Shadows] {} invisible/see-through materials in {} cast no shadow", no_caster, what));
+}
+
+/// Resource group listener: applies the material rules to every material of a newly parsed group
+class MaterialRulesListener: public Ogre::ResourceGroupListener
 {
 public:
     void resourceGroupScriptingEnded(const Ogre::String& groupName) override
     {
-        int count = 0;
-        auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
-        while (it.hasMoreElements())
-        {
-            Ogre::MaterialPtr mat = Ogre::static_pointer_cast<Ogre::Material>(it.getNext());
-            if (mat->getGroup() == groupName && RTSSManager::SetupShadowCaster(*mat))
-                count++;
-        }
-        if (count > 0)
-            LOG(fmt::format("[RoR|Shadows] {} invisible/see-through materials in group '{}' cast no shadow", count, groupName));
+        ApplyMaterialRules(groupName, fmt::format("group '{}'", groupName));
     }
 };
+
+/// Whether any pass of the technique has a shader that can't run (unsupported language, e.g. Cg without plugin)
+bool HasUnrunnableShaders(const Ogre::Technique* tech)
+{
+    const Ogre::GpuProgramType types[] = { Ogre::GPT_VERTEX_PROGRAM, Ogre::GPT_FRAGMENT_PROGRAM,
+        Ogre::GPT_GEOMETRY_PROGRAM, Ogre::GPT_DOMAIN_PROGRAM, Ogre::GPT_HULL_PROGRAM };
+    for (const Ogre::Pass* pass : tech->getPasses())
+    {
+        for (Ogre::GpuProgramType type : types)
+        {
+            if (pass->hasGpuProgram(type) && !pass->getGpuProgram(type)->isSupported())
+                return true;
+        }
+    }
+    return false;
+}
+
+/// Picks the texture unit most likely to hold the colour (diffuse) texture: the first 2D texture whose name
+/// doesn't suggest data (specular, normal, environment, damage, masks...); otherwise the first 2D texture.
+Ogre::TextureUnitState* FindDiffuseUnit(Ogre::Pass* pass)
+{
+    static const std::regex data_hint("spec|_s\\.|normal|_n\\.|_nm|bump|env|cube|refl|dmg|damage|mask|_ao|occl|noise",
+        std::regex::icase);
+    Ogre::TextureUnitState* first_2d = nullptr;
+    for (Ogre::TextureUnitState* tus : pass->getTextureUnitStates())
+    {
+        if (tus->getTextureType() != Ogre::TEX_TYPE_2D || tus->getTextureName().empty())
+            continue;
+        if (!first_2d)
+            first_2d = tus;
+        if (!std::regex_search(tus->getTextureName(), data_hint))
+            return tus;
+    }
+    return first_2d;
+}
 
 /// OGRE asks this listener whenever it needs a material's technique for a scheme the material has none for.
 /// For the RTSS scheme, the base class asks RTSS to generate one from the material's 'Default' technique.
@@ -256,20 +304,62 @@ bool RTSSManager::SetupShadowCaster(Ogre::Material& mat)
     return changed;
 }
 
-void RTSSManager::InstallShadowCasterRules()
+void RTSSManager::InstallMaterialRules()
 {
-    static ShadowCasterRulesListener listener;
+    static MaterialRulesListener listener;
     Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener(&listener);
 
     // Groups parsed before this point (RoR's own resource packs)
-    int count = 0;
-    auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
-    while (it.hasMoreElements())
+    ApplyMaterialRules("", "RoR's resource packs");
+}
+
+bool RTSSManager::RescueMaterial(Ogre::Material& mat)
+{
+    const Ogre::Technique* src = nullptr;
+    for (const Ogre::Technique* tech : mat.getTechniques())
     {
-        if (SetupShadowCaster(*Ogre::static_pointer_cast<Ogre::Material>(it.getNext())))
-            count++;
+        if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME || tech->getNumPasses() == 0)
+            continue;
+        if (!HasUnrunnableShaders(tech))
+            return false; // Something can run - nothing to rescue
+        if (!src)
+            src = tech;
     }
-    LOG(fmt::format("[RoR|Shadows] {} invisible/see-through materials in RoR's resource packs cast no shadow", count));
+    if (!src)
+        return false;
+
+    // Copy of the first technique, without shaders. Extra passes (specular/reflection passes written for the
+    // shaders) would only add odd layers without them - keep the first.
+    Ogre::Technique* tech = mat.createTechnique();
+    *tech = *src;
+    tech->setName("RoR/CgRescue");
+    while (tech->getNumPasses() > 1)
+        tech->removePass(1);
+    Ogre::Pass* pass = tech->getPass(0);
+    const Ogre::GpuProgramType types[] = { Ogre::GPT_VERTEX_PROGRAM, Ogre::GPT_FRAGMENT_PROGRAM,
+        Ogre::GPT_GEOMETRY_PROGRAM, Ogre::GPT_DOMAIN_PROGRAM, Ogre::GPT_HULL_PROGRAM };
+    for (Ogre::GpuProgramType type : types)
+    {
+        if (pass->hasGpuProgram(type))
+            pass->setGpuProgram(type, Ogre::GpuProgramPtr());
+    }
+
+    // Keep only the colour texture; the others (specular, normal, environment...) were inputs for the shaders
+    Ogre::TextureUnitState* diffuse = FindDiffuseUnit(pass);
+    for (int i = (int)pass->getNumTextureUnitStates() - 1; i >= 0; i--)
+    {
+        if (pass->getTextureUnitState(i) != diffuse)
+            pass->removeTextureUnitState(i);
+    }
+    if (diffuse)
+    {
+        diffuse->setColourOperation(Ogre::LBO_MODULATE);
+        diffuse->setTextureCoordSet(0);
+    }
+
+    LOG(fmt::format("[RoR|Cg rescue] Material '{}' (group '{}'): no runnable shaders, using its texture '{}'",
+        mat.getName(), mat.getGroup(), diffuse ? diffuse->getTextureName() : "(none)"));
+    return true;
 }
 
 void RTSSManager::RefreshMaterial(Ogre::Material& mat)

@@ -69,11 +69,20 @@ public:
     /// generates the technique (before the first draw); changes made after that are only picked up by this.
     static void RefreshMaterial(Ogre::Material& mat);
 
+    /// Applies RescueMaterial() and SetupShadowCaster() to every material now and to every resource group parsed
+    /// later (terrains, vehicles, mods). Call once, after the technique resolver is installed.
+    static void InstallMaterialRules();
+
+    /// Cg rescue: if none of a material's techniques can run (shaders in a language without a plugin, e.g. Cg),
+    /// adds a fallback technique - a copy of the first one without shaders, keeping only the diffuse texture -
+    /// which the technique resolver then shades like any classic material. Mod files are not changed; this only
+    /// adds a technique to the loaded material.
+    /// @return True if a fallback was added.
+    static bool RescueMaterial(Ogre::Material& mat);
+
     /// Shadow caster rules: invisible materials (`colour_write off`) and see-through ones (blended, no depth
-    /// write - e.g. headlight beam cones) cast no shadow. Applied to every material now and to every resource group
-    /// parsed later. (Alpha-tested materials keep their cut-out shapes through OGRE's own caster, see resolver.)
-    /// Call once, after the technique resolver is installed.
-    static void InstallShadowCasterRules();
+    /// write - e.g. headlight beam cones) cast no shadow. (Alpha-tested materials keep their cut-out shapes
+    /// through OGRE's own caster, see the technique resolver.)
 
     /// Applies the shadow caster rules (see InstallShadowCasterRules()) to one material.
     /// @return True if the material was set to cast no shadow.
