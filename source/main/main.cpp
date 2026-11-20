@@ -52,6 +52,7 @@
 #include "OverlayWrapper.h"
 #include "PlatformUtils.h"
 #include "RoRVersion.h"
+#include "RTSSManager.h"
 #include "ScriptEngine.h"
 #include "ServerScriptEngine.h"
 #include "Skidmark.h"
@@ -220,6 +221,7 @@ int main(int argc, char *argv[])
         mShaderGenerator->addSceneManager(App::GetGfxScene()->GetSceneManager());
 
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME); // RTSS scheme
+        RTSSManager::InstallTechniqueResolver(); // RTSS shades all classic materials, not only those with `rtshader_system`
 
         App::CreateGuiManager(); // Needs scene manager
 

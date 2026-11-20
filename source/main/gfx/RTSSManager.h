@@ -38,6 +38,12 @@ class RTSSManager
 {
 public:
 
+    /// Makes RTSS shade every classic (fixed-function style) material, not only the ones with an
+    /// `rtshader_system` block in their script: whenever OGRE needs a material's technique for the
+    /// RTSS scheme and there is none, one is generated. Materials with their own shaders are left alone.
+    /// Call once, after RTSS is initialized.
+    static void InstallTechniqueResolver();
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 

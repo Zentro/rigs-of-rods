@@ -30,9 +30,110 @@
 #include <Overlay/OgreOverlayContainer.h>
 #include <Overlay/OgreOverlay.h>
 #include <OgreMaterialManager.h>
+#include <Bites/OgreSGTechniqueResolverListener.h>
+#include <RTShaderSystem/OgreRTShaderSystem.h>
+
+#include <unordered_set>
 
 using namespace Ogre;
 using namespace RoR;
+
+namespace {
+
+/// OGRE asks this listener whenever it needs a material's technique for a scheme the material has none for.
+/// For the RTSS scheme, the base class asks RTSS to generate one from the material's 'Default' technique.
+class RoRTechniqueResolver: public OgreBites::SGTechniqueResolverListener
+{
+public:
+    using SGTechniqueResolverListener::SGTechniqueResolverListener;
+
+    Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex, const Ogre::String& schemeName,
+        Ogre::Material* mat, unsigned short lodIndex, const Ogre::Renderable* rend) override
+    {
+        if (schemeName != RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+            return nullptr;
+
+        // Materials with their own shaders (GLSL, HLSL, Cg) keep them: RTSS would replace or break them
+        // (on gfx-rtss this broke sky boxes and shadow casting). Returning null = OGRE uses the material's
+        // normal technique, exactly as before.
+        if (HasOwnShaders(mat))
+            return nullptr;
+
+        const std::string key = mat->getGroup() + "/" + mat->getName();
+        if (m_failed.count(key))
+            return nullptr;
+
+        if (IsBillboard(rend))
+            UseVertexColourIfUnlit(mat);
+
+        Ogre::Technique* tech = SGTechniqueResolverListener::handleSchemeNotFound(schemeIndex, schemeName, mat, lodIndex, rend);
+
+        // RTSS can register a technique and then fail to generate shaders for it. An empty or shader-less
+        // technique would be drawn wrong or crash code that expects passes (see GfxActor::SetMaterialFlareOn),
+        // so drop it and let OGRE use the normal technique. Remembered, otherwise this repeats every frame.
+        if (tech && (tech->getNumPasses() == 0 || !tech->getPass(0)->isProgrammable()))
+        {
+            RTShader::ShaderGenerator::getSingleton().removeAllShaderBasedTechniques(*mat);
+            tech = nullptr;
+        }
+        if (!tech)
+        {
+            m_failed.insert(key);
+            LOG(fmt::format("[RoR|RTSS] Could not generate a technique for material '{}' (group '{}'), using its own",
+                mat->getName(), mat->getGroup()));
+        }
+        return tech;
+    }
+
+private:
+    /// Particles, flares, beacons and ribbon trails are drawn as billboards (sets or chains).
+    static bool IsBillboard(const Ogre::Renderable* rend)
+    {
+        return dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend);
+    }
+
+    /// Billboards carry their colour and fade-out alpha in the vertex colour. Fixed function uses it on
+    /// unlit passes by itself; RTSS only if the pass asks for it (`diffuse vertexcolour`), otherwise every
+    /// particle is drawn full white and opaque. Billboards always have vertex colours, so this is safe for them.
+    static void UseVertexColourIfUnlit(Ogre::Material* mat)
+    {
+        for (Ogre::Technique* tech : mat->getTechniques())
+        {
+            if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+                continue;
+            for (Ogre::Pass* pass : tech->getPasses())
+            {
+                if (!pass->getLightingEnabled() && pass->getVertexColourTracking() == Ogre::TVC_NONE)
+                    pass->setVertexColourTracking(Ogre::TVC_DIFFUSE);
+            }
+        }
+    }
+
+    static bool HasOwnShaders(const Ogre::Material* mat)
+    {
+        for (const Ogre::Technique* tech : mat->getTechniques())
+        {
+            if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+                continue; // e.g. techniques RTSS or other systems added
+            for (const Ogre::Pass* pass : tech->getPasses())
+            {
+                if (pass->isProgrammable())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    std::unordered_set<std::string> m_failed; //!< "group/name" of materials RTSS couldn't handle
+};
+
+} // namespace
+
+void RTSSManager::InstallTechniqueResolver()
+{
+    static RoRTechniqueResolver resolver(RTShader::ShaderGenerator::getSingletonPtr());
+    Ogre::MaterialManager::getSingleton().addListener(&resolver);
+}
 
 
 void RTSSManager::setupShadows()
