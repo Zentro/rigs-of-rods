@@ -34,6 +34,18 @@ namespace RoR {
 /// @addtogroup Gfx
 /// @{
 
+/// PSSM with stable cascades. OGRE's PSSMShadowCameraSetup (LiSPSM/"focused") fits each shadow camera to the
+/// bounding boxes of what's currently visible and warps it by the view direction - with few objects in view the
+/// shadow cameras jump as the camera turns, and shadows get clipped away. Here each cascade is a fixed-size,
+/// unwarped orthographic view around its slice of the camera frustum, snapped to whole shadow texels: turning
+/// or moving the camera only shifts it smoothly. Costs some resolution compared to a tight fit.
+class StableCSMShadowCameraSetup: public Ogre::PSSMShadowCameraSetup
+{
+public:
+    void getShadowCamera(const Ogre::SceneManager* sm, const Ogre::Camera* cam, const Ogre::Viewport* vp,
+                         const Ogre::Light* light, Ogre::Camera* texCam, size_t iteration) const override;
+};
+
 class RTSSManager
 {
 public:
