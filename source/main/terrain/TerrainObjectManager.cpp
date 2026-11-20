@@ -45,7 +45,7 @@
 #include "TObjFileFormat.h"
 #include "Utils.h"
 #include "WriteTextToTexture.h"
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 
 #include <RTShaderSystem/OgreRTShaderSystem.h>
 #include <Overlay/OgreFontManager.h>

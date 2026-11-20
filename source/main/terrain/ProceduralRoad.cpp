@@ -27,7 +27,7 @@
 #include "GameContext.h"
 #include "GfxScene.h"
 #include "Terrain.h"
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 
 #include <Ogre.h>
 

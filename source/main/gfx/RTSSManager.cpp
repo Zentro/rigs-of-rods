@@ -18,7 +18,7 @@
     along with Rigs of Rods. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 
 #include "Actor.h"
 #include "CameraManager.h"
@@ -35,7 +35,7 @@ using namespace Ogre;
 using namespace RoR;
 
 
-void ShadowManager::setupShadows()
+void RTSSManager::setupShadows()
 {
     if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::NONE)
         return;
@@ -43,7 +43,7 @@ void ShadowManager::setupShadows()
     this->processPSSM();
 }
 
-void ShadowManager::processPSSM()
+void RTSSManager::processPSSM()
 {
     const int NUM_SHADOW_TEXTURES = 3;
     const int NUM_SPLITS = 3;
@@ -96,7 +96,7 @@ void ShadowManager::processPSSM()
 
 }
 
-void ShadowManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile)
+void RTSSManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile)
 {
     if (pssmSetup)
     {

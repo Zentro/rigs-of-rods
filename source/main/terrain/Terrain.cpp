@@ -32,7 +32,7 @@
 #include "GUI_SurveyMap.h"
 #include "Language.h"
 #include "ScriptEngine.h"
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
 #include "Terrn2FileFormat.h"
@@ -51,7 +51,7 @@ RoR::Terrain::Terrain(CacheEntryPtr entry, Terrn2DocumentPtr def)
     : m_collisions(0)
     , m_geometry_manager(0)
     , m_object_manager(0)
-    , m_shadow_manager(0)
+    , m_rtss_manager(0)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
     , m_cur_gravity(DEFAULT_GRAVITY)
@@ -96,10 +96,10 @@ void RoR::Terrain::dispose()
         m_geometry_manager = nullptr;
     }
 
-    if (m_shadow_manager != nullptr)
+    if (m_rtss_manager != nullptr)
     {
-        delete(m_shadow_manager);
-        m_shadow_manager = nullptr;
+        delete(m_rtss_manager);
+        m_rtss_manager = nullptr;
     }
 
     if (m_collisions != nullptr)
@@ -319,8 +319,8 @@ void RoR::Terrain::initWater()
 
 void RoR::Terrain::initShadows()
 {
-    m_shadow_manager = new ShadowManager();
-    m_shadow_manager->setupShadows();
+    m_rtss_manager = new RTSSManager();
+    m_rtss_manager->setupShadows();
 }
 
 void RoR::Terrain::loadTerrainObjects()
