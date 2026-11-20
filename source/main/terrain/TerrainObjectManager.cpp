@@ -335,8 +335,11 @@ void TerrainObjectManager::ProcessTree(
     if (max < 10)
         max = 10;
 
-    // Check if farther details level is greater than closer
-    if (max / 10 > min / 2)
+    // PagedGeometry requires each detail level to reach farther than the previous one
+    // (low vegetation settings can clamp both to 10). Note: this used to compare the fade lengths
+    // (max/10 > min/2, i.e. max > 5*min), which dropped the impostors on most terrains (e.g. Auriga:
+    // 250/1200) - trees then vanished past the near range.
+    if (max > min)
     {
         geom->addDetailLevel<ImpostorPage>(max, max / 10);
     }
