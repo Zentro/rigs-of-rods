@@ -2,19 +2,22 @@
 // Distortion effects
 //----------------------------
 
-vertex_program Examples/FresnelRefractReflectVP cg
+// Written with OgreUnifiedShader.h: one source for GLSL, GLSL ES and HLSL (D3D11)
+vertex_program Examples/FresnelRefractReflectVP glsl glsles hlsl
 {
-	source Example_Fresnel.cg
-	entry_point main_vp
-	profiles vs_1_1 arbvp1
+	source Example_FresnelVp.glsl
 }
 
-fragment_program Examples/FresnelRefractReflectFP cg
+fragment_program Examples/FresnelRefractReflectFP glsl glsles hlsl
 {
-	source Example_Fresnel.cg
-	entry_point main_fp
-	// sorry, ps_1_1 and fp20 can't do this
-	profiles ps_2_0 arbfp1
+	source Example_FresnelFp.glsl
+	default_params
+	{
+		// sampler units, needed by GLSL versions without layout(binding)
+		param_named noiseMap int 0
+		param_named reflectMap int 1
+		param_named refractMap int 2
+	}
 }
 
 material Examples/FresnelReflectionRefraction
@@ -141,12 +144,14 @@ material Examples/FresnelReflectionRefractioninverted
 
 }
 
-fragment_program Examples/ReflectFP cg
+fragment_program Examples/ReflectFP glsl glsles hlsl
 {
-	source Example_Fresnel.cg
-	entry_point main_simplerfp
-	// sorry, ps_1_1 and fp20 can't do this
-	profiles ps_2_0 arbfp1
+	source Example_ReflectFp.glsl
+	default_params
+	{
+		param_named noiseMap int 0
+		param_named reflectMap int 1
+	}
 }
 
 material Examples/FresnelReflection

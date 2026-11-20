@@ -1561,6 +1561,10 @@ void CacheSystem::LoadResource(CacheEntryPtr& entry)
     //   otherwise material links are unresolved and loading ends with an exception
     App::GetContentManager()->InitBaseManagedMaterials(group);
 
+    // Shader include files (OgreUnifiedShader.h...) - bundle groups aren't in the global pool,
+    // so programs defined inside a bundle (or in game files loaded into it) can't see them otherwise.
+    App::GetContentManager()->AddResourcePack("shaderinc", group);
+
     // Make "FileSystem" (directory) bundles writable (Default is read-only), except if it's a root directory.
     // See explanation of `readOnly` OGRE flag in `ContentManager::InitModCache()`.
     const bool readonly = entry->resource_bundle_type == "Zip" || this->IsPathContentDirRoot(entry->resource_bundle_path);
