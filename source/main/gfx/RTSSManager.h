@@ -69,6 +69,16 @@ public:
     /// generates the technique (before the first draw); changes made after that are only picked up by this.
     static void RefreshMaterial(Ogre::Material& mat);
 
+    /// Shadow caster rules: invisible materials (`colour_write off`) and see-through ones (blended, no depth
+    /// write - e.g. headlight beam cones) cast no shadow. Applied to every material now and to every resource group
+    /// parsed later. (Alpha-tested materials keep their cut-out shapes through OGRE's own caster, see resolver.)
+    /// Call once, after the technique resolver is installed.
+    static void InstallShadowCasterRules();
+
+    /// Applies the shadow caster rules (see InstallShadowCasterRules()) to one material.
+    /// @return True if the material was set to cast no shadow.
+    static bool SetupShadowCaster(Ogre::Material& mat);
+
     static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
 
     ~RTSSManager();
