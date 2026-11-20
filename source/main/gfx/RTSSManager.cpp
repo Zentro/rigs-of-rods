@@ -216,8 +216,10 @@ void RTSSManager::processPSSM()
     sm->setShadowDirLightTextureOffset(0);
     sm->setShadowFarDistance(shadow_distance);
     sm->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, NUM_CASCADES);
-    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, NUM_CASCADES);
-    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, NUM_CASCADES);
+    // Only the sun casts shadows: other light types must not reserve shadow textures, so the sun's cascades
+    // always stay in texture slots 0..NUM_CASCADES-1 whatever lights are around.
+    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, 0);
+    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, 0);
     sm->setShadowTextureCount(NUM_CASCADES);
 
     // Casters may shadow themselves (vehicle roof onto trunk, mirrors, wheel arches ...)
