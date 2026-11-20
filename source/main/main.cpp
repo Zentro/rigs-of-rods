@@ -225,6 +225,7 @@ int main(int argc, char *argv[])
         RTSSManager::InstallTechniqueResolver(); // RTSS shades all classic materials, not only those with `rtshader_system`
         RTSSManager::InstallMaterialRules(); // Cg rescue; invisible and see-through materials cast no shadow
         RTSSManager::InstallSubRenderStates(); // 'RoR/NiceMetal' vehicle shading
+        RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
 
         App::CreateGuiManager(); // Needs scene manager
 
@@ -2309,10 +2310,19 @@ int main(int argc, char *argv[])
             }
             else
             {
-                App::GetAppContext()->GetOgreRoot()->renderOneFrame();
-                if (!render_window->isActive() && render_window->isVisible())
+                try
                 {
-                    render_window->update(); // update even when in background !
+                    App::GetAppContext()->GetOgreRoot()->renderOneFrame();
+                    if (!render_window->isActive() && render_window->isVisible())
+                    {
+                        render_window->update(); // update even when in background !
+                    }
+                }
+                catch (...)
+                {
+                    // E.g. a shader that fails to compile on this GPU: log it and quit properly instead of crashing.
+                    HandleGenericException("Main: rendering a frame");
+                    App::GetGameContext()->PushMessage(Message(MSG_APP_SHUTDOWN_REQUESTED));
                 }
             } // Render block
 

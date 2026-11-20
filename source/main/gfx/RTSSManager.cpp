@@ -262,6 +262,18 @@ void RTSSManager::InstallTechniqueResolver()
     Ogre::MaterialManager::getSingleton().addListener(&resolver);
 }
 
+void RTSSManager::LimitLightCount()
+{
+    // RTSS sizes its light arrays from the number of lights in the frustum, which is unbounded - one vehicle's
+    // flares alone push it past 70. OGRE never binds more than OGRE_MAX_SIMULTANEOUS_LIGHTS to a pass, so
+    // everything above that is dead weight: on D3D9 the oversized arrays overrun the ps_3_0 constant register
+    // budget and the shader fails to assemble; elsewhere it costs shader time and causes shader rebuilds
+    // whenever the number of visible lights changes.
+    RTShader::RenderState* scheme_render_state = RTShader::ShaderGenerator::getSingleton().getRenderState(MSN_SHADERGEN);
+    scheme_render_state->setLightCountAutoUpdate(false);
+    scheme_render_state->setLightCount(OGRE_MAX_SIMULTANEOUS_LIGHTS);
+}
+
 void RTSSManager::InstallSubRenderStates()
 {
     // Deliberately never deleted: RTSS keeps the factory for the rest of the process, and RoR never shuts
