@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
         // Use 'General' group (aka RGN_DEFAULT)
         App::GetContentManager()->AddResourcePack("fonts");
         App::GetContentManager()->AddResourcePack("OgreCore");
+        App::GetContentManager()->AddResourcePack("shaderinc"); // OgreUnifiedShader.h & co, see CacheSystem::LoadResource()
         App::GetContentManager()->AddResourcePack("paged");
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");
