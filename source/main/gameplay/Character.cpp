@@ -31,6 +31,7 @@
 #include "InputEngine.h"
 #include "MovableText.h"
 #include "Network.h"
+#include "RTSSManager.h"
 #include "Terrain.h"
 #include "Utils.h"
 #include "GfxWater.h"
@@ -574,7 +575,7 @@ GfxCharacter* Character::SetupGfx()
 
     // setup colour
     MaterialPtr mat1 = MaterialManager::getSingleton().getByName("tracks/character", RGN_DEFAULT);
-    MaterialPtr mat2 = mat1->clone("tracks/" + m_instance_name);
+    MaterialPtr mat2 = RTSSManager::CloneMaterial(mat1, "tracks/" + m_instance_name);
     entity->setMaterialName("tracks/" + m_instance_name);
 
     m_gfx_character = new GfxCharacter();
