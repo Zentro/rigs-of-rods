@@ -44,6 +44,17 @@ public:
     /// Call once, after RTSS is initialized.
     static void InstallTechniqueResolver();
 
+    /// Copies a material and registers the copy with RTSS. A plain `Material::clone()` also copies the
+    /// source's RTSS technique, but not RTSS's bookkeeping for it: RTSS then never generates shaders for
+    /// the copy or updates their per-frame parameters (lights, shadows, view matrix). Use this for every
+    /// material that gets drawn in the 3D scene.
+    /// @param new_group Resource group of the copy; empty = same as the source.
+    static Ogre::MaterialPtr CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group = "");
+
+    /// Makes RTSS rebuild its technique from the material's current passes. RTSS copies the passes when it
+    /// generates the technique (before the first draw); changes made after that are only picked up by this.
+    static void RefreshMaterial(Ogre::Material& mat);
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 

@@ -53,6 +53,12 @@ public:
         if (schemeName != RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
             return nullptr;
 
+        // Re-entry guard: anything below that makes OGRE look up a technique again (e.g. querying an
+        // entity's render operation) would end up here again and recurse until the stack overflows.
+        if (m_busy)
+            return nullptr;
+        struct BusyScope { bool& b; BusyScope(bool& x): b(x) { b = true; } ~BusyScope() { b = false; } } busy(m_busy);
+
         // Materials with their own shaders (GLSL, HLSL, Cg) keep them: RTSS would replace or break them
         // (on gfx-rtss this broke sky boxes and shadow casting). Returning null = OGRE uses the material's
         // normal technique, exactly as before.
@@ -63,7 +69,7 @@ public:
         if (m_failed.count(key))
             return nullptr;
 
-        if (IsBillboard(rend))
+        if (HasVertexColours(rend))
             UseVertexColourIfUnlit(mat);
 
         Ogre::Technique* tech = SGTechniqueResolverListener::handleSchemeNotFound(schemeIndex, schemeName, mat, lodIndex, rend);
@@ -86,15 +92,34 @@ public:
     }
 
 private:
-    /// Particles, flares, beacons and ribbon trails are drawn as billboards (sets or chains).
-    static bool IsBillboard(const Ogre::Renderable* rend)
+    /// Whether the geometry being drawn has per-vertex colours (particles, flares and other billboards always
+    /// do; some meshes too, e.g. the grid lines of simple2).
+    static bool HasVertexColours(const Ogre::Renderable* rend)
     {
-        return dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend);
+        if (!rend)
+            return false;
+        if (dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend))
+            return true; // Billboards always have vertex colours
+        const Ogre::VertexData* vd = nullptr;
+        if (const Ogre::SubEntity* se = dynamic_cast<const Ogre::SubEntity*>(rend))
+        {
+            // Read the mesh directly: SubEntity::getRenderOperation() looks up the material's technique
+            // (to choose hardware/software animation), which would call this resolver again.
+            const Ogre::SubMesh* sm = se->getSubMesh();
+            vd = sm->useSharedVertices ? sm->parent->sharedVertexData : sm->vertexData;
+        }
+        else
+        {
+            Ogre::RenderOperation op;
+            const_cast<Ogre::Renderable*>(rend)->getRenderOperation(op);
+            vd = op.vertexData;
+        }
+        return vd && vd->vertexDeclaration && vd->vertexDeclaration->findElementBySemantic(Ogre::VES_DIFFUSE);
     }
 
-    /// Billboards carry their colour and fade-out alpha in the vertex colour. Fixed function uses it on
-    /// unlit passes by itself; RTSS only if the pass asks for it (`diffuse vertexcolour`), otherwise every
-    /// particle is drawn full white and opaque. Billboards always have vertex colours, so this is safe for them.
+    /// Fixed function uses the vertex colour on unlit passes by itself; RTSS only if the pass asks for it
+    /// (`diffuse vertexcolour`). Without it, particles (colour and fade-out are vertex colours) are drawn
+    /// full white and opaque, vertex-coloured lines white. Only called for geometry that has vertex colours.
     static void UseVertexColourIfUnlit(Ogre::Material* mat)
     {
         for (Ogre::Technique* tech : mat->getTechniques())
@@ -125,6 +150,7 @@ private:
     }
 
     std::unordered_set<std::string> m_failed; //!< "group/name" of materials RTSS couldn't handle
+    bool m_busy = false; //!< Inside handleSchemeNotFound()
 };
 
 } // namespace
@@ -133,6 +159,23 @@ void RTSSManager::InstallTechniqueResolver()
 {
     static RoRTechniqueResolver resolver(RTShader::ShaderGenerator::getSingletonPtr());
     Ogre::MaterialManager::getSingleton().addListener(&resolver);
+}
+
+Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group)
+{
+    Ogre::MaterialPtr dst = src->clone(new_name, new_group);
+    // Removes the RTSS technique `clone()` copied and creates a registered one with the same render state
+    // (e.g. the `rtshader_system` block of managed materials). If RTSS doesn't know the source (not drawn
+    // yet), nothing is copied and the technique resolver creates one when the copy is first drawn.
+    RTShader::ShaderGenerator::getSingleton().cloneShaderBasedTechniques(*src, *dst);
+    return dst;
+}
+
+void RTSSManager::RefreshMaterial(Ogre::Material& mat)
+{
+    auto& shader_gen = RTShader::ShaderGenerator::getSingleton();
+    shader_gen.invalidateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, mat);
+    shader_gen.validateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, mat);
 }
 
 
