@@ -40,6 +40,52 @@ using namespace RoR;
 
 namespace {
 
+const char* NO_SHADOW_CASTER_MAT = "RoR/NoShadowCaster";
+
+/// Shadow caster that draws nothing (writes neither colour nor depth)
+Ogre::MaterialPtr GetNoShadowCaster()
+{
+    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(NO_SHADOW_CASTER_MAT, Ogre::RGN_DEFAULT);
+    if (!mat)
+    {
+        mat = Ogre::MaterialManager::getSingleton().create(NO_SHADOW_CASTER_MAT, Ogre::RGN_DEFAULT);
+        mat->setReceiveShadows(false);
+        Ogre::Pass* pass = mat->getTechnique(0)->getPass(0);
+        pass->setLightingEnabled(false);
+        pass->setColourWriteEnabled(false);
+        pass->setDepthWriteEnabled(false);
+    }
+    return mat;
+}
+
+/// Materials the resolver must leave to fixed function. OGRE draws shadow casters with the scene's caster
+/// material and, for alpha-tested/alpha-blended objects, copies their textures and alpha test into that
+/// material's pass *per object* (TextureShadowRenderer::deriveShadowCasterPass). An RTSS technique is built
+/// once from that pass and never sees these changes - leaves and fences would cast solid squares.
+bool IsShadowCasterMaterial(const Ogre::Material* mat)
+{
+    return mat->getName() == "Ogre/TextureShadowCaster" || mat->getName() == NO_SHADOW_CASTER_MAT;
+}
+
+/// Resource group listener: applies the shadow caster rules to every material of a newly parsed group
+class ShadowCasterRulesListener: public Ogre::ResourceGroupListener
+{
+public:
+    void resourceGroupScriptingEnded(const Ogre::String& groupName) override
+    {
+        int count = 0;
+        auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
+        while (it.hasMoreElements())
+        {
+            Ogre::MaterialPtr mat = Ogre::static_pointer_cast<Ogre::Material>(it.getNext());
+            if (mat->getGroup() == groupName && RTSSManager::SetupShadowCaster(*mat))
+                count++;
+        }
+        if (count > 0)
+            LOG(fmt::format("[RoR|Shadows] {} invisible/see-through materials in group '{}' cast no shadow", count, groupName));
+    }
+};
+
 /// OGRE asks this listener whenever it needs a material's technique for a scheme the material has none for.
 /// For the RTSS scheme, the base class asks RTSS to generate one from the material's 'Default' technique.
 class RoRTechniqueResolver: public OgreBites::SGTechniqueResolverListener
@@ -59,6 +105,9 @@ public:
             return nullptr;
         struct BusyScope { bool& b; BusyScope(bool& x): b(x) { b = true; } ~BusyScope() { b = false; } } busy(m_busy);
 
+        if (IsShadowCasterMaterial(mat))
+            return nullptr;
+
         // Materials with their own shaders (GLSL, HLSL, Cg) keep them: RTSS would replace or break them
         // (on gfx-rtss this broke sky boxes and shadow casting). Returning null = OGRE uses the material's
         // normal technique, exactly as before.
@@ -71,6 +120,9 @@ public:
 
         if (HasVertexColours(rend))
             UseVertexColourIfUnlit(mat);
+
+        // Materials created in code after loading (RTSS copies the caster setting into its technique)
+        RTSSManager::SetupShadowCaster(*mat);
 
         Ogre::Technique* tech = SGTechniqueResolverListener::handleSchemeNotFound(schemeIndex, schemeName, mat, lodIndex, rend);
 
@@ -169,6 +221,55 @@ Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const
     // yet), nothing is copied and the technique resolver creates one when the copy is first drawn.
     RTShader::ShaderGenerator::getSingleton().cloneShaderBasedTechniques(*src, *dst);
     return dst;
+}
+
+bool RTSSManager::SetupShadowCaster(Ogre::Material& mat)
+{
+    if (IsShadowCasterMaterial(&mat))
+        return false;
+
+    bool changed = false;
+    for (Ogre::Technique* tech : mat.getTechniques())
+    {
+        if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME
+            || tech->getNumPasses() == 0
+            || tech->getShadowCasterMaterial()) // Keep the author's `shadow_caster_material`
+            continue;
+
+        // Invisible: helper geometry (e.g. 'tracks/trans' cab shells). OGRE's caster ignores colour write.
+        bool invisible = true;
+        for (const Ogre::Pass* pass : tech->getPasses())
+            invisible = invisible && !pass->getColourWriteEnabled();
+
+        // See-through: blended without depth write (headlight beam cones, glow planes). Nothing is cut away by
+        // an alpha test, so OGRE's caster would draw their whole shape.
+        const Ogre::Pass* first = tech->getPass(0);
+        const bool see_through = first->isTransparent() && !first->getDepthWriteEnabled()
+            && first->getAlphaRejectFunction() == Ogre::CMPF_ALWAYS_PASS;
+
+        if (invisible || see_through)
+        {
+            tech->setShadowCasterMaterial(GetNoShadowCaster());
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+void RTSSManager::InstallShadowCasterRules()
+{
+    static ShadowCasterRulesListener listener;
+    Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener(&listener);
+
+    // Groups parsed before this point (RoR's own resource packs)
+    int count = 0;
+    auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
+    while (it.hasMoreElements())
+    {
+        if (SetupShadowCaster(*Ogre::static_pointer_cast<Ogre::Material>(it.getNext())))
+            count++;
+    }
+    LOG(fmt::format("[RoR|Shadows] {} invisible/see-through materials in RoR's resource packs cast no shadow", count));
 }
 
 void RTSSManager::RefreshMaterial(Ogre::Material& mat)
