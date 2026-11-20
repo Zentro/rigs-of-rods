@@ -88,6 +88,16 @@ public:
     /// @return True if the material was set to cast no shadow.
     static bool SetupShadowCaster(Ogre::Material& mat);
 
+    /// Registers RoR's own RTSS sub render states (the 'RoR/NiceMetal' vehicle shading). Call once, after RTSS
+    /// is initialized.
+    static void InstallSubRenderStates();
+
+    /// Attaches the vehicle surface shading (NiceMetal: damage/wetness blend, specular-map-masked cubemap
+    /// reflection) to a spawned managed material. Must be called after the spawner has assigned the textures,
+    /// because the shading depends on which texture units are present. `is_flexbody` says whether the mesh
+    /// carries the per-node damage/wetness vertex colours; only flexbodies do.
+    static void ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody);
+
     static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
 
     ~RTSSManager();

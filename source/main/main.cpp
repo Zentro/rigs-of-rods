@@ -224,6 +224,7 @@ int main(int argc, char *argv[])
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME); // RTSS scheme
         RTSSManager::InstallTechniqueResolver(); // RTSS shades all classic materials, not only those with `rtshader_system`
         RTSSManager::InstallMaterialRules(); // Cg rescue; invisible and see-through materials cast no shadow
+        RTSSManager::InstallSubRenderStates(); // 'RoR/NiceMetal' vehicle shading
 
         App::CreateGuiManager(); // Needs scene manager
 

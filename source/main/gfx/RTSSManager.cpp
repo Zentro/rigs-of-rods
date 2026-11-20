@@ -23,6 +23,7 @@
 #include "Actor.h"
 #include "CameraManager.h"
 #include "GfxScene.h"
+#include "RTSSNiceMetal.h"
 
 #include <Ogre.h>
 #include <Terrain/OgreTerrain.h>
@@ -259,6 +260,51 @@ void RTSSManager::InstallTechniqueResolver()
 {
     static RoRTechniqueResolver resolver(RTShader::ShaderGenerator::getSingletonPtr());
     Ogre::MaterialManager::getSingleton().addListener(&resolver);
+}
+
+void RTSSManager::InstallSubRenderStates()
+{
+    // Deliberately never deleted: RTSS keeps the factory for the rest of the process, and RoR never shuts
+    // RTSS down. A `static` object would be destroyed at exit while vehicle materials still hold its
+    // sub render states - OGRE asserts on that ("Sub render states still exists") and the game aborts.
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new NiceMetalSubRenderStateFactory());
+}
+
+void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody)
+{
+    Pass* pass = mat->getTechnique("BaseTechnique")->getPass("BaseRender");
+
+    // A plain diffuse-only material needs nothing special - the regular RTSS shading does the right thing.
+    const bool has_specular = pass->getTextureUnitState("Specular_Map") != nullptr;
+    if (!has_specular && !pass->getTextureUnitState("Dmg_Diffuse_Map"))
+    {
+        return;
+    }
+
+    // The per-pass render state exists only once the material has an RTSS technique. The technique resolver
+    // would only create it at the first draw, so create it now. (Idempotent.)
+    RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
+    shadergen.createShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME, MSN_SHADERGEN);
+    RTShader::RenderState* render_state = shadergen.getRenderState(MSN_SHADERGEN, *mat, 0);
+    if (!render_state)
+    {
+        LOG(fmt::format("[RoR|RTSS] No shader render state for material '{}', leaving it without vehicle shading", mat->getName()));
+        return;
+    }
+
+    // The sub render state samples these itself, so keep FFPTexturing off them. This is also what keeps the
+    // vertex colour out of the lighting stage: it carries damage and wetness flags rather than a colour.
+    for (TextureUnitState* tus : pass->getTextureUnitStates())
+    {
+        RTShader::ShaderGenerator::_markNonFFP(tus);
+    }
+
+    RTShader::SubRenderState* srs = shadergen.createSubRenderState(NiceMetalSubRenderState::Type);
+    srs->setParameter("transparent", transparent ? "true" : "false");
+    srs->setParameter("is_flexbody", is_flexbody ? "true" : "false");
+    render_state->addTemplateSubRenderState(srs);
+
+    shadergen.invalidateMaterial(MSN_SHADERGEN, *mat);
 }
 
 Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group)
