@@ -1,132 +1,56 @@
-vertex_program NiceMetal_VS cg
+// NiceMetal: compatibility placeholders.
+// These programs used to be Cg shaders. Cg is no longer supported, but mods still reference them by name
+// (vertex_program_ref NiceMetal_VS ...). The names must exist: OGRE silently drops references to programs that
+// don't, and the materials then render wrong (e.g. see-through). Declared with OGRE's "null" language they are
+// valid but never runnable, so RoR's Cg rescue (RTSSManager::RescueMaterial) gives those materials a plain
+// textured fallback. "source" is required by the script parser and never read.
+
+vertex_program NiceMetal_VS null
 {
-    source nicemetal.cg
-    entry_point main_nicemetal_vp
-    profiles vs_1_1 arbvp1
-    default_params
-    {
-        param_named_auto worldviewproj worldviewproj_matrix
-        param_named_auto lightPosition light_position_object_space 0
-        param_named_auto eyePosition camera_position_object_space
-    }
+    source none
 }
 
-fragment_program NiceMetal_PS cg
+fragment_program NiceMetal_PS null
 {
-    source nicemetal.cg
-    entry_point main_nicemetal_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
 
-fragment_program NiceMetal_transp_PS cg
+fragment_program NiceMetal_transp_PS null
 {
-    source nicemetal.cg
-    entry_point main_nicemetal_transp_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
 
-fragment_program NiceMetal_PS_nodmg cg
+fragment_program NiceMetal_PS_nodmg null
 {
-    source nicemetal.cg
-    entry_point main_nicemetal_fp_nodmg
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
 
-fragment_program NiceMetal_transp_PS_nodmg cg
+fragment_program NiceMetal_transp_PS_nodmg null
 {
-    source nicemetal.cg
-    entry_point main_nicemetal_fp_nodmg
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
 
-vertex_program NiceMetal_Reflect_VS cg
+vertex_program NiceMetal_Reflect_VS null
 {
-    source nicemetal.cg
-    entry_point reflect_nicemetal_vp
-    profiles vs_1_1 arbvp1
-    default_params
-    {
-	  param_named_auto camPosition camera_position_object_space
-      param_named_auto world world_matrix
-      param_named_auto worldViewProj worldviewproj_matrix
-        //param_named_auto worldviewproj worldviewproj_matrix
-        //param_named_auto eyePositionW camera_position
-        //param_named_auto modelToWorld inverse_transpose_world_matrix
-    }
+    source none
 }
 
-fragment_program NiceMetal_Reflect_PS cg
+fragment_program NiceMetal_Reflect_PS null
 {
-    source nicemetal.cg
-    entry_point reflect_nicemetal_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-    }
+    source none
 }
 
-fragment_program NiceMetal_Reflect_nocolor_PS cg
+fragment_program NiceMetal_Reflect_nocolor_PS null
 {
-    source nicemetal.cg
-    entry_point reflect_nicemetal_nocolor_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-    }
+    source none
 }
 
-fragment_program SimpleMetal_PS cg
+fragment_program SimpleMetal_PS null
 {
-    source nicemetal.cg
-    entry_point main_simplemetal_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
 
-fragment_program SimpleMetal_transp_PS cg
+fragment_program SimpleMetal_transp_PS null
 {
-    source nicemetal.cg
-    entry_point main_simplemetal_transp_fp
-    profiles ps_2_0 arbfp1
-    default_params
-    {
-        param_named_auto lightDiffuse light_diffuse_colour 0
-        param_named_auto lightSpecular light_specular_colour 0
-        param_named exponent float 127
-        param_named_auto ambient ambient_light_colour
-    }
+    source none
 }
