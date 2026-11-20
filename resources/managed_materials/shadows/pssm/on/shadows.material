@@ -5,11 +5,6 @@ abstract technique Shadows/managed/base_receiver
 			ambient 1 1 1 1
 			diffuse 1 1 1 1
 			
-			rtshader_system
-            {
-                shadow_mapping light_count 4 filter pcf16
-            }
-			
 			texture_unit Diffuse_Map
 			{
 				// nothing specified for now, derivers can override

@@ -29,6 +29,8 @@
 #include <OgreTerrainMaterialGeneratorA.h>
 #include "Application.h"
 
+#include <RTShaderSystem/OgreShaderSubRenderState.h>
+
 namespace RoR {
 
 /// @addtogroup Gfx
@@ -67,6 +69,10 @@ public:
     /// generates the technique (before the first draw); changes made after that are only picked up by this.
     static void RefreshMaterial(Ogre::Material& mat);
 
+    static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
+
+    ~RTSSManager();
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 
@@ -75,6 +81,9 @@ public:
 protected:
 
     void processPSSM();
+
+    /// Shadow receiving stage in the RTSS scheme's render state - applies to every material RTSS shades
+    Ogre::RTShader::SubRenderState* m_shadow_srs = nullptr;
 };
 
 /// @} // addtogroup Gfx
