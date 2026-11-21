@@ -61,6 +61,9 @@ public:
 
     void update();
 
+    /// Moves the 'DeflectorPlane' affectors of a particle system (water particle scripts have them at world y=0) to the given height
+    static void SetDeflectorHeight(Ogre::ParticleSystem* ps, float height);
+
 protected:
 
     static const int MAX_DUSTS = 100;
@@ -78,8 +81,11 @@ protected:
     };
 
     Ogre::ColourValue colours[MAX_DUSTS];
-    Ogre::ParticleSystem* pss[MAX_DUSTS];
-    Ogre::SceneNode* sns[MAX_DUSTS];
+    // One particle system per pool with one emitter per slot (was: one particle system per slot - up to 100
+    // systems per pool, each its own renderable/draw call and update). The system sits at the world origin,
+    // the emitters are positioned in world space.
+    Ogre::ParticleSystem* m_ps = nullptr;
+    Ogre::ParticleEmitter* emitters[MAX_DUSTS];
     Ogre::SceneNode* parent_snode;
     Ogre::Vector3 positions[MAX_DUSTS];
     Ogre::Vector3 velocities[MAX_DUSTS]; //!< Velocity in wall time, ignoring the time scale.
