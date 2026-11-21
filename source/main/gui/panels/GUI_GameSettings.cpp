@@ -395,6 +395,14 @@ void GameSettings::DrawGraphicsSettings()
 {
     ImGui::TextDisabled("%s", _LC("GameSettings", "Video settings"));
 
+    DrawGCombo(App::gfx_render_pipeline, _LC("GameSettings", "Render pipeline (requires restart)"),
+        m_combo_items_render_pipeline.c_str());
+    if (App::gfx_render_pipeline->getEnum<GfxRenderPipeline>() == GfxRenderPipeline::PBR)
+    {
+        DrawGCombo(App::gfx_tonemap, _LC("GameSettings", "Tonemapping"), m_combo_items_tonemap.c_str());
+        DrawGFloatSlider(App::gfx_exposure, _LC("GameSettings", "Exposure"), 0.25f, 4.f);
+    }
+
     DrawGCombo(App::gfx_flares_mode, _LC("GameSettings", "Light sources"),
         m_combo_items_light_sources.c_str());
 
@@ -576,6 +584,21 @@ void GameSettings::SetVisible(bool v)
         ImAddItemToComboboxString(m_combo_items_light_sources, ToLocalizedString(GfxFlaresMode::ALL_VEHICLES_HEAD_ONLY));
         ImAddItemToComboboxString(m_combo_items_light_sources, ToLocalizedString(GfxFlaresMode::ALL_VEHICLES_ALL_LIGHTS));
         ImTerminateComboboxString(m_combo_items_light_sources);
+    }
+
+    if (m_combo_items_render_pipeline == "")
+    {
+        ImAddItemToComboboxString(m_combo_items_render_pipeline, ToLocalizedString(GfxRenderPipeline::LEGACY));
+        ImAddItemToComboboxString(m_combo_items_render_pipeline, ToLocalizedString(GfxRenderPipeline::PBR));
+        ImTerminateComboboxString(m_combo_items_render_pipeline);
+    }
+
+    if (m_combo_items_tonemap == "")
+    {
+        ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::NONE));
+        ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::ACES));
+        ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::AGX));
+        ImTerminateComboboxString(m_combo_items_tonemap);
     }
 
     if (m_combo_items_shadow_type == "")

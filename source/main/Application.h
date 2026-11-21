@@ -369,6 +369,7 @@ enum class GfxRenderPipeline
     LEGACY, //!< Gamma space, renders directly to the window (the look before the graphics overhaul)
     PBR,    //!< Linear HDR scene + tonemapping (see GfxPipeline, ROADMAP.md M3)
 };
+std::string ToLocalizedString(GfxRenderPipeline e);
 
 enum class GfxTonemap
 {
@@ -376,6 +377,7 @@ enum class GfxTonemap
     ACES,   //!< ACES fitted (Hill)
     AGX,    //!< AgX (Sobotka)
 };
+std::string ToLocalizedString(GfxTonemap e);
 
 enum class GfxShadowType
 {

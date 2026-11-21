@@ -15,7 +15,7 @@ fragment_program RoR/Pipeline/Tonemap_FP glsl glsles hlsl
     default_params
     {
         param_named sceneTex int 0
-        param_named exposure float 1.6
-        param_named tonemapMode float 2.0
+        param_named exposure float 1.0
+        param_named tonemapMode float 0.0
     }
 }

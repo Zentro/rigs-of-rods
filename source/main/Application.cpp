@@ -508,6 +508,27 @@ std::string ToLocalizedString(GfxFlaresMode e)
     }
 }
 
+std::string ToLocalizedString(GfxRenderPipeline e)
+{
+    switch (e)
+    {
+    case GfxRenderPipeline::LEGACY:   return _LC("GfxRenderPipeline", "Legacy");
+    case GfxRenderPipeline::PBR:      return _LC("GfxRenderPipeline", "HDR (linear, tonemapped)");
+    default:                          return "";
+    }
+}
+
+std::string ToLocalizedString(GfxTonemap e)
+{
+    switch (e)
+    {
+    case GfxTonemap::NONE:            return _LC("GfxTonemap", "None (clamp)");
+    case GfxTonemap::ACES:            return _LC("GfxTonemap", "ACES");
+    case GfxTonemap::AGX:             return _LC("GfxTonemap", "AgX");
+    default:                          return "";
+    }
+}
+
 std::string ToLocalizedString(GfxShadowType e)
 {
     switch (e)
