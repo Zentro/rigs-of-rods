@@ -24,6 +24,7 @@
 #include "CameraManager.h"
 #include "GfxScene.h"
 #include "RTSSNiceMetal.h"
+#include "RTSSPaged.h"
 
 #include <Ogre.h>
 #include <Terrain/OgreTerrain.h>
@@ -280,6 +281,30 @@ void RTSSManager::InstallSubRenderStates()
     // RTSS down. A `static` object would be destroyed at exit while vehicle materials still hold its
     // sub render states - OGRE asserts on that ("Sub render states still exists") and the game aborts.
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new NiceMetalSubRenderStateFactory());
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new PagedFadeSubRenderStateFactory());
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new GrassSubRenderStateFactory());
+}
+
+bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, RTShader::SubRenderState* srs)
+{
+    RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
+    // RTSS only considers supported techniques - compile() is what finds them.
+    if (mat->getSupportedTechniques().empty())
+    {
+        mat->compile();
+    }
+    shadergen.createShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME, MSN_SHADERGEN);
+    RTShader::RenderState* render_state = shadergen.getRenderState(MSN_SHADERGEN, *mat, pass_index);
+    if (!render_state)
+    {
+        LOG(fmt::format("[RoR|RTSS] No shader render state for material '{}' pass {}, can't add '{}'",
+            mat->getName(), pass_index, srs->getType()));
+        shadergen.destroySubRenderState(srs);
+        return false;
+    }
+    render_state->addTemplateSubRenderState(srs);
+    shadergen.invalidateMaterial(MSN_SHADERGEN, *mat);
+    return true;
 }
 
 void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody)
@@ -436,8 +461,30 @@ void RTSSManager::setupShadows()
     this->processPSSM();
 }
 
+namespace {
+
+/// Objects flagged NEAR_SHADOW_CASTER (grass) cast only into the near cascades. Small things' shadows are invisible
+/// farther away, while the far cascades cover the most ground - grass there is the most expensive and useless.
+class NearShadowCasterListener: public Ogre::ShadowTextureListener
+{
+public:
+    void shadowTextureCasterPreViewProj(Ogre::Light*, Ogre::Camera* cam, size_t iteration) override
+    {
+        // With one sun and no other shadow-casting lights, iteration = cascade index
+        if (Ogre::Viewport* vp = cam->getViewport())
+            vp->setVisibilityMask((iteration < (size_t)RTSSManager::NUM_NEAR_CASCADES) ? 0xFFFFFFFF : ~(Ogre::uint32)NEAR_SHADOW_CASTER);
+    }
+};
+
+NearShadowCasterListener g_near_shadow_caster_listener;
+
+} // namespace
+
 RTSSManager::~RTSSManager()
 {
+    if (App::GetGfxScene()->GetSceneManager())
+        App::GetGfxScene()->GetSceneManager()->removeShadowTextureListener(&g_near_shadow_caster_listener);
+
     // Remove the shadow stage from the RTSS scheme again, otherwise every terrain load adds another one
     auto* shader_gen = RTShader::ShaderGenerator::getSingletonPtr();
     if (m_shadow_srs && shader_gen)
@@ -513,6 +560,9 @@ void RTSSManager::processPSSM()
     m_shadow_srs->setParameter("filter", (quality >= 2) ? "pcf16" : "pcf4");
     scheme_rs->addTemplateSubRenderState(m_shadow_srs);
     shader_gen->invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+
+    sm->removeShadowTextureListener(&g_near_shadow_caster_listener); // Not twice
+    sm->addShadowTextureListener(&g_near_shadow_caster_listener);
 
     // Log what OGRE actually created - it falls back to other formats silently
     std::string splits;

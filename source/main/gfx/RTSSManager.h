@@ -92,8 +92,8 @@ public:
     /// after RTSS is initialized.
     static void LimitLightCount();
 
-    /// Registers RoR's own RTSS sub render states (the 'RoR/NiceMetal' vehicle shading). Call once, after RTSS
-    /// is initialized.
+    /// Registers RoR's own RTSS sub render states ('RoR/NiceMetal' vehicle shading, 'RoR/PagedFade' and
+    /// 'RoR/Grass' for PagedGeometry). Call once, after RTSS is initialized.
     static void InstallSubRenderStates();
 
     /// Attaches the vehicle surface shading (NiceMetal: damage/wetness blend, specular-map-masked cubemap
@@ -102,7 +102,13 @@ public:
     /// carries the per-node damage/wetness vertex colours; only flexbodies do.
     static void ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody);
 
+    /// Gives the material an RTSS technique now (instead of at its first draw) and adds `srs` to the render state
+    /// of pass `pass_index`. The material must not have its own shaders.
+    /// @return False if RTSS can't shade the material; `srs` is destroyed then.
+    static bool AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, Ogre::RTShader::SubRenderState* srs);
+
     static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
+    static const int NUM_NEAR_CASCADES = 2; //!< Cascades that objects flagged NEAR_SHADOW_CASTER (grass) cast into
 
     ~RTSSManager();
 

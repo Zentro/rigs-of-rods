@@ -27,6 +27,11 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "BatchPage.h"
 #include "BatchedGeometry.h"
 
+// RoR: RTSS shading for tree batches
+#include "RTSSManager.h"
+#include "RTSSPaged.h"
+#include <OgreShaderGenerator.h>
+
 
 using namespace Ogre;
 using namespace Forests;
@@ -212,6 +217,57 @@ void BatchPage::_updateShaders()
    {
 		BatchedGeometry::SubBatch *subBatch = it.getNext();
 		const MaterialPtr &ptrMat = m_vecUnfadedMaterials[i++];
+
+		// RoR: with RTSS, the distance fade is an RTSS sub render state ('RoR/PagedFade') and RTSS generates the
+		// rest of the shader like for any other material - per-pixel lighting, shadows, fog. Materials with their
+		// own vertex program (mods) keep the code below.
+		bool ownVertexProgram = false;
+		for (Technique* tech : ptrMat->getTechniques())
+			for (Pass* pass : tech->getPasses())
+				ownVertexProgram = ownVertexProgram || pass->hasVertexProgram();
+
+		if (RTShader::ShaderGenerator::getSingletonPtr() && !ownVertexProgram)
+		{
+			const bool hasColours = subBatch->m_pVertexData->vertexDeclaration->findElementBySemantic(VES_DIFFUSE) != NULL;
+
+			Ogre::StringStream signature;
+			signature << "BatchMat|RTSS|" << ptrMat->getName() << "|";
+			if (hasColours)
+				signature << "clr|";
+			if (m_bFadeEnabled)
+				signature << m_fVisibleDist << "|" << m_fInvisibleDist << "|";
+
+			MaterialPtr rtssMaterial = MaterialManager::getSingleton().getByName(signature.str());
+			if (!rtssMaterial)
+			{
+				rtssMaterial = RoR::RTSSManager::CloneMaterial(ptrMat, signature.str());
+				for (Technique* tech : rtssMaterial->getTechniques())
+				{
+					for (Pass* pass : tech->getPasses())
+					{
+						// Tree colour (colour map), as the old shader multiplied it into the lit colour
+						if (hasColours)
+							pass->setVertexColourTracking(TVC_AMBIENT | TVC_DIFFUSE);
+						if (m_bFadeEnabled && pass->getAlphaRejectFunction() == CMPF_ALWAYS_PASS)
+							pass->setSceneBlending(SBT_TRANSPARENT_ALPHA);
+					}
+				}
+
+				if (m_bFadeEnabled)
+				{
+					for (unsigned short p = 0; p < rtssMaterial->getTechnique(0)->getNumPasses(); ++p)
+					{
+						RTShader::SubRenderState* fade = RTShader::ShaderGenerator::getSingleton().createSubRenderState(RoR::PagedFadeSubRenderState::Type);
+						fade->setParameter("invisible_dist", StringConverter::toString(m_fInvisibleDist));
+						fade->setParameter("fade_gap", StringConverter::toString(m_fInvisibleDist - m_fVisibleDist));
+						RoR::RTSSManager::AddSubRenderState(rtssMaterial, p, fade);
+					}
+				}
+			}
+
+			subBatch->setMaterial(rtssMaterial);
+			continue;
+		}
 
 		//Check if lighting should be enabled
 		bool lightingEnabled = false;

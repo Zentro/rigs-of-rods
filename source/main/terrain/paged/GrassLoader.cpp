@@ -35,6 +35,11 @@ Permission is granted to anyone to use this software for any purpose, including 
 
 #include "GrassLoader.h"
 #include "PagedGeometry.h"
+
+// RoR: RTSS grass shading
+#include "RTSSManager.h"
+#include "RTSSPaged.h"
+#include <OgreShaderGenerator.h>
 #include "PropertyMaps.h"
 #include "RandomTable.h"
 
@@ -109,6 +114,20 @@ void GrassLoader::frameUpdate()
 
 		layer->_updateShaders();
 
+		if (layer->shaderState) // RoR: RTSS grass shading - the sub render states read these values
+		{
+			if (layer->animate){
+				layer->waveCount += ellapsed * (layer->animSpeed * Math::PI);
+				if (layer->waveCount > Math::PI*2) layer->waveCount -= Math::PI*2;
+			}
+			Vector3 direction = windDir * layer->animMag;
+			layer->shaderState->time = layer->waveCount;
+			layer->shaderState->frequency = layer->animFreq;
+			layer->shaderState->direction = Vector4(direction.x, direction.y, direction.z, 0);
+			layer->shaderState->camera_pos = geom->getCamera()->getDerivedPosition();
+			continue;
+		}
+
 		GpuProgramParametersSharedPtr params = layer->material->getTechnique(0)->getPass(0)->getVertexProgramParameters();
 		if (layer->animate){
 			//Increment animation frame
@@ -178,7 +197,9 @@ void GrassLoader::loadPage(PageInfo &page)
 			//Add the mesh to PagedGeometry
 			Entity *entity = geom->getCamera()->getSceneManager()->createEntity(getUniqueID(), mesh->getName());
 			entity->setRenderQueueGroup(renderQueue);
-			entity->setCastShadows(false);
+			entity->setCastShadows(layer->castShadows); // RoR: true with RTSS grass shading (it has a matching caster)
+			if (layer->castShadows)
+				entity->setVisibilityFlags(RoR::NEAR_SHADOW_CASTER); // RoR: grass casts only into the near shadow cascades
 			addEntity(entity, page.centerPoint, Quaternion::IDENTITY, Vector3::UNIT_SCALE);
 
 			//Store the mesh pointer
@@ -750,6 +771,15 @@ GrassLayer::GrassLayer(PagedGeometry *geom, GrassLoader *ldr)
 
 GrassLayer::~GrassLayer()
 {
+	// RoR: the RTSS materials reference this layer's shader state - don't leave them behind
+	for (MaterialPtr& mat : rtssMaterials)
+	{
+		if (RTShader::ShaderGenerator::getSingletonPtr())
+			RTShader::ShaderGenerator::getSingleton().removeAllShaderBasedTechniques(*mat);
+		MaterialManager::getSingleton().remove(mat);
+	}
+	rtssMaterials.clear();
+
 	if (densityMap)
 		densityMap->unload();
 	if (colorMap)
@@ -1120,6 +1150,10 @@ void GrassLayer::_updateShaders()
 			tmpName << "vp";
 			const String vsName = tmpName.str();
 
+			// RoR: RTSS shading, if possible
+			if (_updateShadersRTSS(vsName, fadeRange))
+				return;
+
 			//Generate a string ID that identifies the material combined with the vertex shader
 			const String matName = material->getName() + "_" + vsName;
 
@@ -1423,6 +1457,77 @@ void GrassLayer::_updateShaders()
 }
 
 
+bool GrassLayer::_updateShadersRTSS(const String &vsName, float fadeRange)
+{
+	if (!RTShader::ShaderGenerator::getSingletonPtr())
+		return false;
+	for (Technique* tech : material->getTechniques())
+		for (Pass* pass : tech->getPasses())
+			if (pass->hasVertexProgram())
+				return false; // The material brings its own shader - keep PagedGeometry's code path
+
+	if (!shaderState)
+		shaderState = std::make_shared<RoR::GrassShaderState>();
+
+	const bool sprite = (renderTechnique == GRASSTECH_SPRITE);
+	const bool fadeAlpha = (fadeTechnique == FADETECH_ALPHA || fadeTechnique == FADETECH_ALPHAGROW);
+	const bool fadeGrow = (fadeTechnique == FADETECH_GROW || fadeTechnique == FADETECH_ALPHAGROW);
+	auto makeSubRenderState = [&](bool caster) -> RTShader::SubRenderState* {
+		auto* srs = static_cast<RoR::GrassSubRenderState*>(
+			RTShader::ShaderGenerator::getSingleton().createSubRenderState(RoR::GrassSubRenderState::Type));
+		srs->setup(shaderState, sprite, animate, blend, fadeAlpha, fadeGrow, fadeRange, maxHeight * 1.05f, caster);
+		return srs;
+	};
+
+	// Unique per layer: the materials point to this layer's shader state, they can't be shared
+	static unsigned int s_counter = 0;
+	const String rtssName = material->getName() + "_RTSS_" + vsName + "_" + StringConverter::toString(s_counter++);
+
+	MaterialPtr rtssMat = RoR::RTSSManager::CloneMaterial(material, rtssName);
+	rtssMat->setLightingEnabled(lighting);
+	for (Technique* tech : rtssMat->getTechniques())
+		for (Pass* pass : tech->getPasses())
+			pass->setVertexColourTracking(TVC_AMBIENT | TVC_DIFFUSE); // Colour map, as the old shader multiplied it in
+
+	// Shadow caster: same vertex code (waving, sprites facing the player's camera, fading) with an alpha test.
+	// Set before RTSS builds the grass technique - it copies the caster setting then.
+	Pass* srcPass = rtssMat->getTechnique(0)->getPass(0);
+	MaterialPtr caster = MaterialManager::getSingleton().create(rtssName + "/ShadowCaster", rtssMat->getGroup());
+	caster->setReceiveShadows(false);
+	Pass* casterPass = caster->getTechnique(0)->getPass(0);
+	casterPass->setLightingEnabled(false);
+	casterPass->setCullingMode(srcPass->getCullingMode());
+	casterPass->setManualCullingMode(srcPass->getManualCullingMode());
+	if (srcPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)
+		casterPass->setAlphaRejectSettings(srcPass->getAlphaRejectFunction(), srcPass->getAlphaRejectValue());
+	else
+		casterPass->setAlphaRejectSettings(CMPF_GREATER_EQUAL, 128); // Blended grass: cut out the mostly transparent parts
+	if (srcPass->getNumTextureUnitStates() > 0)
+		*casterPass->createTextureUnitState() = *srcPass->getTextureUnitState(0);
+	rtssMaterials.push_back(caster);
+
+	castShadows = RoR::RTSSManager::AddSubRenderState(caster, 0, makeSubRenderState(/*caster:*/true));
+	if (castShadows)
+	{
+		caster->load();
+		for (Technique* tech : rtssMat->getTechniques())
+			tech->setShadowCasterMaterial(caster);
+	}
+
+	rtssMaterials.push_back(rtssMat);
+	if (!RoR::RTSSManager::AddSubRenderState(rtssMat, 0, makeSubRenderState(/*caster:*/false)))
+	{
+		castShadows = false;
+		return false; // PagedGeometry's own shader then; the unused materials are removed with the layer
+	}
+
+	LogManager::getSingleton().logMessage("[PagedGeometry] Grass material '" + rtssName + "' shaded by RTSS"
+		+ (castShadows ? ", casts shadows" : ""));
+	material = rtssMat;
+	return true;
+}
+
+
 unsigned long GrassPage::GUID = 0;
 
 void GrassPage::init(PagedGeometry *geom, const Ogre::Any &data)
@@ -1442,7 +1547,7 @@ void GrassPage::addEntity(Entity *entity, const Vector3 &position, const Quatern
 	node->setPosition(position);
 	nodeList.push_back(node);
 
-	entity->setCastShadows(false);
+	// RoR: the GrassLoader decides (see GrassLayer::castShadows)
 	node->attachObject(entity);
 }
 
