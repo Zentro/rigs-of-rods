@@ -239,11 +239,11 @@ void GfxPipeline::LinearizeTextures(Ogre::Material* mat)
             {
                 if (!IsColourTexture(tus))
                     continue;
-                // Applies when the texture unit loads its texture...
-                tus->setHardwareGammaEnabled(true);
-                // ...but a texture which already exists (loaded by another material, or created unloaded) keeps its
-                // settings - flag it too. Never load anything here: e.g. at startup the texture's pack may not be
-                // added yet, and a failed load leaves the texture layer blank for good (black character).
+                // OGRE 14 keeps the sRGB flag on the texture itself (TextureUnitState::setHardwareGammaEnabled just
+                // forwards it, which would mark already-loaded textures without reloading them). The texture unit
+                // created its (unloaded) texture objects when it got the names - look them up and flag/reload them.
+                // Never load anything new here: e.g. at startup the texture's pack may not be added yet, and a failed
+                // load leaves the texture layer blank for good (black character).
                 for (unsigned int i = 0; i < tus->getNumFrames(); i++)
                 {
                     const String& name = tus->getFrameTextureName(i);
