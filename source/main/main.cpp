@@ -374,6 +374,7 @@ int main(int argc, char *argv[])
 
             // Game events
             OgreProfileBegin("RoR message queue");
+            const auto perf_msg_queue = PerfNow();
             while (App::GetGameContext()->HasMessages())
             {
                 Message m = App::GetGameContext()->PopMessage();
@@ -2079,6 +2080,7 @@ int main(int argc, char *argv[])
                 }
 
             } // Game events block
+            PerfAdd(PERF_MSG_QUEUE, perf_msg_queue);
             OgreProfileEnd("RoR message queue");
 
             // Check FPS limit
@@ -2267,7 +2269,9 @@ int main(int argc, char *argv[])
                 App::sim_state->getEnum<SimState>() == SimState::PAUSED ||    // Avoid dangling (DISPOSED) pointers in simbuffer
                 App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE) // Needed for character movement
             {
+                const auto perf_simbuf = PerfNow();
                 App::GetGfxScene()->BufferSimulationData();
+                PerfAdd(PERF_SIM_BUFFER, perf_simbuf);
             }
 
             // Calculate elapsed simulation time (taking simulation speed and pause into account)
@@ -2284,7 +2288,9 @@ int main(int argc, char *argv[])
                 {
                     App::GetGameContext()->GetTerrain()->getWater()->FrameStepWaveField(dt_sim);
                 }
+                const auto perf_sim = PerfNow();
                 App::GetGameContext()->UpdateActors(); // *** Start new physics tasks. No reading from Actor N/B beyond this point.
+                PerfAdd(PERF_SIM_START, perf_sim);
             }
             OgreProfileEnd("Simulation");
 
@@ -2296,7 +2302,9 @@ int main(int argc, char *argv[])
             }
             else if (App::app_state->getEnum<AppState>() == AppState::SIMULATION)
             {
+                const auto perf_scene = PerfNow();
                 App::GetGfxScene()->UpdateScene(dt_sim); // Draws GUI as well
+                PerfAdd(PERF_SCENE, perf_scene);
             }
             OgreProfileEnd("Scene and GUI");
 
@@ -2312,7 +2320,9 @@ int main(int argc, char *argv[])
             {
                 try
                 {
+                    const auto perf_render = PerfNow();
                     App::GetAppContext()->GetOgreRoot()->renderOneFrame();
+                    PerfAdd(PERF_RENDER, perf_render);
                     if (!render_window->isActive() && render_window->isVisible())
                     {
                         render_window->update(); // update even when in background !
