@@ -203,7 +203,7 @@ bool RoR::Terrain::initialize()
 
 void RoR::Terrain::initCamera()
 {
-    App::GetCameraManager()->GetCamera()->getViewport()->setBackgroundColour(m_def->ambient_color);
+    App::GetCameraManager()->GetCamera()->getViewport()->setBackgroundColour(App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color));
     App::GetCameraManager()->GetCameraNode()->setPosition(m_def->start_position);
 
     // NOTE: camera far clip distance isn't linked to 'sight range'.
@@ -242,8 +242,9 @@ void RoR::Terrain::initLight()
     //directional light for shadow
     m_main_light->setType(Light::LT_DIRECTIONAL);
 
-    m_main_light->setDiffuseColour(m_def->ambient_color);
-    m_main_light->setSpecularColour(m_def->ambient_color);
+    // Authored in display (gamma) space; linear for the HDR pipeline
+    m_main_light->setDiffuseColour(App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color));
+    m_main_light->setSpecularColour(App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color));
     m_main_light->setCastShadows(true);
     m_main_light->setShadowFarDistance(1000.0f);
     m_main_light->setShadowNearClipDistance(-1);
@@ -260,7 +261,7 @@ void RoR::Terrain::initFog()
     if (sight_range >= UNLIMITED_SIGHTRANGE)
         App::GetGfxScene()->GetSceneManager()->setFog(FOG_NONE);
     else
-        App::GetGfxScene()->GetSceneManager()->setFog(FOG_LINEAR, m_def->ambient_color, 0.000f, sight_range * 0.65f, sight_range*0.9);
+        App::GetGfxScene()->GetSceneManager()->setFog(FOG_LINEAR, App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color), 0.000f, sight_range * 0.65f, sight_range*0.9);
 }
 
 void RoR::Terrain::initVegetation()

@@ -168,6 +168,9 @@ public:
         if (m_failed.count(key))
             return nullptr;
 
+        // HDR pipeline: textures assigned after loading (skins, props, materials made in code) - idempotent
+        App::GetGfxScene()->GetPipeline().LinearizeTextures(mat);
+
         if (HasVertexColours(rend))
             UseVertexColourIfUnlit(mat);
 

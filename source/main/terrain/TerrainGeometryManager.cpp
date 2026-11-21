@@ -312,6 +312,22 @@ bool TerrainGeometryManager::InitTerrain(std::string otc_filename)
         this->SetupGeometry(page, m_spec->is_flat);
     }
 
+    // Layer diffuse textures are colour data in display (gamma) space - decode them in hardware for the HDR pipeline.
+    // (Terrain materials are generated in code, the group scan in GfxPipeline doesn't see them.)
+    if (App::GetGfxScene()->GetPipeline().IsActive())
+    {
+        for (OTCPage& page : m_spec->pages)
+        {
+            for (OTCLayer& layer : page.layers)
+            {
+                Ogre::TexturePtr tex = Ogre::static_pointer_cast<Ogre::Texture>(
+                    Ogre::TextureManager::getSingleton().createOrRetrieve(
+                        layer.diffusespecular_filename, m_ogre_terrain_group->getResourceGroup()).first);
+                GfxPipeline::EnsureTextureSRGB(tex);
+            }
+        }
+    }
+
     // sync load since we want everything in place when we start
     App::GetGuiManager()->LoadingWindow.SetProgress(44, _L("Loading terrain pages ..."));
     m_ogre_terrain_group->loadAllTerrains(true);

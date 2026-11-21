@@ -1100,7 +1100,7 @@ int main(int argc, char *argv[])
                             {
                                 SOUND_KILL(-1, SS_TRIG_MAIN_MENU);
                             }
-                            App::GetGfxScene()->GetSceneManager()->setAmbientLight(Ogre::ColourValue(0.7f, 0.7f, 0.7f));
+                            App::GetGfxScene()->GetSceneManager()->setAmbientLight(App::GetGfxScene()->GetPipeline().ToLinear(Ogre::ColourValue(0.7f, 0.7f, 0.7f)));
                             App::GetDiscordRpc()->UpdatePresence();
                             App::sim_state->setVal((int)SimState::RUNNING);
                             App::app_state->setVal((int)AppState::SIMULATION);

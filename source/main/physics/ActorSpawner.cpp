@@ -2686,6 +2686,7 @@ void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
         const bool is_flexbody
             = def.type == RigDef::ManagedMaterialType::FLEXMESH_STANDARD
             || def.type == RigDef::ManagedMaterialType::FLEXMESH_TRANSPARENT;
+        App::GetGfxScene()->GetPipeline().LinearizeTextures(material.get()); // HDR pipeline: the textures were just assigned
         RTSSManager::ApplyActorShading(material, transparent, is_flexbody);
     }
 

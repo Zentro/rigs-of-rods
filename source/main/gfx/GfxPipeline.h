@@ -27,29 +27,56 @@
 #include <Ogre.h>
 #include <OgreCompositorInstance.h>
 
+#include <set>
+#include <string>
+
 namespace RoR {
 
 /// @addtogroup Gfx
 /// @{
 
 /// Owns the frame-level rendering setup when `gfx_render_pipeline` is PBR. See ROADMAP.md M3.
-/// - 3.1 (this): HDR target and tonemapping ('RoR/HDR' compositor, resources/pipeline).
-/// - Later chunks: linear content (sRGB textures, linear colours), RTSS linear output, secondary views.
-class GfxPipeline: public Ogre::CompositorInstance::Listener
+/// - HDR target and tonemapping ('RoR/HDR' compositor, resources/pipeline).
+/// - Linear content: lighting must happen in linear space, but RoR's content is authored in display (gamma) space.
+///   Colour textures are decoded from sRGB by the hardware; material and light colours are converted once.
+///   UI renders after tonemapping, in display space, and is left alone.
+class GfxPipeline: public Ogre::CompositorInstance::Listener, public Ogre::ResourceGroupListener
 {
 public:
     void Init(Ogre::Viewport* viewport); //!< Call once RTSS and the main viewport exist.
     void UpdateFrame();                   //!< Call once per frame before rendering.
-    bool IsActive() const { return m_active; } //!< True if the HDR pipeline renders the main view.
+    bool IsActive() const { return m_active; } //!< True if the HDR pipeline renders the main view (linear lighting).
+
+    /// Converts an authored (gamma space) colour to linear if the HDR pipeline is active, otherwise returns it as is.
+    Ogre::ColourValue ToLinear(Ogre::ColourValue const& c) const;
+
+    /// Material colours to linear (once per material) and colour textures to sRGB decoding. No-op if not active.
+    /// Runs for every script material when its resource group is parsed.
+    void LinearizeMaterial(Ogre::Material* mat);
+
+    /// Only the textures part of LinearizeMaterial() - safe to call any number of times. For textures assigned
+    /// later (vehicle managed materials at spawn, skins, materials created in code).
+    void LinearizeTextures(Ogre::Material* mat);
+
+    /// Forces hardware sRGB decoding on a texture, reloading it if it is loaded already.
+    static void EnsureTextureSRGB(Ogre::TexturePtr tex);
 
     // Ogre::CompositorInstance::Listener
     void notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr& mat) override;
 
+    // Ogre::ResourceGroupListener
+    void resourceGroupScriptingEnded(const Ogre::String& groupName) override;
+
 private:
     static const Ogre::uint32 PASS_TONEMAP = 1; //!< `identifier` of the output pass in RoRPipeline.compositor
 
-    bool           m_active = false;
-    Ogre::Vector4  m_tonemap_values = Ogre::Vector4::ZERO; //!< x: exposure, y: tonemap mode
+    bool IsUiMaterial(const Ogre::Material* mat) const; //!< Renders after tonemapping, in display space
+    void CollectUiScripts();
+
+    bool                   m_active = false;
+    Ogre::Vector4          m_tonemap_values = Ogre::Vector4::ZERO; //!< x: exposure, y: tonemap mode
+    std::set<std::string>  m_linearized; //!< "group|name" of materials whose colours were converted
+    std::set<std::string>  m_ui_scripts; //!< .material files of the UI resource packs
 };
 
 /// @} // addtogroup Gfx
