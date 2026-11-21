@@ -49,6 +49,13 @@ using namespace AngelScript;
 using namespace RoR;
 using namespace OgreAngelscriptWrappers;
 
+// OGRE 14.6 changed Radian/Degree::operator=(const float&) to operator=(float)
+#if OGRE_VERSION >= ((14 << 16) | (6 << 8) | 0)
+#   define ROR_OGRE_ANGLE_FLOAT_ARG (float)
+#else
+#   define ROR_OGRE_ANGLE_FLOAT_ARG (const float &)
+#endif
+
 // forward declarations, defined below
 void registerOgreVector3(AngelScript::asIScriptEngine* engine);
 void registerOgreVector2(AngelScript::asIScriptEngine* engine);
@@ -437,7 +444,7 @@ void registerOgreRadian(AngelScript::asIScriptEngine* engine)
     // Register the object operators
     r = engine->RegisterObjectMethod("radian", "radian &opAssign(const radian &in)", asMETHODPR(Radian, operator =, (const Radian &), Radian&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
-    r = engine->RegisterObjectMethod("radian", "radian &opAssign(const float)", asMETHODPR(Radian, operator =, (const float &), Radian&), asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("radian", "radian &opAssign(const float)", asMETHODPR(Radian, operator =, ROR_OGRE_ANGLE_FLOAT_ARG, Radian&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
     r = engine->RegisterObjectMethod("radian", "radian &opAssign(const degree &in)", asMETHODPR(Radian, operator =, (const Degree &), Radian&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
@@ -477,7 +484,7 @@ void registerOgreRadian(AngelScript::asIScriptEngine* engine)
     r = engine->RegisterObjectMethod("radian", "radian opDiv(float) const", asMETHODPR(Radian, operator/,(float) const, Radian), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
 
-    r = engine->RegisterObjectMethod("radian", "radian &opDivAssign(float)", asMETHODPR(Radian,operator*=,(float),Radian&), asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("radian", "radian &opDivAssign(float)", asMETHODPR(Radian,operator/=,(float),Radian&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
 
     r = engine->RegisterObjectMethod("radian", "int opCmp(const radian &in) const", asFUNCTION(RadianCmp), asCALL_CDECL_OBJFIRST);
@@ -518,7 +525,7 @@ void registerOgreDegree(AngelScript::asIScriptEngine* engine)
     // Register the object operators
     r = engine->RegisterObjectMethod("degree", "degree &opAssign(const degree &in)", asMETHODPR(Degree, operator =, (const Degree &), Degree&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
-    r = engine->RegisterObjectMethod("degree", "degree &opAssign(float)", asMETHODPR(Degree, operator =, (const float &), Degree&), asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("degree", "degree &opAssign(float)", asMETHODPR(Degree, operator =, ROR_OGRE_ANGLE_FLOAT_ARG, Degree&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
     r = engine->RegisterObjectMethod("degree", "degree &opAssign(const radian &in)", asMETHODPR(Degree, operator =, (const Radian &), Degree&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
@@ -558,7 +565,7 @@ void registerOgreDegree(AngelScript::asIScriptEngine* engine)
     r = engine->RegisterObjectMethod("degree", "degree opDiv(float) const", asMETHODPR(Degree, operator/,(float) const, Degree), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
 
-    r = engine->RegisterObjectMethod("degree", "degree &opDivAssign(float)", asMETHODPR(Degree,operator*=,(float),Degree&), asCALL_THISCALL);
+    r = engine->RegisterObjectMethod("degree", "degree &opDivAssign(float)", asMETHODPR(Degree,operator/=,(float),Degree&), asCALL_THISCALL);
     ROR_ASSERT( r >= 0 );
 
     r = engine->RegisterObjectMethod("degree", "int opCmp(const degree &in) const", asFUNCTION(DegreeCmp), asCALL_CDECL_OBJFIRST);

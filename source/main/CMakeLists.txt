@@ -496,6 +496,15 @@ else ()
     set(PLUGINS_FOLDER ".")
 endif ()
 
+# Image codec: FreeImage if this OGRE build has it (AnotherFoxGuy's Conan package), otherwise STBI
+# (e.g. OGRE built from source without FreeImage installed, see ROADMAP C.5)
+set(CFG_COMMENT_CODEC_FREEIMAGE "")
+set(CFG_COMMENT_CODEC_STBI "# ")
+if (NOT WIN32 AND DEFINED OGRE_PLUGIN_DIR AND NOT EXISTS "${OGRE_PLUGIN_DIR}/Codec_FreeImage.so" AND EXISTS "${OGRE_PLUGIN_DIR}/Codec_STBI.so")
+    set(CFG_COMMENT_CODEC_FREEIMAGE "# ")
+    set(CFG_COMMENT_CODEC_STBI "")
+endif ()
+
 configure_file(plugins.cfg.in ${RUNTIME_OUTPUT_DIRECTORY}/plugins.cfg)
 
 # Copy resources to bin directory
