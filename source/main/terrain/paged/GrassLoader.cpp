@@ -1509,7 +1509,11 @@ bool GrassLayer::_updateShadersRTSS(const String &vsName, float fadeRange)
 	rtssMat->setLightingEnabled(lighting);
 	for (Technique* tech : rtssMat->getTechniques())
 		for (Pass* pass : tech->getPasses())
+		{
 			pass->setVertexColourTracking(TVC_AMBIENT | TVC_DIFFUSE); // Colour map, as the old shader multiplied it in
+			// The old shader ignored emissive - some content sets it anyway (LJGreece grass: full green, 'emissive 0 1 0')
+			pass->setSelfIllumination(ColourValue::Black);
+		}
 
 	// Shadow caster: same vertex code (waving, sprites facing the player's camera, fading) with an alpha test.
 	// Set before RTSS builds the grass technique - it copies the caster setting then.

@@ -248,6 +248,8 @@ void BatchPage::_updateShaders()
 						// Tree colour (colour map), as the old shader multiplied it into the lit colour
 						if (hasColours)
 							pass->setVertexColourTracking(TVC_AMBIENT | TVC_DIFFUSE);
+						// The old shader ignored emissive - some content sets it anyway (e.g. LJGreece: full green)
+						pass->setSelfIllumination(ColourValue::Black);
 						if (m_bFadeEnabled && pass->getAlphaRejectFunction() == CMPF_ALWAYS_PASS)
 							pass->setSceneBlending(SBT_TRANSPARENT_ALPHA);
 					}
