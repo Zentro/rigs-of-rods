@@ -84,7 +84,7 @@ namespace Forests
          const Ogre::LightList& getLights(void) const;
 
          ///
-         void setMaterial(Ogre::MaterialPtr &mat)                 { m_ptrMaterial = mat; }
+         void setMaterial(Ogre::MaterialPtr &mat)                 { m_ptrMaterial = mat; if (mat) mat->load(); } // RoR: load like Ogre::SubEntity does - an unloaded material has no technique
          void setMaterialName(const Ogre::String &mat, const Ogre::String &rg =
             Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME)
          {
