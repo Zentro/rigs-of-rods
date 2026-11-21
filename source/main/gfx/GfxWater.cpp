@@ -144,9 +144,12 @@ void GfxWater::PrepareWater()
         }
         else
         {
-            if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
-                !GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0") &&
-                !GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4")
+            // The water shaders (fresnel.material) are GLSL, GLSL ES and HLSL. (This used to ask for assembly
+            // profiles - arbfp1, ps_2_0, ps_1_4 - which the GL3+ and D3D11 render systems don't have.)
+            Ogre::HighLevelGpuProgramManager& hlgpm = Ogre::HighLevelGpuProgramManager::getSingleton();
+            if (!hlgpm.isLanguageSupported("glsl") &&
+                !hlgpm.isLanguageSupported("glsles") &&
+                !hlgpm.isLanguageSupported("hlsl")
             )
             {
                 OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Your card does not support advanced fragment programs, "
