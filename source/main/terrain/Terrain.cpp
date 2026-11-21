@@ -130,9 +130,6 @@ bool RoR::Terrain::initialize()
     loading_window->SetProgress(10, _L("Initializing Object Subsystem"));
     this->initObjects(); // *.odef files
 
-    loading_window->SetProgress(14, _L("Initializing Shadow Subsystem"));
-    this->initShadows();
-
     loading_window->SetProgress(17, _L("Initializing Geometry Subsystem"));
     this->m_geometry_manager = new TerrainGeometryManager(this);
 
@@ -145,6 +142,11 @@ bool RoR::Terrain::initialize()
 
     loading_window->SetProgress(27, _L("Initializing Light Subsystem"));
     this->initLight();
+
+    // After the light: the loading screen renders the scene between steps, and shadow-receiving materials drawn
+    // with shadows enabled but no shadow-casting light make OGRE use stale shadow camera pointers (crash).
+    loading_window->SetProgress(28, _L("Initializing Shadow Subsystem"));
+    this->initShadows();
 
     loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
     this->initFog();
@@ -209,6 +211,16 @@ void RoR::Terrain::initCamera()
 
 void RoR::Terrain::initSkySubSystem()
 {
+    // Sky boxes are 'infinitely' far away - they must not receive shadows (RTSS would add shadow mapping to them;
+    // OGRE also crashed drawing that before the sun existed). Only the loaded material is changed, not the file.
+    const std::string sky_material = (!m_def->cubemap_config.empty()) ? m_def->cubemap_config : "tracks/skyboxcol";
+    Ogre::MaterialPtr sky_mat = Ogre::MaterialManager::getSingleton().getByName(sky_material, Ogre::RGN_AUTODETECT);
+    if (sky_mat && sky_mat->getReceiveShadows())
+    {
+        sky_mat->setReceiveShadows(false);
+        RTSSManager::RefreshMaterial(*sky_mat); // If RTSS already shaded it
+    }
+
     // Static skybox. (Caelum and SkyX were removed; the terrn2 keys `CaelumConfigFile`,
     // `CaelumFogStart/End` and `SkyXConfigFile` are still parsed but unused.)
     if (!m_def->cubemap_config.empty())
