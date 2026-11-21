@@ -84,6 +84,7 @@ bool SurveyMapTextureCreator::init(int res, int fsaa)
     mViewport->setOverlaysEnabled(false);
     mViewport->setShadowsEnabled(false);
     mViewport->setSkiesEnabled(false);
+    App::GetGfxScene()->GetPipeline().AddToViewport(mViewport); // Shown in the UI - tonemapped like the main view
 
     return true;
 }

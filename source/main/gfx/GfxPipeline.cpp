@@ -112,6 +112,35 @@ void GfxPipeline::Init(Ogre::Viewport* viewport)
     }
 }
 
+bool GfxPipeline::IsRequested()
+{
+    return App::gfx_render_pipeline->getEnum<GfxRenderPipeline>() == GfxRenderPipeline::PBR;
+}
+
+Ogre::PixelFormat GfxPipeline::GetSceneTargetFormat(Ogre::PixelFormat legacy_format)
+{
+    return IsRequested() ? PF_FLOAT16_RGBA : legacy_format;
+}
+
+Ogre::uint GfxPipeline::GetSceneTargetFsaa(Ogre::uint legacy_fsaa)
+{
+    return IsRequested() ? 0 : legacy_fsaa;
+}
+
+void GfxPipeline::AddToViewport(Ogre::Viewport* viewport)
+{
+    if (!m_active || !viewport)
+        return;
+    CompositorInstance* hdr = CompositorManager::getSingleton().addCompositor(viewport, "RoR/HDR");
+    if (!hdr)
+    {
+        LOG("[RoR|GfxPipeline] Could not add compositor 'RoR/HDR' to a secondary view, it will look too dark");
+        return;
+    }
+    hdr->addListener(this); // Tonemap constants, see notifyMaterialRender()
+    CompositorManager::getSingleton().setCompositorEnabled(viewport, "RoR/HDR", true);
+}
+
 void GfxPipeline::UpdateFrame()
 {
     if (!m_active)
@@ -243,10 +272,37 @@ void GfxPipeline::LinearizeMaterial(Ogre::Material* mat)
                 pass->setDiffuse(this->ToLinear(pass->getDiffuse()));
                 pass->setSpecular(this->ToLinear(pass->getSpecular()));
                 pass->setSelfIllumination(this->ToLinear(pass->getSelfIllumination()));
+
+                // Materials with their own shaders: authored colour constants (e.g. the water's 'tintColour')
+                for (int i = 0; i < GPT_COMPUTE_PROGRAM; i++)
+                {
+                    if (pass->hasGpuProgram((GpuProgramType)i))
+                        this->LinearizeColourConstants(pass->getGpuProgramParameters((GpuProgramType)i));
+                }
             }
         }
     }
     this->LinearizeTextures(mat);
+}
+
+void GfxPipeline::LinearizeColourConstants(Ogre::GpuProgramParametersSharedPtr params)
+{
+    if (!params || !params->hasNamedParameters())
+        return;
+    for (const auto& entry: params->getConstantDefinitions().map)
+    {
+        std::string name = entry.first;
+        Ogre::StringUtil::toLowerCase(name);
+        const GpuConstantDefinition& def = entry.second;
+        if ((name.find("colour") == std::string::npos && name.find("color") == std::string::npos)
+            || (def.constType != GCT_FLOAT3 && def.constType != GCT_FLOAT4)
+            || def.arraySize != 1
+            || params->_findRawAutoConstantEntryFloat(def.physicalIndex)) // Automatic constants are linear already
+            continue;
+        float* v = params->getFloatPointer(def.physicalIndex);
+        const ColourValue lin = this->ToLinear(ColourValue(v[0], v[1], v[2]));
+        v[0] = lin.r; v[1] = lin.g; v[2] = lin.b;
+    }
 }
 
 void GfxPipeline::resourceGroupScriptingEnded(const Ogre::String& groupName)

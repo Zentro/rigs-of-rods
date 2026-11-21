@@ -61,6 +61,21 @@ public:
     /// Forces hardware sRGB decoding on a texture, reloading it if it is loaded already.
     static void EnsureTextureSRGB(Ogre::TexturePtr tex);
 
+    /// True if `gfx_render_pipeline` asks for the HDR pipeline - for things created before Init().
+    static bool IsRequested();
+
+    /// Format for render targets which hold scene colours that are used in the 3D scene again (environment map,
+    /// water reflection/refraction, mirrors, video cameras): half-float with the HDR pipeline (linear values keep
+    /// their precision and aren't clipped at 1), otherwise `legacy_format`.
+    static Ogre::PixelFormat GetSceneTargetFormat(Ogre::PixelFormat legacy_format);
+
+    /// FSAA for such render targets: none for half-float targets (not reliably supported), otherwise `legacy_fsaa`.
+    static Ogre::uint GetSceneTargetFsaa(Ogre::uint legacy_fsaa);
+
+    /// For views whose image is shown directly (the map texture in the UI, video camera windows): adds the HDR
+    /// compositor, so they're tonemapped and display-encoded like the main view. No-op if not active.
+    void AddToViewport(Ogre::Viewport* viewport);
+
     // Ogre::CompositorInstance::Listener
     void notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr& mat) override;
 
@@ -71,6 +86,7 @@ private:
     static const Ogre::uint32 PASS_TONEMAP = 1; //!< `identifier` of the output pass in RoRPipeline.compositor
 
     bool IsUiMaterial(const Ogre::Material* mat) const; //!< Renders after tonemapping, in display space
+    void LinearizeColourConstants(Ogre::GpuProgramParametersSharedPtr params); //!< Named 'colour' float3/4 constants
     void CollectUiScripts();
 
     bool                   m_active = false;

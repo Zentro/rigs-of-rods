@@ -7195,7 +7195,7 @@ void ActorSpawner::CreateVideoCamera(RigDef::VideoCamera* def)
                 def->texture_width,
                 def->texture_height,
                 0, // no mip maps
-                Ogre::PF_R8G8B8,
+                GfxPipeline::GetSceneTargetFormat(Ogre::PF_R8G8B8), // Shown in the scene - see GfxPipeline
                 Ogre::TU_RENDERTARGET);
             vcam.vcam_render_target = vcam.vcam_render_tex->getBuffer()->getRenderTarget();
             vcam.vcam_render_target->setAutoUpdated(false);
@@ -7246,6 +7246,7 @@ void ActorSpawner::CreateVideoCamera(RigDef::VideoCamera* def)
             vp->setVisibilityMask(~HIDE_MIRROR);
             vp->setVisibilityMask(~DEPTHMAP_DISABLED);
             vp->setOverlaysEnabled(false);
+            App::GetGfxScene()->GetPipeline().AddToViewport(vp); // Its own window - tonemapped like the main view
             vcam.vcam_material->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(vcam.vcam_off_tex_name);
         }
 
@@ -7302,7 +7303,7 @@ void ActorSpawner::CreateMirrorPropVideoCam(
             , 128
             , 256
             , 0
-            , Ogre::PF_R8G8B8
+            , GfxPipeline::GetSceneTargetFormat(Ogre::PF_R8G8B8) // Shown in the scene - see GfxPipeline
             , Ogre::TU_RENDERTARGET);
 
         // Create OGRE camera
