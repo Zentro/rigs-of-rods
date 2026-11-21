@@ -21,9 +21,11 @@
 #include "GfxPipeline.h"
 
 #include "Application.h"
+#include "GfxScene.h"
 #include "PlatformUtils.h"
 
 #include <OgreCompositorManager.h>
+#include <RTShaderSystem/OgreShaderGenerator.h>
 
 using namespace Ogre;
 using namespace RoR;
@@ -40,6 +42,33 @@ static const char* NON_COLOUR_TEXTURE_HINTS[] = {
     "_ao.", "occlusion", "mask", "noise", "perlin", "fresnel", "reflection", "refraction",
     "environmenttexture", "lightmap", "blendmap", "densitymap"
 };
+
+namespace {
+
+/// With ShaderGenerator::setTargetLinearColours(), OGRE converts colour constants from gamma to linear while
+/// uploading them (GpuProgramParameters::setUseLinearColours) - surface ambient/diffuse/emissive, derived ambient
+/// and scene colour, light colours. RoR already supplies linear colours (GfxPipeline::LinearizeMaterial, ToLinear),
+/// so they would be decoded twice: ambient 0.09 -> 0.008, black shadows, too dark surfaces. Turned off here right
+/// before the parameters are uploaded (render object listeners fire before SceneManager::updateGpuProgramParameters).
+/// Found on the gfx-rtss branch, see its WALKTHROUGH.md, section 3.4.
+class LinearColourParamsListener: public RenderObjectListener
+{
+public:
+    void notifyRenderSingleObject(Renderable*, const Pass* pass, const AutoParamDataSource*, const LightList*, bool) override
+    {
+        if (!pass->isProgrammable())
+            return;
+        for (int i = 0; i < GPT_COMPUTE_PROGRAM; i++)
+        {
+            if (pass->hasGpuProgram((GpuProgramType)i))
+                pass->getGpuProgramParameters((GpuProgramType)i)->setUseLinearColours(false);
+        }
+    }
+};
+
+LinearColourParamsListener g_linear_colour_params_listener;
+
+} // namespace
 
 void GfxPipeline::Init(Ogre::Viewport* viewport)
 {
@@ -67,6 +96,11 @@ void GfxPipeline::Init(Ogre::Viewport* viewport)
     m_active = true;
     this->UpdateFrame();
     LOG("[RoR|GfxPipeline] HDR pipeline active (half-float scene, tonemapping)");
+
+    // RTSS shaders: output linear colours (no gamma encoding, the tonemapper does that) and decode 8-bit textures
+    // which aren't hardware-sRGB. Both parts below go together - either one alone makes shadows black.
+    RTShader::ShaderGenerator::getSingleton().setTargetLinearColours(true);
+    App::GetGfxScene()->GetSceneManager()->addRenderObjectListener(&g_linear_colour_params_listener);
 
     // Linear content: every group parsed from now on, plus the ones already parsed (RoR's own packs)
     this->CollectUiScripts();
