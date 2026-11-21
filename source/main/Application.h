@@ -799,6 +799,7 @@ extern CVar* gfx_shadow_quality;
 extern CVar* gfx_shadow_distance;
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
+extern CVar* gfx_lod_range;
 extern CVar* gfx_camera_height;
 extern CVar* gfx_fov_external;
 extern CVar* gfx_fov_external_default;

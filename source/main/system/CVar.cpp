@@ -192,6 +192,7 @@ void Console::cVarSetupBuiltins()
     App::gfx_shadow_quality      = this->cVarCreate("gfx_shadow_quality",      "Shadows Quality",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"); //0 = Low quality, 1 = mid, 2 = hq, 3 = ultra
     App::gfx_shadow_distance     = this->cVarCreate("gfx_shadow_distance",     "Shadow distance",            CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "400"); // metres, sun shadows end here
     App::gfx_skidmarks_mode      = this->cVarCreate("gfx_skidmarks_mode",      "Skidmarks",                  CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
+    App::gfx_lod_range           = this->cVarCreate("gfx_lod_range",           "LodRange",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");
     App::gfx_sight_range         = this->cVarCreate("gfx_sight_range",         "SightRange",                 CVAR_ARCHIVE | CVAR_TYPE_INT,     "5000");
     App::gfx_camera_height       = this->cVarCreate("gfx_camera_height",       "Static camera height",       CVAR_ARCHIVE | CVAR_TYPE_INT,     "5");
     App::gfx_fov_external        = this->cVarCreate("gfx_fov_external",        "",                                          CVAR_TYPE_INT,     "60");

@@ -95,6 +95,9 @@ void GfxScene::UpdateScene(float dt)
     // NOTE: The `dt` parameter here is simulation time (0 when paused), not real time!
     // ================================================================================
 
+    // LOD range factor: mesh and material LOD distances (gfx_lod_range)
+    App::GetCameraManager()->GetCamera()->setLodBias(Ogre::Math::Clamp(App::gfx_lod_range->getFloat(), 0.1f, 10.f));
+
     // Actors - start threaded tasks
     for (GfxActor* gfx_actor: m_live_gfx_actors)
     {
