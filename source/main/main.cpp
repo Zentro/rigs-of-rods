@@ -186,6 +186,7 @@ int main(int argc, char *argv[])
         App::GetContentManager()->AddResourcePack("paged");
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");
+        App::GetContentManager()->AddResourcePack("pipeline"); // HDR compositor and tonemapping, see GfxPipeline
         App::GetContentManager()->AddResourcePack("character");
         
         Ogre::ResourceGroupManager::getSingleton().createResourceGroup(RGN_UI_ICONS, /*inGlobalPool:*/ false); // 'inGlobalPool=false' is default for OGRE_RESOURCEMANAGER_STRICT>0
@@ -226,6 +227,7 @@ int main(int argc, char *argv[])
         RTSSManager::InstallMaterialRules(); // Cg rescue; invisible and see-through materials cast no shadow
         RTSSManager::InstallSubRenderStates(); // 'RoR/NiceMetal' vehicle shading
         RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
+        App::GetGfxScene()->GetPipeline().Init(App::GetAppContext()->GetViewport()); // HDR pipeline (gfx_render_pipeline)
 
         App::CreateGuiManager(); // Needs scene manager
 
@@ -2320,6 +2322,7 @@ int main(int argc, char *argv[])
             {
                 try
                 {
+                    App::GetGfxScene()->GetPipeline().UpdateFrame();
                     const auto perf_render = PerfNow();
                     App::GetAppContext()->GetOgreRoot()->renderOneFrame();
                     PerfAdd(PERF_RENDER, perf_render);

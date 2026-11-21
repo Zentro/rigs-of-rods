@@ -1,0 +1,21 @@
+// HDR pipeline programs (see GfxPipeline.cpp). Unified shader syntax (OgreUnifiedShader.h) - GLSL, GLSL ES and HLSL.
+
+vertex_program RoR/Pipeline/Quad_VP glsl glsles hlsl
+{
+    source Quad_vs.glsl
+    default_params
+    {
+        param_named_auto worldViewProj worldviewproj_matrix
+    }
+}
+
+fragment_program RoR/Pipeline/Tonemap_FP glsl glsles hlsl
+{
+    source Tonemap_fs.glsl
+    default_params
+    {
+        param_named sceneTex int 0
+        param_named exposure float 1.6
+        param_named tonemapMode float 2.0
+    }
+}

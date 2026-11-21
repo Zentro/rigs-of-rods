@@ -32,6 +32,7 @@ set(SOURCE_FILES
         gfx/EnvironmentMap.{h,cpp}
         gfx/GfxActor.{h,cpp}
         gfx/GfxData.{h,cpp}
+        gfx/GfxPipeline.{h,cpp}
         gfx/GfxScene.{h,cpp}
         gfx/IGfxWater.h
         gfx/MovableText.{h,cpp}

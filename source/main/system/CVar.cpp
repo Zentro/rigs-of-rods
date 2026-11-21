@@ -192,6 +192,9 @@ void Console::cVarSetupBuiltins()
     App::gfx_envmap_rate         = this->cVarCreate("gfx_envmap_rate",         "ReflectionUpdateRate",       CVAR_ARCHIVE | CVAR_TYPE_INT,     "1");
     App::gfx_shadow_quality      = this->cVarCreate("gfx_shadow_quality",      "Shadows Quality",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"); //0 = Low quality, 1 = mid, 2 = hq, 3 = ultra
     App::gfx_shadow_distance     = this->cVarCreate("gfx_shadow_distance",     "Shadow distance",            CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "400"); // metres, sun shadows end here
+    App::gfx_render_pipeline     = this->cVarCreate("gfx_render_pipeline",     "Render pipeline",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxRenderPipeline::LEGACY - PBR becomes the default with ROADMAP M3.5*/);
+    App::gfx_tonemap             = this->cVarCreate("gfx_tonemap",             "Tonemapping",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"/*(int)GfxTonemap::AGX*/);
+    App::gfx_exposure            = this->cVarCreate("gfx_exposure",            "Exposure",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.6");
     App::gfx_skidmarks_mode      = this->cVarCreate("gfx_skidmarks_mode",      "Skidmarks",                  CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_static_objects      = this->cVarCreate("gfx_static_objects",      "StaticTerrainObjects",       CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "true");
     App::gfx_lod_range           = this->cVarCreate("gfx_lod_range",           "LodRange",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");

@@ -364,6 +364,19 @@ std::string ToLocalizedString(SimGearboxMode e);
 /// @}
 /// @}
 
+enum class GfxRenderPipeline
+{
+    LEGACY, //!< Gamma space, renders directly to the window (the look before the graphics overhaul)
+    PBR,    //!< Linear HDR scene + tonemapping (see GfxPipeline, ROADMAP.md M3)
+};
+
+enum class GfxTonemap
+{
+    NONE,   //!< Clamp only
+    ACES,   //!< ACES fitted (Hill)
+    AGX,    //!< AgX (Sobotka)
+};
+
 enum class GfxShadowType
 {
     NONE,
@@ -799,6 +812,9 @@ extern CVar* gfx_envmap_enabled;
 extern CVar* gfx_envmap_rate;
 extern CVar* gfx_shadow_quality;
 extern CVar* gfx_shadow_distance;
+extern CVar* gfx_render_pipeline;   //!< GfxRenderPipeline, requires restart
+extern CVar* gfx_tonemap;           //!< GfxTonemap (PBR pipeline)
+extern CVar* gfx_exposure;          //!< Linear exposure multiplier (PBR pipeline)
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
 extern CVar* gfx_lod_range;
