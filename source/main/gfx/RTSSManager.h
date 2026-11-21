@@ -81,10 +81,10 @@ public:
     static bool RescueMaterial(Ogre::Material& mat);
 
     /// Shadow caster rules: invisible materials (`colour_write off`) and see-through ones (blended, no depth
-    /// write - e.g. headlight beam cones) cast no shadow. (Alpha-tested materials keep their cut-out shapes
-    /// through OGRE's own caster, see the technique resolver.)
+    /// write - e.g. headlight beam cones) cast no shadow. Alpha-tested materials get an own caster (texture +
+    /// alpha test, shaded by RTSS) so their shadows keep the cut-out shapes.
 
-    /// Applies the shadow caster rules (see InstallShadowCasterRules()) to one material.
+    /// Applies the shadow caster rules (see above) to one material. Call again when its textures change.
     /// @return True if the material was set to cast no shadow.
     static bool SetupShadowCaster(Ogre::Material& mat);
 

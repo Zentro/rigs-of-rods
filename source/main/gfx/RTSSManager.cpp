@@ -44,6 +44,8 @@ using namespace RoR;
 namespace {
 
 const char* NO_SHADOW_CASTER_MAT = "RoR/NoShadowCaster";
+const char* SHADOW_CASTER_MAT = "RoR/ShadowCaster";
+const char* ALPHA_CASTER_SUFFIX = "/RoRShadowCaster"; //!< Casters made for alpha-tested materials, see SetupShadowCaster()
 
 /// Shadow caster that draws nothing (writes neither colour nor depth)
 Ogre::MaterialPtr GetNoShadowCaster()
@@ -61,13 +63,70 @@ Ogre::MaterialPtr GetNoShadowCaster()
     return mat;
 }
 
-/// Materials the resolver must leave to fixed function. OGRE draws shadow casters with the scene's caster
-/// material and, for alpha-tested/alpha-blended objects, copies their textures and alpha test into that
-/// material's pass *per object* (TextureShadowRenderer::deriveShadowCasterPass). An RTSS technique is built
-/// once from that pass and never sees these changes - leaves and fences would cast solid squares.
+/// Shadow caster materials themselves - the caster rules don't apply to them. ('/ShadowCaster' = GrassLoader's)
 bool IsShadowCasterMaterial(const Ogre::Material* mat)
 {
-    return mat->getName() == "Ogre/TextureShadowCaster" || mat->getName() == NO_SHADOW_CASTER_MAT;
+    const std::string& name = mat->getName();
+    return name == SHADOW_CASTER_MAT || name == NO_SHADOW_CASTER_MAT
+        || Ogre::StringUtil::endsWith(name, ALPHA_CASTER_SUFFIX, false)
+        || Ogre::StringUtil::endsWith(name, "/ShadowCaster", false);
+}
+
+/// Shared caster for everything without an own caster: depth only. Its shaders are generated right away, from the
+/// plain pass: OGRE copies the textures and alpha test of alpha-tested objects that have no own caster into this
+/// pass per object (TextureShadowRenderer::deriveShadowCasterPass), which a generated shader never sees - and
+/// GL3+/D3D11 have no fixed function to draw it with. SetupShadowCaster() gives those objects their own caster.
+Ogre::MaterialPtr GetSharedShadowCaster()
+{
+    Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().getByName(SHADOW_CASTER_MAT, Ogre::RGN_DEFAULT);
+    if (!mat)
+    {
+        mat = Ogre::MaterialManager::getSingleton().create(SHADOW_CASTER_MAT, Ogre::RGN_DEFAULT);
+        mat->setReceiveShadows(false);
+        mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+        mat->compile();
+        RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
+        shadergen.createShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME, RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+        shadergen.validateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, *mat);
+    }
+    return mat;
+}
+
+/// Own caster for an alpha-tested material: depth only, cut out by the alpha of the material's first texture
+/// (leaves, fences, grilles). Shaded by RTSS like any other material. Kept in step with the material's texture:
+/// vehicle materials are copies of a template and get their real textures only after copying.
+Ogre::MaterialPtr GetAlphaTestedCaster(const Ogre::Material& mat, const Ogre::Pass& src)
+{
+    const std::string name = mat.getName() + ALPHA_CASTER_SUFFIX;
+    const Ogre::TextureUnitState* src_tus = (src.getNumTextureUnitStates() > 0) ? src.getTextureUnitState(0) : nullptr;
+
+    Ogre::MaterialPtr caster = Ogre::MaterialManager::getSingleton().getByName(name, mat.getGroup());
+    if (caster)
+    {
+        Ogre::Pass* pass = caster->getTechnique(0)->getPass(0);
+        const Ogre::TextureUnitState* tus = (pass->getNumTextureUnitStates() > 0) ? pass->getTextureUnitState(0) : nullptr;
+        const std::string cur_tex = tus ? tus->getTextureName() : "";
+        const std::string src_tex = src_tus ? src_tus->getTextureName() : "";
+        if (cur_tex != src_tex)
+        {
+            pass->removeAllTextureUnitStates();
+            if (src_tus)
+                *pass->createTextureUnitState() = *src_tus;
+            RTSSManager::RefreshMaterial(*caster);
+        }
+        return caster;
+    }
+
+    caster = Ogre::MaterialManager::getSingleton().create(name, mat.getGroup());
+    caster->setReceiveShadows(false);
+    Ogre::Pass* pass = caster->getTechnique(0)->getPass(0);
+    pass->setLightingEnabled(false);
+    pass->setAlphaRejectSettings(src.getAlphaRejectFunction(), src.getAlphaRejectValue());
+    pass->setCullingMode(src.getCullingMode());
+    pass->setManualCullingMode(src.getManualCullingMode());
+    if (src_tus)
+        *pass->createTextureUnitState() = *src_tus;
+    return caster;
 }
 
 /// Applies the material rules (Cg rescue, shadow casters) to all materials of a group, or all materials if empty
@@ -154,9 +213,6 @@ public:
         if (m_busy)
             return nullptr;
         struct BusyScope { bool& b; BusyScope(bool& x): b(x) { b = true; } ~BusyScope() { b = false; } } busy(m_busy);
-
-        if (IsShadowCasterMaterial(mat))
-            return nullptr;
 
         // Materials with their own shaders (GLSL, HLSL, Cg) keep them: RTSS would replace or break them
         // (on gfx-rtss this broke sky boxes and shadow casting). Returning null = OGRE uses the material's
@@ -245,6 +301,8 @@ private:
         {
             if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
                 continue; // e.g. techniques RTSS or other systems added
+            if (HasUnrunnableShaders(tech))
+                continue; // e.g. Cg: the material's Cg rescue technique is the one drawn, and RTSS shades it
             for (const Ogre::Pass* pass : tech->getPasses())
             {
                 if (pass->isProgrammable())
@@ -290,6 +348,9 @@ void RTSSManager::InstallSubRenderStates()
 
 bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, RTShader::SubRenderState* srs)
 {
+    // The technique resolver won't see this material (it gets its RTSS technique here)
+    RTSSManager::SetupShadowCaster(*mat);
+
     RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
     // RTSS only considers supported techniques - compile() is what finds them.
     if (mat->getSupportedTechniques().empty())
@@ -312,6 +373,10 @@ bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short
 
 void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody)
 {
+    // Textures are final now. (The material is a copy, and may get its RTSS technique below - then the technique
+    // resolver, which sets up casters too, never sees it.)
+    RTSSManager::SetupShadowCaster(*mat);
+
     Pass* pass = mat->getTechnique("BaseTechnique")->getPass("BaseRender");
 
     // A plain diffuse-only material needs nothing special - the regular RTSS shading does the right thing.
@@ -366,8 +431,13 @@ bool RTSSManager::SetupShadowCaster(Ogre::Material& mat)
     for (Ogre::Technique* tech : mat.getTechniques())
     {
         if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME
-            || tech->getNumPasses() == 0
-            || tech->getShadowCasterMaterial()) // Keep the author's `shadow_caster_material`
+            || tech->getNumPasses() == 0)
+            continue;
+
+        // Keep the author's `shadow_caster_material` (and the no-shadow caster set earlier). Ours are redone:
+        // a copied material (vehicles) carries the caster of the material it was copied from.
+        const Ogre::MaterialPtr& cur_caster = tech->getShadowCasterMaterial();
+        if (cur_caster && !Ogre::StringUtil::endsWith(cur_caster->getName(), ALPHA_CASTER_SUFFIX, false))
             continue;
 
         // Invisible: helper geometry (e.g. 'tracks/trans' cab shells). OGRE's caster ignores colour write.
@@ -385,6 +455,10 @@ bool RTSSManager::SetupShadowCaster(Ogre::Material& mat)
         {
             tech->setShadowCasterMaterial(GetNoShadowCaster());
             changed = true;
+        }
+        else if (first->getAlphaRejectFunction() != Ogre::CMPF_ALWAYS_PASS)
+        {
+            tech->setShadowCasterMaterial(GetAlphaTestedCaster(mat, *first));
         }
     }
     return changed;
@@ -524,9 +598,8 @@ void RTSSManager::processPSSM()
     // Casters may shadow themselves (vehicle roof onto trunk, mirrors, wheel arches ...)
     sm->setShadowTextureSelfShadow(true);
 
-    //Caster is set via materials
-    MaterialPtr shadowMat = MaterialManager::getSingleton().getByName("Ogre/TextureShadowCaster");
-    sm->setShadowTextureCasterMaterial(shadowMat);
+    // Caster for everything without an own caster (see SetupShadowCaster())
+    sm->setShadowTextureCasterMaterial(GetSharedShadowCaster());
 
     // Depth textures: the shadow cameras only render depth, which receivers compare against their own depth.
     // (With colour textures the caster material writes a *colour* - the receivers' comparison was meaningless:
