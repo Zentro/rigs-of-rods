@@ -275,8 +275,15 @@ bool AppContext::SetUpRendering()
             const auto render_systems = App::GetAppContext()->GetOgreRoot()->getAvailableRenderers();
             if (!render_systems.empty())
             {
-                LOG(fmt::format("[RoR|Startup|Rendering] Auto-selected renderer plugin '{}'", render_systems.front()->getName()));
-                    m_ogre_root->setRenderSystem(render_systems.front());
+                Ogre::RenderSystem* selected = render_systems.front();
+#if OGRE_PLATFORM != OGRE_PLATFORM_WIN32
+                // OpenGL 3+ where the OGRE build has it (legacy GL stays selectable in settings).
+                // Windows keeps the first plugin until Direct3D 11 is verified (ROADMAP C.5.4).
+                if (Ogre::RenderSystem* gl3 = m_ogre_root->getRenderSystemByName("OpenGL 3+ Rendering Subsystem"))
+                    selected = gl3;
+#endif
+                LOG(fmt::format("[RoR|Startup|Rendering] Auto-selected renderer plugin '{}'", selected->getName()));
+                m_ogre_root->setRenderSystem(selected);
             }
             else
             {
