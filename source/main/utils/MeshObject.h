@@ -35,7 +35,9 @@
 class MeshObject
 {
 public:
-    MeshObject(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, Ogre::SceneNode* sceneNode);
+    /// @param cpu_copy Load the mesh with CPU-side copies of its buffers (shadow buffers) - needed when the CPU reads
+    ///                 the geometry, e.g. to bake it into StaticGeometry; otherwise every read is a GPU readback.
+    MeshObject(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, Ogre::SceneNode* sceneNode, bool cpu_copy = false);
 
     void setMaterialName(Ogre::String m);
     void setCastShadows(bool b);
@@ -50,7 +52,7 @@ protected:
     Ogre::MeshPtr m_mesh;
     bool m_cast_shadows = false;
 
-    void createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName);
+    void createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, bool cpu_copy);
 };
 
 /// @} // @addtogroup Gfx

@@ -35,10 +35,10 @@
 using namespace Ogre;
 using namespace RoR;
 
-MeshObject::MeshObject(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, Ogre::SceneNode *m_scene_node)
+MeshObject::MeshObject(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, Ogre::SceneNode *m_scene_node, bool cpu_copy)
     : m_scene_node(m_scene_node), m_entity(nullptr), m_cast_shadows(true)
 {
-    this->createEntity(meshName, entityRG, entityName);
+    this->createEntity(meshName, entityRG, entityName, cpu_copy);
 }
 
 void MeshObject::setMaterialName(Ogre::String m)
@@ -67,7 +67,7 @@ void MeshObject::setVisible(bool b)
         m_entity->setVisible(b);
 }
 
-void MeshObject::createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName)
+void MeshObject::createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre::String entityName, bool cpu_copy)
 {
     if (!m_scene_node)
         return;
@@ -79,7 +79,8 @@ void MeshObject::createEntity(Ogre::String meshName, Ogre::String entityRG, Ogre
         // Mesh hasn't been loaded yet
         if (m_mesh == nullptr)
         {
-            m_mesh = Ogre::MeshManager::getSingleton().load(meshName, entityRG);
+            m_mesh = Ogre::MeshManager::getSingleton().load(meshName, entityRG,
+                Ogre::HBU_GPU_ONLY, Ogre::HBU_GPU_ONLY, /*vertexBufferShadowed:*/cpu_copy, /*indexBufferShadowed:*/cpu_copy);
 
             // important: you need to add the LODs before creating the entity
             // now find possible LODs, needs to be done before calling createEntity()
