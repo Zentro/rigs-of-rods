@@ -18,6 +18,11 @@ MAIN_DECLARATION
     if(gl_FragColor.a < 0.5 || oColour.a < 0.5)
         discard;
 #endif
+#ifdef TEX_ALPHA_TEST
+    // Impostors: cut out by the texture only; the vertex alpha is the distance fade (blended)
+    if(gl_FragColor.a < 0.5)
+        discard;
+#endif
     gl_FragColor *= saturate(oColour);
 #ifdef USE_FOG
     float fogf = saturate((fogParams.z - abs(oFogCoord)) * fogParams.w);

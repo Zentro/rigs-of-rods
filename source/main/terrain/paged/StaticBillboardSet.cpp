@@ -76,211 +76,226 @@ mFadeInvisibleDist      (0.f)
          s_isGLSL = mgr.isLanguageSupported("glsl");
          Ogre::String shaderLanguage = s_isGLSL ? "glsl" : mgr.isLanguageSupported("hlsl") ? "hlsl" : "cg";
 
-         //First shader, simple camera-alignment
-         String vertexProg;
-         if (!s_isGLSL) // DirectX HLSL or nVidia CG
+         // RoR: with GLSL, use the script programs (resources/paged/PagedGeometry.program, OgreUnifiedShader, match the
+         // 'Default_Sprite' fragment program). The code below generates GLSL 1.10 with fixed-function built-ins
+         // (gl_Vertex, gl_FrontColor...) and no fragment program - blank impostors on GL3+.
+         HighLevelGpuProgramPtr scriptVp = mgr.getByName("Sprite_vp");
+         HighLevelGpuProgramPtr scriptFadeVp = mgr.getByName("SpriteFade_vp");
+         const bool useScriptPrograms = s_isGLSL && scriptVp && scriptFadeVp
+            && !scriptVp->getOrigin().empty() && !scriptFadeVp->getOrigin().empty();
+         if (useScriptPrograms)
          {
-            vertexProg =
-               "void Sprite_vp(	\n"
-               "	float4 position : POSITION,	\n"
-               "	float3 normal   : NORMAL,	\n"
-               "	float4 color	: COLOR,	\n"
-               "	float2 uv       : TEXCOORD0,	\n"
-               "	out float4 oPosition : POSITION,	\n"
-               "	out float2 oUv       : TEXCOORD0,	\n"
-               "	out float4 oColor    : COLOR, \n"
-               "	out float oFog       : FOG,	\n"
-               "	uniform float4x4 worldViewProj,	\n"
-               "	uniform float    uScroll, \n"
-               "	uniform float    vScroll, \n"
-               "	uniform float4   preRotatedQuad[4] )	\n"
-               "{	\n"
-               //Face the camera
-               "	float4 vCenter = float4( position.x, position.y, position.z, 1.0f );	\n"
-               "	float4 vScale = float4( normal.x, normal.y, normal.x, 1.0f );	\n"
-               "	oPosition = mul( worldViewProj, vCenter + (preRotatedQuad[normal.z] * vScale) );  \n"
-
-               //Color
-               "	oColor = color;   \n"
-
-               //UV Scroll
-               "	oUv = uv;	\n"
-               "	oUv.x += uScroll; \n"
-               "	oUv.y += vScroll; \n"
-
-               //Fog
-               "	oFog = oPosition.z; \n"
-               "}";
+            scriptVp->load();
+            scriptFadeVp->load();
          }
-         else     // OpenGL GLSL
+         else
          {
-            vertexProg =
-               "uniform mat4 worldViewProj;\n"
-               "uniform float uScroll; \n"
-               "uniform float vScroll; \n"
-               "uniform vec4  preRotatedQuad[4]; \n"
-
-               "void main() { \n"
-               //Face the camera
-               "	vec4 vCenter = vec4( gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 1.0 ); \n"
-               "	vec4 vScale = vec4( gl_Normal.x, gl_Normal.y, gl_Normal.x , 1.0 ); \n"
-               "	gl_Position = worldViewProj * (vCenter + (preRotatedQuad[int(gl_Normal.z)] * vScale) ); \n"
-
-               //Color
-               "	gl_FrontColor = gl_Color; \n"
-
-               //UV Scroll
-               "	gl_TexCoord[0] = gl_MultiTexCoord0; \n"
-               "	gl_TexCoord[0].x += uScroll; \n"
-               "	gl_TexCoord[0].y += vScroll; \n"
-
-               //Fog
-               "	gl_FogFragCoord = gl_Position.z; \n"
-               "}";
-         }
-
-		 HighLevelGpuProgramPtr vertexShader = HighLevelGpuProgramManager::getSingleton().getByName("Sprite_vp");
-         if (vertexShader) // left over from an earlier terrain (e.g. instance count dropped to 0 while still registered)
-         {
-            Ogre::LogManager::getSingleton().logMessage("[PagedGeometry] Sprite_vp already exists, recreating it");
-            HighLevelGpuProgramManager::getSingleton().remove(vertexShader);
-            vertexShader.reset();
-         }
-
-         vertexShader = HighLevelGpuProgramManager::getSingleton().createProgram(
-            "Sprite_vp", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, shaderLanguage, GPT_VERTEX_PROGRAM);
-         vertexShader->setSource(vertexProg);
-
-         // Set entry point for vertex program. GLSL can only have one entry point "main".
-         if (!s_isGLSL)
-         {
-            if (shaderLanguage == "hlsl")
+            //First shader, simple camera-alignment
+            String vertexProg;
+            if (!s_isGLSL) // DirectX HLSL or nVidia CG
             {
-               vertexShader->setParameter("target", "vs_1_1");
-               vertexShader->setParameter("entry_point", "Sprite_vp");
+               vertexProg =
+                  "void Sprite_vp(	\n"
+                  "	float4 position : POSITION,	\n"
+                  "	float3 normal   : NORMAL,	\n"
+                  "	float4 color	: COLOR,	\n"
+                  "	float2 uv       : TEXCOORD0,	\n"
+                  "	out float4 oPosition : POSITION,	\n"
+                  "	out float2 oUv       : TEXCOORD0,	\n"
+                  "	out float4 oColor    : COLOR, \n"
+                  "	out float oFog       : FOG,	\n"
+                  "	uniform float4x4 worldViewProj,	\n"
+                  "	uniform float    uScroll, \n"
+                  "	uniform float    vScroll, \n"
+                  "	uniform float4   preRotatedQuad[4] )	\n"
+                  "{	\n"
+                  //Face the camera
+                  "	float4 vCenter = float4( position.x, position.y, position.z, 1.0f );	\n"
+                  "	float4 vScale = float4( normal.x, normal.y, normal.x, 1.0f );	\n"
+                  "	oPosition = mul( worldViewProj, vCenter + (preRotatedQuad[normal.z] * vScale) );  \n"
+
+                  //Color
+                  "	oColor = color;   \n"
+
+                  //UV Scroll
+                  "	oUv = uv;	\n"
+                  "	oUv.x += uScroll; \n"
+                  "	oUv.y += vScroll; \n"
+
+                  //Fog
+                  "	oFog = oPosition.z; \n"
+                  "}";
             }
-            else if(shaderLanguage == "cg")
+            else     // OpenGL GLSL
             {
-               vertexShader->setParameter("profiles", "vs_1_1 arbvp1");
-               vertexShader->setParameter("entry_point", "Sprite_vp");
+               vertexProg =
+                  "uniform mat4 worldViewProj;\n"
+                  "uniform float uScroll; \n"
+                  "uniform float vScroll; \n"
+                  "uniform vec4  preRotatedQuad[4]; \n"
+
+                  "void main() { \n"
+                  //Face the camera
+                  "	vec4 vCenter = vec4( gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 1.0 ); \n"
+                  "	vec4 vScale = vec4( gl_Normal.x, gl_Normal.y, gl_Normal.x , 1.0 ); \n"
+                  "	gl_Position = worldViewProj * (vCenter + (preRotatedQuad[int(gl_Normal.z)] * vScale) ); \n"
+
+                  //Color
+                  "	gl_FrontColor = gl_Color; \n"
+
+                  //UV Scroll
+                  "	gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+                  "	gl_TexCoord[0].x += uScroll; \n"
+                  "	gl_TexCoord[0].y += vScroll; \n"
+
+                  //Fog
+                  "	gl_FogFragCoord = gl_Position.z; \n"
+                  "}";
             }
-            else
+
+   		 HighLevelGpuProgramPtr vertexShader = HighLevelGpuProgramManager::getSingleton().getByName("Sprite_vp");
+            if (vertexShader) // left over from an earlier terrain (e.g. instance count dropped to 0 while still registered)
             {
-               assert(false && "Unknown shader language");
+               Ogre::LogManager::getSingleton().logMessage("[PagedGeometry] Sprite_vp already exists, recreating it");
+               HighLevelGpuProgramManager::getSingleton().remove(vertexShader);
+               vertexShader.reset();
             }
-         }
 
-         // compile vertex shader
-         vertexShader->load();
+            vertexShader = HighLevelGpuProgramManager::getSingleton().createProgram(
+               "Sprite_vp", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, shaderLanguage, GPT_VERTEX_PROGRAM);
+            vertexShader->setSource(vertexProg);
 
-
-         //====================================================================
-         //Second shader, camera alignment and distance based fading
-         String vertexProg2;
-         if (!s_isGLSL) // DirectX HLSL or nVidia CG
-         {
-            vertexProg2 =
-               "void SpriteFade_vp(	\n"
-               "	float4 position : POSITION,	\n"
-               "	float3 normal   : NORMAL,	\n"
-               "	float4 color	: COLOR,	\n"
-               "	float2 uv       : TEXCOORD0,	\n"
-               "	out float4 oPosition : POSITION,	\n"
-               "	out float2 oUv       : TEXCOORD0,	\n"
-               "	out float4 oColor    : COLOR, \n"
-               "	out float oFog       : FOG,	\n"
-               "	uniform float4x4 worldViewProj,	\n"
-
-               "	uniform float3 camPos, \n"
-               "	uniform float fadeGap, \n"
-               "   uniform float invisibleDist, \n"
-
-               "	uniform float    uScroll, \n"
-               "	uniform float    vScroll, \n"
-               "	uniform float4   preRotatedQuad[4] )	\n"
-               "{	\n"
-               //Face the camera
-               "	float4 vCenter = float4( position.x, position.y, position.z, 1.0f );	\n"
-               "	float4 vScale = float4( normal.x, normal.y, normal.x, 1.0f );	\n"
-               "	oPosition = mul( worldViewProj, vCenter + (preRotatedQuad[normal.z] * vScale) );  \n"
-
-               "	oColor.rgb = color.rgb;   \n"
-
-               //Fade out in the distance
-               "	float dist = distance(camPos.xz, position.xz);	\n"
-               "	oColor.a = (invisibleDist - dist) / fadeGap;   \n"
-
-               //UV scroll
-               "	oUv = uv;	\n"
-               "	oUv.x += uScroll; \n"
-               "	oUv.y += vScroll; \n"
-
-               //Fog
-               "	oFog = oPosition.z; \n"
-               "}";
-         }
-         else        // OpenGL GLSL
-         {
-            vertexProg2 =
-               "uniform mat4 worldViewProj;\n"
-               "uniform vec3  camPos; \n"
-               "uniform float fadeGap; \n"
-               "uniform float invisibleDist; \n"
-               "uniform float uScroll; \n"
-               "uniform float vScroll; \n"
-               "uniform vec4  preRotatedQuad[4]; \n"
-
-               "void main() { \n"
-               //Face the camera
-               "	vec4 vCenter = vec4( gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 1.0 ); \n"
-               "	vec4 vScale = vec4( gl_Normal.x, gl_Normal.y, gl_Normal.x , 1.0 ); \n"
-               "	gl_Position = worldViewProj * (vCenter + (preRotatedQuad[int(gl_Normal.z)] * vScale) ); \n"
-
-               "	gl_FrontColor.xyz = gl_Color.xyz; \n"
-
-               //Fade out in the distance
-               "	vec4 position = gl_Vertex; \n"
-               "	float dist = distance(camPos.xz, position.xz); \n"
-               "	gl_FrontColor.w = (invisibleDist - dist) / fadeGap; \n"
-
-               //UV scroll
-               "	gl_TexCoord[0] = gl_MultiTexCoord0; \n"
-               "	gl_TexCoord[0].x += uScroll; \n"
-               "	gl_TexCoord[0].y += vScroll; \n"
-
-               //Fog
-               "	gl_FogFragCoord = gl_Position.z; \n"
-               "}";
-         }
-
-		 HighLevelGpuProgramPtr vertexShader2 = HighLevelGpuProgramManager::getSingleton().getByName("SpriteFade_vp");
-         if (vertexShader2) // left over from an earlier terrain (e.g. instance count dropped to 0 while still registered)
-         {
-            Ogre::LogManager::getSingleton().logMessage("[PagedGeometry] SpriteFade_vp already exists, recreating it");
-            HighLevelGpuProgramManager::getSingleton().remove(vertexShader2);
-            vertexShader2.reset();
-         }
-         vertexShader2 = HighLevelGpuProgramManager::getSingleton().createProgram("SpriteFade_vp",
-            ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, shaderLanguage, GPT_VERTEX_PROGRAM);
-         vertexShader2->setSource(vertexProg2);
-
-         // Set entry point. GLSL can only have one entry point "main".
-         if (!s_isGLSL)
-         {
-
-            if (shaderLanguage == "hlsl")
+            // Set entry point for vertex program. GLSL can only have one entry point "main".
+            if (!s_isGLSL)
             {
-               vertexShader2->setParameter("target", "vs_1_1");
-               vertexShader2->setParameter("entry_point", "SpriteFade_vp");
+               if (shaderLanguage == "hlsl")
+               {
+                  vertexShader->setParameter("target", "vs_1_1");
+                  vertexShader->setParameter("entry_point", "Sprite_vp");
+               }
+               else if(shaderLanguage == "cg")
+               {
+                  vertexShader->setParameter("profiles", "vs_1_1 arbvp1");
+                  vertexShader->setParameter("entry_point", "Sprite_vp");
+               }
+               else
+               {
+                  assert(false && "Unknown shader language");
+               }
             }
-            else if(shaderLanguage == "cg")
+
+            // compile vertex shader
+            vertexShader->load();
+
+
+            //====================================================================
+            //Second shader, camera alignment and distance based fading
+            String vertexProg2;
+            if (!s_isGLSL) // DirectX HLSL or nVidia CG
             {
-               vertexShader2->setParameter("profiles", "vs_1_1 arbvp1");
-               vertexShader2->setParameter("entry_point", "SpriteFade_vp");
+               vertexProg2 =
+                  "void SpriteFade_vp(	\n"
+                  "	float4 position : POSITION,	\n"
+                  "	float3 normal   : NORMAL,	\n"
+                  "	float4 color	: COLOR,	\n"
+                  "	float2 uv       : TEXCOORD0,	\n"
+                  "	out float4 oPosition : POSITION,	\n"
+                  "	out float2 oUv       : TEXCOORD0,	\n"
+                  "	out float4 oColor    : COLOR, \n"
+                  "	out float oFog       : FOG,	\n"
+                  "	uniform float4x4 worldViewProj,	\n"
+
+                  "	uniform float3 camPos, \n"
+                  "	uniform float fadeGap, \n"
+                  "   uniform float invisibleDist, \n"
+
+                  "	uniform float    uScroll, \n"
+                  "	uniform float    vScroll, \n"
+                  "	uniform float4   preRotatedQuad[4] )	\n"
+                  "{	\n"
+                  //Face the camera
+                  "	float4 vCenter = float4( position.x, position.y, position.z, 1.0f );	\n"
+                  "	float4 vScale = float4( normal.x, normal.y, normal.x, 1.0f );	\n"
+                  "	oPosition = mul( worldViewProj, vCenter + (preRotatedQuad[normal.z] * vScale) );  \n"
+
+                  "	oColor.rgb = color.rgb;   \n"
+
+                  //Fade out in the distance
+                  "	float dist = distance(camPos.xz, position.xz);	\n"
+                  "	oColor.a = (invisibleDist - dist) / fadeGap;   \n"
+
+                  //UV scroll
+                  "	oUv = uv;	\n"
+                  "	oUv.x += uScroll; \n"
+                  "	oUv.y += vScroll; \n"
+
+                  //Fog
+                  "	oFog = oPosition.z; \n"
+                  "}";
             }
+            else        // OpenGL GLSL
+            {
+               vertexProg2 =
+                  "uniform mat4 worldViewProj;\n"
+                  "uniform vec3  camPos; \n"
+                  "uniform float fadeGap; \n"
+                  "uniform float invisibleDist; \n"
+                  "uniform float uScroll; \n"
+                  "uniform float vScroll; \n"
+                  "uniform vec4  preRotatedQuad[4]; \n"
+
+                  "void main() { \n"
+                  //Face the camera
+                  "	vec4 vCenter = vec4( gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 1.0 ); \n"
+                  "	vec4 vScale = vec4( gl_Normal.x, gl_Normal.y, gl_Normal.x , 1.0 ); \n"
+                  "	gl_Position = worldViewProj * (vCenter + (preRotatedQuad[int(gl_Normal.z)] * vScale) ); \n"
+
+                  "	gl_FrontColor.xyz = gl_Color.xyz; \n"
+
+                  //Fade out in the distance
+                  "	vec4 position = gl_Vertex; \n"
+                  "	float dist = distance(camPos.xz, position.xz); \n"
+                  "	gl_FrontColor.w = (invisibleDist - dist) / fadeGap; \n"
+
+                  //UV scroll
+                  "	gl_TexCoord[0] = gl_MultiTexCoord0; \n"
+                  "	gl_TexCoord[0].x += uScroll; \n"
+                  "	gl_TexCoord[0].y += vScroll; \n"
+
+                  //Fog
+                  "	gl_FogFragCoord = gl_Position.z; \n"
+                  "}";
+            }
+
+   		 HighLevelGpuProgramPtr vertexShader2 = HighLevelGpuProgramManager::getSingleton().getByName("SpriteFade_vp");
+            if (vertexShader2) // left over from an earlier terrain (e.g. instance count dropped to 0 while still registered)
+            {
+               Ogre::LogManager::getSingleton().logMessage("[PagedGeometry] SpriteFade_vp already exists, recreating it");
+               HighLevelGpuProgramManager::getSingleton().remove(vertexShader2);
+               vertexShader2.reset();
+            }
+            vertexShader2 = HighLevelGpuProgramManager::getSingleton().createProgram("SpriteFade_vp",
+               ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, shaderLanguage, GPT_VERTEX_PROGRAM);
+            vertexShader2->setSource(vertexProg2);
+
+            // Set entry point. GLSL can only have one entry point "main".
+            if (!s_isGLSL)
+            {
+
+               if (shaderLanguage == "hlsl")
+               {
+                  vertexShader2->setParameter("target", "vs_1_1");
+                  vertexShader2->setParameter("entry_point", "SpriteFade_vp");
+               }
+               else if(shaderLanguage == "cg")
+               {
+                  vertexShader2->setParameter("profiles", "vs_1_1 arbvp1");
+                  vertexShader2->setParameter("entry_point", "SpriteFade_vp");
+               }
+            }
+            // compile it
+            vertexShader2->load();
          }
-         // compile it
-         vertexShader2->load();
       }
 
 
@@ -305,8 +320,13 @@ StaticBillboardSet::~StaticBillboardSet()
       if (--s_nSelfInstances == 0)
       {
          s_mapFadedMaterial.clear();  //Delete fade materials
-         HighLevelGpuProgramManager::getSingleton().remove("Sprite_vp");
-         HighLevelGpuProgramManager::getSingleton().remove("SpriteFade_vp");
+         // Only the generated ones - the script programs (resources/paged) stay for the next terrain
+         for (const char* name : {"Sprite_vp", "SpriteFade_vp"})
+         {
+            HighLevelGpuProgramPtr prog = HighLevelGpuProgramManager::getSingleton().getByName(name);
+            if (prog && prog->getOrigin().empty())
+               HighLevelGpuProgramManager::getSingleton().remove(prog);
+         }
       }
 
 
@@ -671,6 +691,9 @@ MaterialPtr StaticBillboardSet::getFadeMaterial(const Ogre::MaterialPtr &protoMa
 
             //Setup vertex program
             pass->setVertexProgram("SpriteFade_vp");
+            // RoR: and a fragment program - GL3+ has no fixed-function fallback (the fade material was blank there)
+            if (!pass->hasFragmentProgram())
+               pass->setFragmentProgram("Default_Sprite");
             GpuProgramParametersSharedPtr params = pass->getVertexProgramParameters();
 
             params->setNamedAutoConstant("worldViewProj", GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
@@ -776,6 +799,9 @@ void StaticBillboardSet::updateAll(const Vector3 &cameraDirection)
       {
          static const Ogre::String Sprite_vp = "Sprite_vp";
          p->setVertexProgram(Sprite_vp);
+         // RoR: and a fragment program - GL3+ has no fixed-function fallback
+         if (!p->hasFragmentProgram())
+            p->setFragmentProgram("Default_Sprite");
 
          p->getVertexProgramParameters()->setNamedAutoConstant("worldViewProj", GpuProgramParameters::ACT_WORLDVIEWPROJ_MATRIX);
 
