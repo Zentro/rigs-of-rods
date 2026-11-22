@@ -130,9 +130,11 @@ Ogre::MaterialPtr GetAlphaTestedCaster(const Ogre::Material& mat, const Ogre::Pa
 }
 
 /// Applies the material rules (Cg rescue, shadow casters) to all materials of a group, or all materials if empty
+bool g_pbr_lighting = false; //!< RTSSManager::EnablePbrLighting() was called
+
 void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
 {
-    int rescued = 0, no_caster = 0;
+    int rescued = 0, no_caster = 0, translated = 0;
     auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
     while (it.hasMoreElements())
     {
@@ -143,7 +145,11 @@ void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
             rescued++;
         if (RTSSManager::SetupShadowCaster(*mat))
             no_caster++;
+        if (g_pbr_lighting && RTSSManager::TranslateLegacyLighting(*mat)) // After the rescue: its fallback too
+            translated++;
     }
+    if (translated > 0)
+        LOG(fmt::format("[RoR|PBR] {} materials in {} translated for physically based lighting", translated, what));
     if (rescued > 0)
         LOG(fmt::format("[RoR|Cg rescue] {} materials in {} have no runnable shaders, using fallbacks", rescued, what));
     if (no_caster > 0)
@@ -495,6 +501,64 @@ void RTSSManager::InstallMaterialRules()
 
     // Groups parsed before this point (RoR's own resource packs)
     ApplyMaterialRules("", "RoR's resource packs");
+}
+
+void RTSSManager::EnablePbrLighting()
+{
+    g_pbr_lighting = true;
+
+    // Cook-Torrance replaces the fixed-function lighting stage (same execution order) for everything RTSS shades
+    // through the scheme. Unlit passes stay unlit (the stage skips them). Terrain has its own generator (M4.8).
+    RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
+    shadergen.getRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+        ->addTemplateSubRenderState(shadergen.createSubRenderState(RTShader::SRS_COOK_TORRANCE_LIGHTING));
+
+    ApplyMaterialRules("", "RoR's resource packs"); // Groups parsed before; later ones via MaterialRulesListener
+    shadergen.invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+}
+
+bool RTSSManager::TranslateLegacyLighting(Ogre::Material& mat)
+{
+    bool changed = false;
+    for (Ogre::Technique* tech : mat.getTechniques())
+    {
+        if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+            continue;
+        for (Ogre::Pass* pass : tech->getPasses())
+        {
+            if (!pass->getLightingEnabled() || pass->isProgrammable()
+                || pass->getUserObjectBindings().getUserAny(PBR_TRANSLATED_KEY).has_value())
+                continue;
+
+            // Blinn-Phong exponent -> perceptual GGX roughness. Without a specular colour no highlight was meant:
+            // fully rough - also keeps the grazing-angle specular of foliage with fake 'up' normals (paged grass) low.
+            const Ogre::ColourValue spec = pass->getSpecular();
+            const float roughness = (spec.r + spec.g + spec.b > 0.05f && pass->getShininess() > 0.f)
+                ? Ogre::Math::Clamp(std::sqrt(2.f / (pass->getShininess() + 2.f)), 0.1f, 1.f)
+                : 1.f;
+            pass->setSpecular(Ogre::ColourValue(roughness, /*metallic:*/0.f, 0.f, 1.f));
+
+            // Ambient and emissive / diffuse, per channel. Works in gamma or linear space alike: the HDR pipeline
+            // linearizes pass colours (GfxPipeline::LinearizeMaterial), and the ratio of gamma values becomes the
+            // ratio of the linear ones.
+            if (!(pass->getVertexColourTracking() & (Ogre::TVC_DIFFUSE | Ogre::TVC_AMBIENT | Ogre::TVC_EMISSIVE)))
+            {
+                const Ogre::ColourValue dif = pass->getDiffuse();
+                auto divide = [&dif](Ogre::ColourValue c)
+                {
+                    for (int i = 0; i < 3; i++)
+                        c[i] = (dif[i] > 0.01f) ? std::min(c[i] / dif[i], 16.f) : c[i];
+                    return c;
+                };
+                pass->setAmbient(divide(pass->getAmbient()));
+                pass->setSelfIllumination(divide(pass->getSelfIllumination()));
+            }
+
+            pass->getUserObjectBindings().setUserAny(PBR_TRANSLATED_KEY, Ogre::Any(true));
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 bool RTSSManager::RescueMaterial(Ogre::Material& mat)

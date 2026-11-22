@@ -230,6 +230,8 @@ int main(int argc, char *argv[])
         RTSSManager::InstallSubRenderStates(); // 'RoR/NiceMetal' vehicle shading
         RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
         App::GetGfxScene()->GetPipeline().Init(App::GetAppContext()->GetViewport()); // HDR pipeline (gfx_render_pipeline)
+        if (App::GetGfxScene()->GetPipeline().IsActive())
+            RTSSManager::EnablePbrLighting(); // Cook-Torrance for everything RTSS shades (ROADMAP M4.2)
 
         App::CreateGuiManager(); // Needs scene manager
 

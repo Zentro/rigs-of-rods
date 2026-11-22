@@ -26,6 +26,7 @@
 #include "GfxScene.h"
 #include "Terrain.h"
 #include "PlatformUtils.h"
+#include "RTSSManager.h"
 
 #include <OgreCompositorManager.h>
 #include <RTShaderSystem/OgreShaderGenerator.h>
@@ -279,7 +280,9 @@ void GfxPipeline::LinearizeMaterial(Ogre::Material* mat)
             {
                 pass->setAmbient(this->ToLinear(pass->getAmbient()));
                 pass->setDiffuse(this->ToLinear(pass->getDiffuse()));
-                pass->setSpecular(this->ToLinear(pass->getSpecular()));
+                // Translated for physically based lighting, the specular holds roughness/metallic, not a colour
+                if (!pass->getUserObjectBindings().getUserAny(RTSSManager::PBR_TRANSLATED_KEY).has_value())
+                    pass->setSpecular(this->ToLinear(pass->getSpecular()));
                 pass->setSelfIllumination(this->ToLinear(pass->getSelfIllumination()));
 
                 // Materials with their own shaders: authored colour constants (e.g. the water's 'tintColour')

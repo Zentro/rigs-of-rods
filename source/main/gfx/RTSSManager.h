@@ -96,6 +96,20 @@ public:
     /// 'RoR/Grass' for PagedGeometry). Call once, after RTSS is initialized.
     static void InstallSubRenderStates();
 
+    /// HDR pipeline: physically based (Cook-Torrance) lighting for every material RTSS shades (ROADMAP M4.2), and
+    /// translation of legacy lighting values in every material now and in every group parsed later - see
+    /// TranslateLegacyLighting(). Call once, after the HDR pipeline is active.
+    static void EnablePbrLighting();
+
+    /// Rewrites the fixed-function lighting values of a material's lit, shader-less passes (RTSS shades them) for
+    /// Cook-Torrance, so they light like before: Blinn-Phong specular/shininess -> roughness (pass specular x,
+    /// metallic y = 0, where RTSS reads them); ambient and emissive divided by diffuse, because Cook-Torrance
+    /// multiplies them by the diffuse colour and fixed-function lighting doesn't (legacy 'ambient 0.9 / diffuse
+    /// 0.1' vegetation keeps its look). Only the loaded material changes, never the file. Idempotent.
+    /// @return True if any pass was changed.
+    static bool TranslateLegacyLighting(Ogre::Material& mat);
+    static constexpr const char* PBR_TRANSLATED_KEY = "RoR/PbrTranslated"; //!< Pass user any: translated (specular is data)
+
     /// Attaches the vehicle surface shading (NiceMetal: damage/wetness blend, specular-map-masked cubemap
     /// reflection) to a spawned managed material. Must be called after the spawner has assigned the textures,
     /// because the shading depends on which texture units are present. `is_flexbody` says whether the mesh
