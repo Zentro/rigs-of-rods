@@ -52,8 +52,10 @@ const char* ALPHA_CASTER_SUFFIX = "/RoRShadowCaster"; //!< Casters made for alph
 
 /// Depth bias of the shadow casters (constant, slope scaled). Without it, 16-bit shadow depth (PF_DEPTH16) on large
 /// gently curved surfaces flickers around the surface's own depth: striped self-shadowing ("acne", vehicle bonnets).
-const float CASTER_DEPTH_BIAS = 3.f;
-const float CASTER_SLOPE_SCALE_BIAS = 6.f; // 3/6: no stripes on gavril, shadows still touch the ground
+/// Negative: OGRE's positive bias pulls depth towards the (shadow) camera - meant for decals; on casters it put
+/// vehicles' sunlit tops into their own shadow.
+const float CASTER_DEPTH_BIAS = -3.f;
+const float CASTER_SLOPE_SCALE_BIAS = -6.f;
 
 /// Shadow caster that draws nothing (writes neither colour nor depth)
 Ogre::MaterialPtr GetNoShadowCaster()
