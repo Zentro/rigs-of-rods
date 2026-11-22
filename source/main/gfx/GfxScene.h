@@ -29,6 +29,7 @@
 #include "ForwardDeclarations.h"
 #include "EnvironmentMap.h" // RoR::GfxEnvmap
 #include "GfxData.h"
+#include "GfxFog.h"
 #include "GfxPipeline.h"
 #include "SimBuffers.h"
 #include "Skidmark.h"
@@ -81,6 +82,7 @@ public:
     GameContextSB&     GetSimDataBuffer() { return m_simbuf; }
     GfxEnvmap&     GetEnvMap() { return m_envmap; }
     GfxPipeline&   GetPipeline() { return m_pipeline; }
+    GfxFog&        GetFog() { return m_fog; } //!< Set scene fog through this
     RoR::SkidmarkConfig* GetSkidmarkConf () { return &m_skidmark_conf; }
     Ogre::SceneManager* GetSceneManager() { return m_scene_manager; }
     std::vector<GfxActor*>& GetGfxActors() { return m_all_gfx_actors; }
@@ -97,6 +99,7 @@ private:
     std::vector<GfxCharacter*>        m_all_gfx_characters;
     RoR::GfxEnvmap                    m_envmap;
     RoR::GfxPipeline                  m_pipeline;
+    RoR::GfxFog                       m_fog;
     GameContextSB                     m_simbuf;
     SkidmarkConfig                    m_skidmark_conf;
 

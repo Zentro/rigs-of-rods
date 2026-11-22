@@ -275,9 +275,9 @@ void RoR::Terrain::initFog()
 
     int sight_range = App::gfx_sight_range->getInt();
     if (sight_range >= UNLIMITED_SIGHTRANGE)
-        App::GetGfxScene()->GetSceneManager()->setFog(FOG_NONE);
+        App::GetGfxScene()->GetFog().Set(FOG_NONE, ColourValue::White, 0.f, 0.f, 0.f);
     else
-        App::GetGfxScene()->GetSceneManager()->setFog(FOG_LINEAR, App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color), 0.000f, sight_range * 0.65f, sight_range*0.9);
+        App::GetGfxScene()->GetFog().Set(FOG_LINEAR, App::GetGfxScene()->GetPipeline().ToLinear(m_def->ambient_color), 0.000f, sight_range * 0.65f, sight_range*0.9);
 }
 
 void RoR::Terrain::initVegetation()

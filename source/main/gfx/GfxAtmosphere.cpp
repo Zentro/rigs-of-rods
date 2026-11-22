@@ -364,7 +364,7 @@ void GfxAtmosphere::UpdateFog()
     visibility /= std::max(m_haze, 0.1f);
     const float density = std::sqrt(3.f) / visibility;
     // Start/end are for shaders that only do linear fog (PagedGeometry)
-    App::GetGfxScene()->GetSceneManager()->setFog(FOG_EXP2, m_fog_colour, density, 0.f, visibility);
+    App::GetGfxScene()->GetFog().Set(FOG_EXP2, m_fog_colour, density, 0.f, visibility);
 }
 
 void GfxAtmosphere::UpdateSkyMaterial()
