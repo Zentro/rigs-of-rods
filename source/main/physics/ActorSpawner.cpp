@@ -60,6 +60,7 @@
 #include "Language.h"
 #include "MeshObject.h"
 #include "PointColDetector.h"
+#include "PbsMaterialFactory.h"
 #include "RTSSManager.h"
 #include "ScrewProp.h"
 #include "ScriptEngine.h"
@@ -2506,6 +2507,59 @@ Ogre::MaterialPtr ActorSpawner::InstantiateManagedMaterial(const Ogre::String& r
     return RTSSManager::CloneMaterial(src_mat, clone_name);
 }
 
+Ogre::MaterialPtr ActorSpawner::CreatePbsManagedMaterial(RigDef::ManagedMaterial const& def, std::string const& custom_name, std::string const& resource_group)
+{
+    // Maps legacy managed materials to RoR PBS materials (ported from the gfx-rtss branch):
+    //   diffuse -> albedo (sRGB), damage -> albedo blended by vertex alpha (flexbodies),
+    //   specular (a reflectivity mask) -> roughness + gloss mask, see GfxPbrMaps::BakeSpecularMap
+    //   material/texture names -> material class (glass, chrome, rubber...), see PbsMaterialFactory::ClassifyMaterial
+    // ==========================================================================
+
+    const bool flexmesh = def.type == RigDef::ManagedMaterialType::FLEXMESH_STANDARD
+                       || def.type == RigDef::ManagedMaterialType::FLEXMESH_TRANSPARENT;
+    const bool transparent = def.type == RigDef::ManagedMaterialType::FLEXMESH_TRANSPARENT
+                          || def.type == RigDef::ManagedMaterialType::MESH_TRANSPARENT;
+
+    auto media = [&](int media_id, std::string const& filename) -> PbsTexture
+    {
+        PbsTexture tex;
+        tex.name = TuneupUtil::getTweakedManagedMatMedia(m_actor->getWorkingTuneupDef(), def.name, media_id, filename);
+        tex.group = TuneupUtil::getTweakedManagedMatMediaRG(m_actor->getWorkingTuneupDef(), def.name, media_id, this->GetCurrentElementMediaRG());
+        return tex;
+    };
+
+    PbsMaterialDef pbs;
+    pbs.name = custom_name;
+    pbs.group = resource_group;
+    pbs.albedo_map = media(0, def.diffuse_map);
+    if (def.specular_map != "")
+        pbs.legacy_specular_map = media(1, def.specular_map);
+    if (flexmesh && def.damaged_diffuse_map != "")
+        pbs.damage_map = media(2, def.damaged_diffuse_map);
+    pbs.two_sided = def.options.double_sided;
+    if (transparent)
+    {
+        pbs.alpha_blend = true;
+        pbs.alpha_test = true;
+        pbs.alpha_threshold = 1.f / 255.f; // Legacy: 'alpha_rejection greater 0'
+    }
+
+    PbrMaterialClass mat_class = PbsMaterialFactory::ClassifyMaterial(def.name + " " + def.diffuse_map, "");
+    if (!mat_class.IsSet() && pbs.damage_map.IsSet())
+    {
+        // Body panels are usually named after the vehicle ('gavril1024') - but only they have damage textures
+        mat_class = PbsMaterialFactory::ClassifyMaterial("paint", "");
+    }
+    PbsMaterialFactory::ApplyMaterialClass(pbs, mat_class);
+
+    Ogre::MaterialPtr mat = PbsMaterialFactory::Get().CreateMaterial(pbs);
+    if (!mat)
+    {
+        this->AddMessage(Message::TYPE_WARNING, fmt::format("Managed material '{}': PBS material unavailable, using the legacy one.", def.name));
+    }
+    return mat;
+}
+
 void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
 {
     // This is how textures map between `RigDef::Document` (*.truck etc...) and `RoR::TuneupDef` (*.tuneup):
@@ -2566,6 +2620,13 @@ void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
     {
         // Create a placeholder material
         material = RTSSManager::CloneMaterial(Ogre::MaterialManager::getSingleton().getByName("tracks/transred"), custom_name, resource_group);
+    }
+    else if (App::GetGfxScene()->GetPipeline().IsActive()
+        && (material = this->CreatePbsManagedMaterial(def, custom_name, resource_group)))
+    {
+        // HDR pipeline: RoR PBS material (ROADMAP M4, path A), done
+        m_managed_materials.insert(std::make_pair(def.name, material));
+        return;
     }
     else if (def.type == RigDef::ManagedMaterialType::FLEXMESH_STANDARD || def.type == RigDef::ManagedMaterialType::FLEXMESH_TRANSPARENT)
     {

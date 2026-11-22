@@ -386,6 +386,7 @@ private:
     void                          CreateMirrorPropVideoCam(Ogre::MaterialPtr custom_mat, CustomMaterial::MirrorPropType type, Ogre::SceneNode* prop_scenenode);
     void                          SetupNewEntity(Ogre::Entity* e, Ogre::ColourValue simple_color); //!< Full texture and material setup
     Ogre::MaterialPtr             InstantiateManagedMaterial(Ogre::String const & rg_name, Ogre::String const & source_name, Ogre::String const & clone_name);
+    Ogre::MaterialPtr             CreatePbsManagedMaterial(RigDef::ManagedMaterial const& def, std::string const& custom_name, std::string const& resource_group); //!< HDR pipeline: RoR PBS variant of managed materials
     void                          CreateCabVisual();
     void                          CreateMaterialFlare(int flare_index, Ogre::MaterialPtr mat);
     std::string                   GetCurrentElementMediaRG(); //!< Where to load media from (the addonpart's bundle or vehicle's bundle?)

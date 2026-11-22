@@ -34,6 +34,7 @@ set(SOURCE_FILES
         gfx/GfxAtmosphere.{h,cpp}
         gfx/GfxFog.{h,cpp}
         gfx/GfxPbrMaps.{h,cpp}
+        gfx/PbsMaterialFactory.{h,cpp}
         gfx/GfxData.{h,cpp}
         gfx/GfxPipeline.{h,cpp}
         gfx/GfxScene.{h,cpp}

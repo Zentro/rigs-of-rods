@@ -23,6 +23,7 @@
 #include "Actor.h"
 #include "CameraManager.h"
 #include "GfxPbrMaps.h"
+#include "PbsMaterialFactory.h"
 #include "GfxScene.h"
 #include "RTSSNiceMetal.h"
 #include "RTSSPaged.h"
@@ -384,78 +385,6 @@ static const char* const PBR_METAL_KEY = "RoR/PbrMetal"; //!< Pass user any: mat
 
 namespace {
 
-/// Physically based values a material's names suggest (ROADMAP M4.4); -1 = not set by the class
-struct PbrMaterialClass
-{
-    float roughness = -1.f;
-    float roughness_max = -1.f;    //!< Caps the roughness instead of setting it
-    float gloss = -1.f;            //!< Gloss layer strength (M4.6)
-    float gloss_roughness = -1.f;
-    bool  metal = false;           //!< Only applied once image based lighting exists (M4.5)
-};
-
-bool NameHas(std::string const& lowercase_names, std::initializer_list<const char*> hints)
-{
-    for (const char* hint : hints)
-    {
-        if (lowercase_names.find(hint) != std::string::npos)
-            return true;
-    }
-    return false;
-}
-
-/// Classifies by material/texture names, then by the names of the material's (dead, Cg) shader programs.
-/// Order matters: first match wins ("bodyglass" is glass, "exhaust_chrome" is chrome). Deliberately not matched:
-/// "metal" (also "metallicblue" paint), "rim" (also "trim", "primer"). Ported from the gfx-rtss branch.
-PbrMaterialClass ClassifyMaterial(std::string names, std::string program_names)
-{
-    Ogre::StringUtil::toLowerCase(names);
-    Ogre::StringUtil::toLowerCase(program_names);
-    PbrMaterialClass c;
-    if (NameHas(names, {"glass", "window", "windshield", "windscreen"}))
-    {
-        c.roughness = 0.05f; c.gloss = 1.f; c.gloss_roughness = 0.03f;
-    }
-    else if (NameHas(names, {"chrome", "chrom"}))
-    {
-        c.roughness = 0.12f; c.metal = true;
-    }
-    else if (NameHas(names, {"exhaust", "muffler", "aluminium", "aluminum", "steel"}))
-    {
-        c.roughness = 0.4f; c.metal = true;
-    }
-    else if (NameHas(names, {"tire", "tyre", "rubber", "wheelband", "tread"}))
-    {
-        c.roughness = 0.9f; c.gloss = 0.f;
-    }
-    else if (NameHas(names, {"leather"}))
-    {
-        c.roughness = 0.6f;
-    }
-    else if (NameHas(names, {"seat", "cloth", "fabric", "carpet", "upholster"}))
-    {
-        c.roughness = 0.9f; c.gloss = 0.f;
-    }
-    else if (NameHas(names, {"lens"}))
-    {
-        c.roughness = 0.15f; c.gloss = 0.7f; c.gloss_roughness = 0.05f;
-    }
-    else if (NameHas(names, {"paint", "carbody", "body"}))
-    {
-        c.roughness_max = 0.45f; c.gloss = 0.8f; c.gloss_roughness = 0.05f;
-    }
-    // Shader names of well known community material families (Cg-rescued materials)
-    else if (NameHas(program_names, {"chrome", "metal_ps", "simplemetal"}))
-    {
-        c.roughness = 0.15f; c.metal = true;
-    }
-    else if (NameHas(program_names, {"paint", "nicemetal", "carpaint"}))
-    {
-        c.roughness_max = 0.45f; c.gloss = 0.8f; c.gloss_roughness = 0.05f;
-    }
-    return c;
-}
-
 /// Names of the shader programs in the material's techniques (only Cg-rescued materials have any left)
 std::string GetProgramNames(const Ogre::Material& mat)
 {
@@ -481,7 +410,7 @@ std::string GetClassNames(const Ogre::Material& mat, const Ogre::Pass* pass)
 }
 
 /// Writes the class into the pass: roughness/metallic (x/y, read by Cook-Torrance) and the gloss layer (z/w, M4.6)
-void ApplyMaterialClass(Ogre::Pass* pass, PbrMaterialClass const& c, float roughness)
+void ApplyMaterialClass(Ogre::Pass* pass, RoR::PbrMaterialClass const& c, float roughness)
 {
     if (c.roughness >= 0.f)
         roughness = c.roughness;
@@ -510,12 +439,12 @@ void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transpare
     const bool pbr = App::GetGfxScene()->GetPipeline().IsActive();
     if (pbr)
     {
-        PbrMaterialClass mat_class = ClassifyMaterial(GetClassNames(*mat, pass), "");
+        RoR::PbrMaterialClass mat_class = PbsMaterialFactory::ClassifyMaterial(GetClassNames(*mat, pass), "");
         // Body panels are usually named after the vehicle ('gavril1024') - but only they have damage textures
-        const bool unclassified = mat_class.roughness < 0.f && mat_class.roughness_max < 0.f && !mat_class.metal;
+        const bool unclassified = !mat_class.IsSet();
         if (unclassified && pass->getTextureUnitState("Dmg_Diffuse_Map"))
         {
-            mat_class = ClassifyMaterial("paint", "");
+            mat_class = PbsMaterialFactory::ClassifyMaterial("paint", "");
         }
         ApplyMaterialClass(pass, mat_class, PBR_DEFAULT_ROUGHNESS);
     }
@@ -675,7 +604,7 @@ bool RTSSManager::TranslateLegacyLighting(Ogre::Material& mat)
             const float roughness = (spec.r + spec.g + spec.b > 0.05f && pass->getShininess() > 0.f)
                 ? Ogre::Math::Clamp(std::sqrt(2.f / (pass->getShininess() + 2.f)), 0.1f, 1.f)
                 : 1.f;
-            ApplyMaterialClass(pass, ClassifyMaterial(GetClassNames(mat, pass), GetProgramNames(mat)), roughness); // M4.4
+            ApplyMaterialClass(pass, PbsMaterialFactory::ClassifyMaterial(GetClassNames(mat, pass), GetProgramNames(mat)), roughness); // M4.4
 
             // Ambient and emissive / diffuse, per channel. Works in gamma or linear space alike: the HDR pipeline
             // linearizes pass colours (GfxPipeline::LinearizeMaterial), and the ratio of gamma values becomes the
