@@ -155,6 +155,13 @@ void GfxScene::UpdateScene(float dt)
         m_envmap.UpdateEnvMap(player_gfx_actor->GetSimDataBuffer().simbuf_pos, player_gfx_actor);
         PerfAdd(PERF_SCENE_ENVMAP, perf_envmap);
     }
+    else if (m_pipeline.IsActive())
+    {
+        // On foot: physically based materials take their sky light and reflections from the environment map
+        const auto perf_envmap = PerfNow();
+        m_envmap.UpdateEnvMap(App::GetCameraManager()->GetCameraNode()->getPosition(), nullptr);
+        PerfAdd(PERF_SCENE_ENVMAP, perf_envmap);
+    }
 
     // Terrain - animated meshes and paged geometry
     const auto perf_terrain = PerfNow();

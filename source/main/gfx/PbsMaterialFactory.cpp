@@ -77,6 +77,10 @@ MaterialPtr PbsMaterialFactory::CreateMaterial(PbsMaterialDef const& def)
     Pass* pass = tech->getPass(0);
     pass->setLightingEnabled(true);
     pass->setDiffuse(def.albedo);
+    // Sky light comes from image based lighting (directional: bright sky above, ground below) - no flat scene
+    // ambient on top, it would count the sky twice. Without the realtime environment map, keep the ambient.
+    const bool ibl = def.env_map && App::gfx_envmap_enabled->getBool();
+    pass->setAmbient(ibl ? ColourValue::Black : ColourValue::White);
     // x = roughness, y = metallic (RTSS Cook-Torrance); z = gloss strength, w = gloss roughness (gloss layer, M4.6)
     pass->setSpecular(ColourValue(def.roughness, def.metallic, Math::Clamp(def.gloss, 0.f, 1.f), def.gloss_roughness));
     // Marks the pass as already in physically based terms (RTSSManager::TranslateLegacyLighting skips it)
@@ -160,7 +164,7 @@ MaterialPtr PbsMaterialFactory::CreateMaterial(PbsMaterialDef const& def)
     }
     rs->addTemplateSubRenderState(lighting);
 
-    if (def.env_map)
+    if (ibl)
     {
         RTShader::SubRenderState* ibl = shader_gen->createSubRenderState(RTShader::SRS_IMAGE_BASED_LIGHTING);
         ibl->setParameter("texture", ENV_MAP_NAME);

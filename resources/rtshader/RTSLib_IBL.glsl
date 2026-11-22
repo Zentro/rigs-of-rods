@@ -82,10 +82,7 @@ void evaluateIBL(inout PixelParams pixel,
     color = pow(color, vec3_splat(2.2)); // gamma to linear
 #endif
 
-    // RoR: specular only. Diffuse sky light is the scene ambient (GfxAtmosphere), which everything gets - terrain
-    // and translated legacy materials too, which have no image based lighting; Fd as well would count the sky twice.
-    // (Patch on the vendored OGRE 14.6.3 file - re-apply when refreshing resources/rtshader.)
-    color += Fr;
+    color += Fr + Fd;
 
 #ifndef USE_LINEAR_COLOURS
     color = pow(color, vec3_splat(1.0/2.2)); // linear to gamma

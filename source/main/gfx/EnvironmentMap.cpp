@@ -205,6 +205,13 @@ RoR::GfxEnvmap::~GfxEnvmap()
 
 void RoR::GfxEnvmap::UpdateEnvMap(Ogre::Vector3 center, GfxActor* gfx_actor, bool full/*=false*/)
 {
+    // First update after (re)creating the scene: all faces, physically based materials light from it right away
+    if (!m_full_update_done)
+    {
+        full = true;
+        m_full_update_done = true;
+    }
+
     // how many of the 6 render planes to update at once? Use cvar 'gfx_envmap_rate', unless instructed to do full render.
     const int update_rate = full ? NUM_FACES : App::gfx_envmap_rate->getInt();
 
@@ -272,6 +279,7 @@ void RoR::GfxEnvmap::SetupPrefilteredEnvMap()
 
 void RoR::GfxEnvmap::CreateSceneNodes()
 {
+    m_full_update_done = false; // New scene
     // We call `Ogre::SceneManager::clearScene()` after returning to menu, so all SceneNode pointers become dangling.
     // See `RoR::GfxScene::ClearScene()`.
     // ----------------------------------------------

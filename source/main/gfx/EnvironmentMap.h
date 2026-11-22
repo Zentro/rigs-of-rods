@@ -52,6 +52,7 @@ private:
     Ogre::TexturePtr     m_rtt_texture;
     Ogre::TexturePtr     m_prefiltered_texture; //!< GGX-prefiltered copy for image based lighting; HDR pipeline only
     int                  m_update_round; /// Render targets are updated one-by-one; this is the index of next target to update.
+    bool                 m_full_update_done = false; //!< The first update after creating the scene renders all faces
 };
 
 /// @} // addtogroup Gfx
