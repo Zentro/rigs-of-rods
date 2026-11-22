@@ -241,6 +241,10 @@ void BatchPage::_updateShaders()
 			if (!rtssMaterial)
 			{
 				rtssMaterial = RoR::RTSSManager::CloneMaterial(ptrMat, signature.str());
+				// Trees receive shadows (canopy, other trees), even if the mod's material says 'receive_shadows off':
+				// that was against the old texture shadows' self-shadowing on alpha-tested leaves. Cascaded shadows
+				// with alpha-tested casters (ROADMAP M2) handle them; without, canopies are lit through (bright at night).
+				rtssMaterial->setReceiveShadows(true);
 				for (Technique* tech : rtssMaterial->getTechniques())
 				{
 					for (Pass* pass : tech->getPasses())
