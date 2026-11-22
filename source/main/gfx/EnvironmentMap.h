@@ -40,6 +40,7 @@ public:
     void SetupEnvMap();
     void UpdateEnvMap(Ogre::Vector3 center, GfxActor* gfx_actor, bool full = false);
     void CreateSceneNodes(); //!< Must be invoked repeatedly because we wipe the SceneManager after return to main menu.
+    void SetupPrefilteredEnvMap(); //!< HDR pipeline: image based lighting reads 'EnvironmentTexturePrefiltered' (ROADMAP M5)
 
 private:
 
@@ -49,6 +50,7 @@ private:
     Ogre::SceneNode*     m_cameras_snode[NUM_FACES];
     Ogre::RenderTarget*  m_render_targets[NUM_FACES];
     Ogre::TexturePtr     m_rtt_texture;
+    Ogre::TexturePtr     m_prefiltered_texture; //!< GGX-prefiltered copy for image based lighting; HDR pipeline only
     int                  m_update_round; /// Render targets are updated one-by-one; this is the index of next target to update.
 };
 

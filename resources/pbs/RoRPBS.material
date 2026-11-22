@@ -25,3 +25,54 @@ material RoR/PBS/SpecToMR
         }
     }
 }
+
+// Environment map filtering for image based lighting: a face of a downsample-chain level, or of a prefiltered level
+material RoR/PBS/EnvDownsample
+{
+    technique
+    {
+        pass
+        {
+            depth_check off
+            depth_write off
+            cull_hardware none
+            lighting off
+            vertex_program_ref RoR/Pipeline/Quad_VP
+            {
+            }
+            fragment_program_ref RoR/PBS/EnvDownsample_FP
+            {
+            }
+            texture_unit Source
+            {
+                tex_address_mode clamp
+                filtering bilinear
+            }
+        }
+    }
+}
+
+material RoR/PBS/EnvPrefilter
+{
+    technique
+    {
+        pass
+        {
+            depth_check off
+            depth_write off
+            cull_hardware none
+            lighting off
+            vertex_program_ref RoR/Pipeline/Quad_VP
+            {
+            }
+            fragment_program_ref RoR/PBS/EnvPrefilter_FP
+            {
+            }
+            texture_unit Source
+            {
+                tex_address_mode clamp
+                filtering bilinear
+            }
+        }
+    }
+}

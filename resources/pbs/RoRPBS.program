@@ -5,3 +5,15 @@ fragment_program RoR/PBS/SpecToMR_FP glsl glsles hlsl
 {
     source SpecToMR_fs.glsl
 }
+
+// Environment map filtering (image based lighting)
+fragment_program RoR/PBS/EnvDownsample_FP glsl glsles hlsl
+{
+    source EnvFilter_fs.glsl
+}
+
+fragment_program RoR/PBS/EnvPrefilter_FP glsl glsles hlsl
+{
+    source EnvFilter_fs.glsl
+    preprocessor_defines PREFILTER
+}

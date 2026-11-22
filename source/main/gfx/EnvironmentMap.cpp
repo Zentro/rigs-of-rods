@@ -24,6 +24,7 @@
 #include "CameraManager.h"
 #include "GameContext.h"
 #include "GfxActor.h"
+#include "GfxPbrMaps.h"
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "Terrain.h"
@@ -247,12 +248,25 @@ void RoR::GfxEnvmap::UpdateEnvMap(Ogre::Vector3 center, GfxActor* gfx_actor, boo
             break;
         }
         m_update_round = (m_update_round + 1) % NUM_FACES;
+        // All 6 faces are current: refresh the prefiltered copy (image based lighting)
+        if (m_update_round == 0 && m_prefiltered_texture)
+        {
+            GfxPbrMaps::PrefilterEnvMap(m_rtt_texture, m_prefiltered_texture);
+        }
     }
 
     if (gfx_actor != nullptr)
     {
         gfx_actor->SetRodsVisible(true);
         gfx_actor->SetAllMeshesVisible(true);
+    }
+}
+
+void RoR::GfxEnvmap::SetupPrefilteredEnvMap()
+{
+    if (!m_prefiltered_texture && m_rtt_texture)
+    {
+        m_prefiltered_texture = GfxPbrMaps::CreatePrefilteredEnvMap("EnvironmentTexturePrefiltered");
     }
 }
 
