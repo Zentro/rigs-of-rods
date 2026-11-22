@@ -223,8 +223,13 @@ void BatchPage::_updateShaders()
 		// own vertex program (mods) keep the code below.
 		bool ownVertexProgram = false;
 		for (Technique* tech : ptrMat->getTechniques())
+		{
+			// RTSS's own (generated) techniques don't count - PBS materials get theirs right away (ROADMAP M4 A.3)
+			if (tech->getSchemeName() == RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+				continue;
 			for (Pass* pass : tech->getPasses())
 				ownVertexProgram = ownVertexProgram || pass->hasVertexProgram();
+		}
 
 		if (RTShader::ShaderGenerator::getSingletonPtr() && !ownVertexProgram)
 		{

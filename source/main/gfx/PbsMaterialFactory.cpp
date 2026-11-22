@@ -212,9 +212,12 @@ MaterialPtr PbsMaterialFactory::CloneMaterial(MaterialPtr const& src, std::strin
 
 const PbsMaterialDef* PbsMaterialFactory::FindDef(MaterialPtr const& mat) const
 {
-    if (!mat)
-        return nullptr;
-    auto it = m_defs.find(mat->getGroup() + "|" + mat->getName());
+    return mat ? this->FindDef(*mat) : nullptr;
+}
+
+const PbsMaterialDef* PbsMaterialFactory::FindDef(Material const& mat) const
+{
+    auto it = m_defs.find(mat.getGroup() + "|" + mat.getName());
     return (it != m_defs.end()) ? &it->second : nullptr;
 }
 
@@ -292,4 +295,273 @@ void PbsMaterialFactory::ApplyMaterialClass(PbsMaterialDef& def, PbrMaterialClas
     // have it; translated legacy materials keep 'metal' as a pass flag only - they'd render almost black)
     if (c.metal)
         def.metallic = 1.f;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Legacy material conversion (ROADMAP M4 A.3, ported from the gfx-rtss branch)
+
+static bool IsEnvMapTus(TextureUnitState* tus)
+{
+    for (auto& eff: tus->getEffects())
+    {
+        if (eff.first == TextureUnitState::ET_ENVIRONMENT_MAP)
+            return true;
+    }
+    return tus->getTextureType() == TEX_TYPE_CUBE_MAP;
+}
+
+static bool IsAdditive(Pass* pass)
+{
+    return pass->getSourceBlendFactor() == SBF_ONE && pass->getDestBlendFactor() == SBF_ONE;
+}
+
+static bool IsAlphaBlend(Pass* pass)
+{
+    return pass->getSourceBlendFactor() == SBF_SOURCE_ALPHA && pass->getDestBlendFactor() == SBF_ONE_MINUS_SOURCE_ALPHA;
+}
+
+static std::string Lowercase(std::string s)
+{
+    StringUtil::toLowerCase(s);
+    return s;
+}
+
+/// True if the pass has shaders which can't run (Cg is gone, or compile errors) - rebuilt from their texture units
+static bool HasDeadPrograms(Pass* pass)
+{
+    for (GpuProgramType t: { GPT_VERTEX_PROGRAM, GPT_FRAGMENT_PROGRAM })
+    {
+        if (!pass->hasGpuProgram(t))
+            continue;
+        const GpuProgramPtr& prog = pass->getGpuProgram(t);
+        if (!prog)
+            return true;
+        if (StringUtil::match(prog->getLanguage(), "cg", /*caseSensitive:*/false))
+            return true;
+        if (prog->isLoaded() && (prog->hasCompileError() || !prog->isSupported()))
+            return true;
+    }
+    return false;
+}
+
+static std::string ProgramNames(Pass* pass)
+{
+    std::string names;
+    for (GpuProgramType t: { GPT_VERTEX_PROGRAM, GPT_FRAGMENT_PROGRAM })
+    {
+        if (pass->hasGpuProgram(t))
+            names += pass->getGpuProgramName(t) + " ";
+    }
+    return names;
+}
+
+/// Classifies a 2D texture unit of a (Cg-rescued) legacy material by its unit/texture name
+enum class LegacyTexRole { ALBEDO, SPECULAR, NORMAL, IGNORE };
+static LegacyTexRole ClassifyTexture(TextureUnitState* tus)
+{
+    const std::string unit_name = Lowercase(tus->getName());
+    const std::string tex_name = Lowercase(tus->getTextureName());
+    auto has = [](std::string const& s, std::initializer_list<const char*> hints) {
+        for (const char* h: hints) { if (s.find(h) != std::string::npos) return true; }
+        return false;
+    };
+    if (has(unit_name, {"spec", "gloss", "refl"}) || has(tex_name, {"_s.", "_spec", "specular", "_sm."}))
+        return LegacyTexRole::SPECULAR;
+    if (has(unit_name, {"normal", "bump", "nm"}) || has(tex_name, {"_n.", "_nm.", "normal", "bump", "_nrm"}))
+        return LegacyTexRole::NORMAL;
+    if (has(unit_name, {"light", "ao", "shadow", "dirt", "detail", "noise"}))
+        return LegacyTexRole::IGNORE;
+    return LegacyTexRole::ALBEDO;
+}
+
+bool PbsMaterialFactory::ConvertLegacyMaterial(MaterialPtr mat, bool colours_linear)
+{
+    if (!mat || mat->getNumTechniques() == 0 || !App::GetGfxScene()->GetPipeline().IsActive())
+        return false;
+    if (this->FindDef(mat))
+        return false; // Already a PBS material
+
+    // Materials authored for RTSS PBR ('rtshader_system { lighting_stage metal_roughness / normal_map }') are left
+    // as they are - converting would throw the authored maps away.
+    RTShader::ShaderGenerator* shader_gen = RTShader::ShaderGenerator::getSingletonPtr();
+    if (shader_gen && mat->getTechnique(0)->getNumPasses() > 0
+        && shader_gen->hasShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME,
+                                               RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME))
+    {
+        RTShader::RenderState* rs = shader_gen->getRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, *mat, 0);
+        if (rs && (rs->getSubRenderState(RTShader::SRS_COOK_TORRANCE_LIGHTING) || rs->getSubRenderState(RTShader::SRS_NORMALMAP)))
+            return false;
+    }
+
+    Technique* tech = mat->getTechnique(0);
+    // Shaders that can't run (Cg): prefer the author's fixed-function fallback technique over guessing from the
+    // shader's texture units (e.g. terrain splat materials - their first unit is an alpha mask)
+    if (tech->getNumPasses() > 0 && tech->getPass(0)->isProgrammable() && HasDeadPrograms(tech->getPass(0)))
+    {
+        for (unsigned short t = 1; t < mat->getNumTechniques(); t++)
+        {
+            Technique* fallback = mat->getTechnique(t);
+            if (fallback->getNumPasses() > 0 && !fallback->getPass(0)->isProgrammable()
+                && fallback->getPass(0)->getNumTextureUnitStates() > 0)
+            {
+                tech = fallback;
+                break;
+            }
+        }
+    }
+    if (tech->getNumPasses() == 0 || tech->getNumPasses() > 3)
+        return false;
+
+    PbsMaterialDef def;
+    def.name = mat->getName();
+    def.group = mat->getGroup();
+    def.receive_shadows = mat->getReceiveShadows();
+
+    // ---- Base pass ----
+    Pass* base = tech->getPass(0);
+    const bool rescue = base->isProgrammable() && HasDeadPrograms(base);
+    if (base->isProgrammable() && !rescue)
+        return false; // Working custom shaders: keep as they are
+    if (!base->getLightingEnabled() && !rescue)
+        return false; // Unlit (signs, sky, effects): keep legacy
+    if (!base->getColourWriteEnabled())
+        return false; // Invisible helpers (e.g. 'tracks/trans' wheel bands) or depth-only passes
+
+    for (unsigned short i = 0; i < base->getNumTextureUnitStates(); i++)
+    {
+        TextureUnitState* tus = base->getTextureUnitState(i);
+        if (tus->getContentType() != TextureUnitState::CONTENT_NAMED || tus->getNumFrames() == 0)
+            return false; // Shadow/compositor textures
+        if (IsEnvMapTus(tus))
+        {
+            def.gloss = std::max(def.gloss, 0.6f); // Legacy chrome/paint look
+            continue;
+        }
+        if (tus->getTextureType() != TEX_TYPE_2D)
+            return false;
+
+        const LegacyTexRole role = rescue ? ClassifyTexture(tus) : LegacyTexRole::ALBEDO;
+        if (role == LegacyTexRole::SPECULAR && !def.legacy_specular_map.IsSet())
+        {
+            def.legacy_specular_map.name = tus->getTextureName();
+        }
+        else if (role == LegacyTexRole::ALBEDO && !def.albedo_map.IsSet())
+        {
+            if (tus->getTextureCoordSet() != 0)
+                return false;
+            def.albedo_map.name = tus->getTextureName();
+        }
+        else if (role == LegacyTexRole::NORMAL || role == LegacyTexRole::IGNORE || rescue)
+        {
+            continue; // Normal maps: ROADMAP M4 A.5; extra maps of rescued shaders (lightmaps, noise...) are dropped
+        }
+        else
+        {
+            return false; // Second colour texture in a fixed-function pass: detail map, lightmap... not supported
+        }
+    }
+
+    auto to_linear = [&](ColourValue const& c) { return colours_linear ? c : App::GetGfxScene()->GetPipeline().ToLinear(c); };
+
+    // With shaders, 'diffuse vertexcolour' is only a hint for the shader - ignore; for fixed-function materials the
+    // diffuse colour tints the texture. Legacy trick: 'ambient 0.9 / diffuse 0.1' (vegetation, signs) = lit mostly
+    // by ambient, i.e. "show the texture regardless of the sun" - the intended surface colour is the brighter one.
+    const ColourValue amb = base->getAmbient(), dif = base->getDiffuse();
+    const ColourValue legacy_colour = (amb.r + amb.g + amb.b > dif.r + dif.g + dif.b) ? amb : dif;
+    def.albedo = (rescue || (base->getVertexColourTracking() & TVC_DIFFUSE)) ? ColourValue::White : to_linear(legacy_colour);
+    def.albedo.a = 1.f;
+    // Vertex colour tinting isn't converted: meshes without vertex colours would render black (as on gfx-rtss)
+
+    // Blinn-Phong exponent -> GGX roughness, only meaningful if there was a specular colour at all
+    const ColourValue spec = base->getSpecular();
+    if (!rescue && spec.r + spec.g + spec.b > 0.05f && base->getShininess() > 0.f)
+        def.roughness = Math::Clamp(Math::Sqrt(2.f / (base->getShininess() + 2.f)), 0.1f, 1.f);
+    else if (!rescue)
+        def.roughness = 1.f; // No highlight was meant (also keeps grazing specular on fake-normal foliage low)
+
+    def.emissive = rescue ? ColourValue::Black : to_linear(base->getSelfIllumination());
+    def.two_sided = base->getCullingMode() == CULL_NONE;
+
+    // Alpha: a high rejection threshold means "cutout" (render opaque, sorted with solids)
+    const CompareFunction rej_func = base->getAlphaRejectFunction();
+    const int rej_val = base->getAlphaRejectValue();
+    const bool rejects = (rej_func == CMPF_GREATER || rej_func == CMPF_GREATER_EQUAL) && rej_val > 0;
+    if (rejects && rej_val >= 64)
+    {
+        def.alpha_test = true;
+        def.alpha_threshold = rej_val / 255.f;
+    }
+    else if (IsAlphaBlend(base))
+    {
+        def.alpha_blend = true;
+        def.alpha_test = rejects;
+        def.alpha_threshold = std::max(rej_val, 1) / 255.f;
+    }
+    else if (base->getSourceBlendFactor() != SBF_ONE || base->getDestBlendFactor() != SBF_ZERO)
+    {
+        return false; // Exotic blending (modulate, add on the base pass...)
+    }
+    else if (rejects)
+    {
+        // Low threshold without blending (e.g. grass 'alpha_rejection greater 30') is still a cutout
+        def.alpha_test = true;
+        def.alpha_threshold = std::max(rej_val, 1) / 255.f;
+    }
+
+    // ---- Extra passes ----
+    for (unsigned short p = 1; p < tech->getNumPasses(); p++)
+    {
+        Pass* pass = tech->getPass(p);
+        if (!IsAdditive(pass))
+            return false;
+        if (pass->isProgrammable() && !HasDeadPrograms(pass))
+            return false;
+
+        bool has_env = false;
+        TextureUnitState* glow = nullptr;
+        for (unsigned short i = 0; i < pass->getNumTextureUnitStates(); i++)
+        {
+            TextureUnitState* tus = pass->getTextureUnitState(i);
+            if (tus->getContentType() != TextureUnitState::CONTENT_NAMED || tus->getNumFrames() == 0)
+                return false;
+            if (IsEnvMapTus(tus))
+                has_env = true;
+            else if (!glow && tus->getTextureType() == TEX_TYPE_2D)
+                glow = tus;
+        }
+
+        if (has_env)
+        {
+            def.gloss = std::max(def.gloss, 0.6f); // Additive reflection pass (+ its specular mask, ignored)
+        }
+        else if (glow && !pass->getLightingEnabled() && !def.emissive_map.IsSet() && pass->getNumTextureUnitStates() == 1)
+        {
+            // Additive unlit texture = glow (lights, displays)
+            def.emissive_map.name = glow->getTextureName();
+            def.emissive = ColourValue::White;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    // Some legacy materials rely on a texture that doesn't exist (placeholder name): don't convert those.
+    // Only the material's own group and the global pool are searched at load time.
+    auto exists = [&](PbsTexture const& t) {
+        return !t.IsSet() || ResourceGroupManager::getSingleton().resourceExists(def.group, t.name)
+            || ResourceGroupManager::getSingleton().resourceExists(RGN_DEFAULT, t.name);
+    };
+    if (!exists(def.albedo_map) || !exists(def.emissive_map))
+        return false;
+    if (!exists(def.legacy_specular_map))
+        def.legacy_specular_map = PbsTexture();
+
+    const std::string prog_names = rescue ? ProgramNames(base) : "";
+    PbsMaterialFactory::ApplyMaterialClass(def, PbsMaterialFactory::ClassifyMaterial(def.name + " " + def.albedo_map.name, prog_names));
+    if (rescue)
+    {
+        LOG(fmt::format("[RoR|PBS] Rescued material '{}' (programs: {}) as PBS", def.name, prog_names));
+    }
+    return this->CreateMaterial(def) != nullptr;
 }

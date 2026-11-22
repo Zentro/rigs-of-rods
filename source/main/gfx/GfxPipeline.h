@@ -53,6 +53,7 @@ public:
     /// Material colours to linear (once per material) and colour textures to sRGB decoding. No-op if not active.
     /// Runs for every script material when its resource group is parsed.
     void LinearizeMaterial(Ogre::Material* mat);
+    bool IsLinearized(const Ogre::Material& mat) const { return m_linearized.count(mat.getGroup() + "|" + mat.getName()) > 0; } //!< Colours already converted
 
     /// Only the textures part of LinearizeMaterial() - safe to call any number of times. For textures assigned
     /// later (vehicle managed materials at spawn, skins, materials created in code).

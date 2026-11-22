@@ -1484,9 +1484,14 @@ bool GrassLayer::_updateShadersRTSS(const String &vsName, float fadeRange)
 	if (!RTShader::ShaderGenerator::getSingletonPtr())
 		return false;
 	for (Technique* tech : material->getTechniques())
+	{
+		// RTSS's own (generated) techniques don't count - PBS materials get theirs right away (ROADMAP M4 A.3)
+		if (tech->getSchemeName() == RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+			continue;
 		for (Pass* pass : tech->getPasses())
 			if (pass->hasVertexProgram())
 				return false; // The material brings its own shader - keep PagedGeometry's code path
+	}
 
 	if (!shaderState)
 		shaderState = std::make_shared<RoR::GrassShaderState>();

@@ -26,6 +26,7 @@
 #include "GfxScene.h"
 #include "Terrain.h"
 #include "PlatformUtils.h"
+#include "PbsMaterialFactory.h"
 #include "RTSSManager.h"
 
 #include <OgreCompositorManager.h>
@@ -271,6 +272,8 @@ void GfxPipeline::LinearizeMaterial(Ogre::Material* mat)
 {
     if (!m_active || !mat || this->IsUiMaterial(mat))
         return;
+    if (PbsMaterialFactory::Get().FindDef(*mat))
+        return; // PBS materials are created with linear colours
 
     if (m_linearized.insert(mat->getGroup() + "|" + mat->getName()).second) // Colours only once!
     {

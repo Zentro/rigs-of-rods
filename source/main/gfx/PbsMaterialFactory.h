@@ -101,8 +101,17 @@ public:
     /// Returns null if `src` isn't a PBS material (clone it the regular way then).
     Ogre::MaterialPtr CloneMaterial(Ogre::MaterialPtr const& src, std::string const& new_name, std::string const& new_group);
 
+    /// Converts a simple legacy (fixed-function, or dead Cg) material in place into a RoR PBS material (ROADMAP M4
+    /// A.3, from the gfx-rtss branch). Recognized: diffuse texture/colour, shininess, environment map reflection,
+    /// additive emissive/reflection passes, alpha test/blend, culling; Cg-rescued materials by texture unit names.
+    /// Anything else (working shaders, lightmaps, detail maps, unlit...) is left as it is.
+    /// @param colours_linear The material's colours were already linearized by the HDR pipeline.
+    /// @return true if converted.
+    bool ConvertLegacyMaterial(Ogre::MaterialPtr mat, bool colours_linear);
+
     /// The definition a PBS material was created from, or null if it isn't one.
     const PbsMaterialDef* FindDef(Ogre::MaterialPtr const& mat) const;
+    const PbsMaterialDef* FindDef(Ogre::Material const& mat) const;
 
     /// Material class from names (material + diffuse texture), then from (dead, Cg) shader program names: legacy
     /// formats never stored what a surface is made of. Order matters, first match wins.

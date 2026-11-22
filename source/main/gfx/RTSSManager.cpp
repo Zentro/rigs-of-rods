@@ -146,13 +146,26 @@ bool g_pbr_lighting = false; //!< RTSSManager::EnablePbrLighting() was called
 
 void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
 {
-    int rescued = 0, no_caster = 0, translated = 0;
+    int rescued = 0, no_caster = 0, translated = 0, converted = 0;
+    // Collected first: converting replaces materials (remove + create), which would break the iteration
+    std::vector<Ogre::MaterialPtr> materials;
     auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
     while (it.hasMoreElements())
     {
         Ogre::MaterialPtr mat = Ogre::static_pointer_cast<Ogre::Material>(it.getNext());
-        if (!groupName.empty() && mat->getGroup() != groupName)
+        if (groupName.empty() || mat->getGroup() == groupName)
+            materials.push_back(mat);
+    }
+    for (Ogre::MaterialPtr& mat : materials)
+    {
+        // HDR pipeline: simple legacy materials become clean PBS materials (reflections, metals, gloss layer; ROADMAP
+        // M4 A.3); the rest keep the rules below. Before the translation, which rewrites the legacy values.
+        if (g_pbr_lighting
+            && PbsMaterialFactory::Get().ConvertLegacyMaterial(mat, App::GetGfxScene()->GetPipeline().IsLinearized(*mat)))
+        {
+            converted++;
             continue;
+        }
         if (RTSSManager::RescueMaterial(*mat))
             rescued++;
         if (RTSSManager::SetupShadowCaster(*mat))
@@ -160,6 +173,8 @@ void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
         if (g_pbr_lighting && RTSSManager::TranslateLegacyLighting(*mat)) // After the rescue: its fallback too
             translated++;
     }
+    if (converted > 0)
+        LOG(fmt::format("[RoR|PBS] {} materials in {} converted to PBS materials", converted, what));
     if (translated > 0)
         LOG(fmt::format("[RoR|PBR] {} materials in {} translated for physically based lighting", translated, what));
     if (rescued > 0)
