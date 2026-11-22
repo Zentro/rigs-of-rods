@@ -34,8 +34,8 @@ std::map<std::string, std::string> GfxPbrMaps::s_baked;
 std::vector<TexturePtr>            GfxPbrMaps::s_env_chain;
 
 static const uint32 MAX_BAKE_SIZE = 1024;
-static const uint32 ENV_PREFILTER_SIZE = 128;
-static const uint32 ENV_PREFILTER_MIPS = 4;    //!< 5 levels, the last one is roughness 1 (RTSS: lod = mips * r * (2 - r))
+static const uint32 ENV_PREFILTER_SIZE = 256; // = environment map size (res / 4 at 1024+); was 128: near reflections blotchy
+static const uint32 ENV_PREFILTER_MIPS = 5;    //!< 6 levels (256 -> 8), the last one is roughness 1 (RTSS: lod = mips * r * (2 - r))
 static const uint32 ENV_CHAIN_MIN_SIZE = 8;
 static const int    ENV_PREFILTER_SAMPLES = 64;
 static const PixelFormat ENV_FORMAT = PF_FLOAT16_RGBA; //!< HDR; explicit - the environment map reports PF_UNKNOWN
