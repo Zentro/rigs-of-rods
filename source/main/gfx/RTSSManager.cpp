@@ -50,6 +50,11 @@ const char* NO_SHADOW_CASTER_MAT = "RoR/NoShadowCaster";
 const char* SHADOW_CASTER_MAT = "RoR/ShadowCaster";
 const char* ALPHA_CASTER_SUFFIX = "/RoRShadowCaster"; //!< Casters made for alpha-tested materials, see SetupShadowCaster()
 
+/// Depth bias of the shadow casters (constant, slope scaled). Without it, 16-bit shadow depth (PF_DEPTH16) on large
+/// gently curved surfaces flickers around the surface's own depth: striped self-shadowing ("acne", vehicle bonnets).
+const float CASTER_DEPTH_BIAS = 3.f;
+const float CASTER_SLOPE_SCALE_BIAS = 6.f; // 3/6: no stripes on gavril, shadows still touch the ground
+
 /// Shadow caster that draws nothing (writes neither colour nor depth)
 Ogre::MaterialPtr GetNoShadowCaster()
 {
@@ -87,6 +92,7 @@ Ogre::MaterialPtr GetSharedShadowCaster()
         mat = Ogre::MaterialManager::getSingleton().create(SHADOW_CASTER_MAT, Ogre::RGN_DEFAULT);
         mat->setReceiveShadows(false);
         mat->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+        mat->getTechnique(0)->getPass(0)->setDepthBias(CASTER_DEPTH_BIAS, CASTER_SLOPE_SCALE_BIAS);
         mat->compile();
         RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
         shadergen.createShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME, RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
@@ -124,6 +130,7 @@ Ogre::MaterialPtr GetAlphaTestedCaster(const Ogre::Material& mat, const Ogre::Pa
     caster->setReceiveShadows(false);
     Ogre::Pass* pass = caster->getTechnique(0)->getPass(0);
     pass->setLightingEnabled(false);
+    pass->setDepthBias(CASTER_DEPTH_BIAS, CASTER_SLOPE_SCALE_BIAS);
     pass->setAlphaRejectSettings(src.getAlphaRejectFunction(), src.getAlphaRejectValue());
     pass->setCullingMode(src.getCullingMode());
     pass->setManualCullingMode(src.getManualCullingMode());
