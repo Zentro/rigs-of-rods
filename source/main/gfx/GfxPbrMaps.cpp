@@ -96,8 +96,10 @@ std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float ba
     const uint32 w = std::min(specular_map->getWidth(), MAX_BAKE_SIZE);
     const uint32 h = std::min(specular_map->getHeight(), MAX_BAKE_SIZE);
     const std::string name = fmt::format("RoR/PBS/MetalRoughness/{}", s_baked.size());
-    TexturePtr dst = TextureManager::getSingleton().createManual(name, RGN_DEFAULT, TEX_TYPE_2D, w, h,
-        MIP_UNLIMITED, PF_BYTE_RGBA, TU_RENDERTARGET | TU_AUTOMIPMAP);
+    // Rendered into a temporary target, then read back: drivers don't reliably generate mipmaps for render
+    // targets (Mesa GL3+ left them as garbage - roughness ~0 at a distance, glittering lines on the paint).
+    TexturePtr rtt = TextureManager::getSingleton().createManual(name + "/Bake", RGN_DEFAULT, TEX_TYPE_2D, w, h,
+        0, PF_BYTE_RGBA, TU_RENDERTARGET);
 
     Pass* pass = s_material->getTechnique(0)->getPass(0);
     pass->getTextureUnitState("SpecMap")->setTexture(specular_map);
@@ -105,7 +107,7 @@ std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float ba
     fp->setIgnoreMissingParams(true);
     fp->setNamedConstant("bakeParams", Vector4(base_roughness, glossy_roughness, 0.f, 0.f));
 
-    RenderTarget* rt = dst->getBuffer()->getRenderTarget();
+    RenderTarget* rt = rtt->getBuffer()->getRenderTarget();
     rt->setAutoUpdated(false);
     Viewport* vp = rt->addViewport(s_camera);
     vp->setClearEveryFrame(false);
@@ -114,6 +116,12 @@ std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float ba
     vp->setSkiesEnabled(false);
     rt->update();
     rt->removeAllViewports();
+
+    // Regular texture from the result: its mipmaps are generated on upload like for any image file
+    Image img;
+    rtt->convertToImage(img);
+    TextureManager::getSingleton().remove(rtt);
+    TextureManager::getSingleton().loadImage(name, RGN_DEFAULT, img, TEX_TYPE_2D, MIP_UNLIMITED);
 
     LOG(fmt::format("[RoR|PBR] Baked metal/roughness texture '{}' ({}x{}) from specular map '{}'", name, w, h, specular_map->getName()));
     s_baked[key] = name;
