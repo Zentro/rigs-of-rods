@@ -193,7 +193,7 @@ void Console::cVarSetupBuiltins()
     App::gfx_shadow_quality      = this->cVarCreate("gfx_shadow_quality",      "Shadows Quality",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"); //0 = Low quality, 1 = mid, 2 = hq, 3 = ultra
     App::gfx_shadow_distance     = this->cVarCreate("gfx_shadow_distance",     "Shadow distance",            CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "400"); // metres, sun shadows end here
     App::gfx_render_pipeline     = this->cVarCreate("gfx_render_pipeline",     "Render pipeline",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxRenderPipeline::LEGACY - PBR becomes the default with ROADMAP M3.5*/);
-    App::gfx_tonemap             = this->cVarCreate("gfx_tonemap",             "Tonemapping",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxTonemap::NONE - AgX/ACES need real HDR light (sky M6, materials M4); with today's LDR skybox they look flat*/);
+    App::gfx_tonemap             = this->cVarCreate("gfx_tonemap",             "Tonemapping",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "2"/*(int)GfxTonemap::AGX - the atmosphere's sun, sky and auto exposure go well above 1; None clips. Modes are calibrated to the same noon brightness (Tonemap_fs.glsl)*/);
     App::gfx_exposure            = this->cVarCreate("gfx_exposure",            "Exposure",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0"); // 1.0 matches legacy brightness (clamp) at noon - ROADMAP M3.5, M6.5
     App::gfx_auto_exposure       = this->cVarCreate("gfx_auto_exposure",       "Auto exposure",              CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "true");
     App::gfx_sky_time            = this->cVarCreate("gfx_sky_time",            "",                           CVAR_TYPE_FLOAT,                  "14.0"); // Session state, not saved (savegames keep it)
@@ -201,6 +201,7 @@ void Console::cVarSetupBuiltins()
     App::gfx_sky_time_speed      = this->cVarCreate("gfx_sky_time_speed",      "",                           CVAR_TYPE_INT,                    "300");
     App::gfx_sky_latitude        = this->cVarCreate("gfx_sky_latitude",        "",                           CVAR_TYPE_FLOAT,                  "45.0"); // Session; terrains may set their own (ROADMAP M6.4)
     App::gfx_sky_day_of_year     = this->cVarCreate("gfx_sky_day_of_year",     "",                           CVAR_TYPE_INT,                    "172");
+    App::gfx_cloud_coverage      = this->cVarCreate("gfx_cloud_coverage",      "",                           CVAR_TYPE_FLOAT,                  "0.3"); // Session; terrains may set their own
     App::gfx_skidmarks_mode      = this->cVarCreate("gfx_skidmarks_mode",      "Skidmarks",                  CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_static_objects      = this->cVarCreate("gfx_static_objects",      "StaticTerrainObjects",       CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "true");
     App::gfx_lod_range           = this->cVarCreate("gfx_lod_range",           "LodRange",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");

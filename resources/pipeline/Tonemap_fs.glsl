@@ -80,6 +80,11 @@ vec3 LinearToSRGB(vec3 c)
     return mix(lo, hi, step(vec3_splat(0.0031308), c));
 }
 
+// Per-tonemapper exposure calibration: at `exposure` 1 every mode shows a noon scene about as bright as None
+// (= legacy). Fitted on noon captures (NeoQueretaro, LJGreece): mean display brightness of None vs the curve.
+#define CALIBRATION_ACES 1.6
+#define CALIBRATION_AGX  0.9
+
 MAIN_PARAMETERS
 IN(vec2 oUv, TEXCOORD0)
 MAIN_DECLARATION
@@ -88,9 +93,9 @@ MAIN_DECLARATION
 
     vec3 ldr;
     if (tonemapMode > 1.5)
-        ldr = TonemapAgX(hdr);
+        ldr = TonemapAgX(hdr * CALIBRATION_AGX);
     else if (tonemapMode > 0.5)
-        ldr = TonemapACES(hdr);
+        ldr = TonemapACES(hdr * CALIBRATION_ACES);
     else
         ldr = saturate(hdr);
 
