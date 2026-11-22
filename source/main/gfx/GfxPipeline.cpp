@@ -21,7 +21,10 @@
 #include "GfxPipeline.h"
 
 #include "Application.h"
+#include "GameContext.h"
+#include "GfxAtmosphere.h"
 #include "GfxScene.h"
+#include "Terrain.h"
 #include "PlatformUtils.h"
 
 #include <OgreCompositorManager.h>
@@ -146,7 +149,13 @@ void GfxPipeline::UpdateFrame()
     if (!m_active)
         return;
 
-    m_tonemap_values.x = Math::Clamp(App::gfx_exposure->getFloat(), 0.01f, 16.f);
+    float exposure = App::gfx_exposure->getFloat();
+    GfxAtmosphere* atmosphere = App::GetGameContext()->GetTerrain() ? App::GetGameContext()->GetTerrain()->getAtmosphere() : nullptr;
+    if (atmosphere && App::gfx_auto_exposure->getBool())
+    {
+        exposure *= atmosphere->GetAutoExposure();
+    }
+    m_tonemap_values.x = Math::Clamp(exposure, 0.01f, 64.f);
     m_tonemap_values.y = static_cast<float>(Math::Clamp(App::gfx_tonemap->getInt(), 0, 2));
 }
 

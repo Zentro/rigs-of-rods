@@ -194,7 +194,8 @@ void Console::cVarSetupBuiltins()
     App::gfx_shadow_distance     = this->cVarCreate("gfx_shadow_distance",     "Shadow distance",            CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "400"); // metres, sun shadows end here
     App::gfx_render_pipeline     = this->cVarCreate("gfx_render_pipeline",     "Render pipeline",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxRenderPipeline::LEGACY - PBR becomes the default with ROADMAP M3.5*/);
     App::gfx_tonemap             = this->cVarCreate("gfx_tonemap",             "Tonemapping",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxTonemap::NONE - AgX/ACES need real HDR light (sky M6, materials M4); with today's LDR skybox they look flat*/);
-    App::gfx_exposure            = this->cVarCreate("gfx_exposure",            "Exposure",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0"); // 1.6 was tuned for gfx-rtss' atmosphere; 1.0 matches legacy brightness (clamp) - ROADMAP M3.5
+    App::gfx_exposure            = this->cVarCreate("gfx_exposure",            "Exposure",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0"); // 1.0 matches legacy brightness (clamp) at noon - ROADMAP M3.5, M6.5
+    App::gfx_auto_exposure       = this->cVarCreate("gfx_auto_exposure",       "Auto exposure",              CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "true");
     App::gfx_sky_time            = this->cVarCreate("gfx_sky_time",            "",                           CVAR_TYPE_FLOAT,                  "14.0"); // Session state, not saved (savegames keep it)
     App::gfx_sky_time_cycle      = this->cVarCreate("gfx_sky_time_cycle",      "",                           CVAR_TYPE_BOOL,                   "false");
     App::gfx_sky_time_speed      = this->cVarCreate("gfx_sky_time_speed",      "",                           CVAR_TYPE_INT,                    "300");

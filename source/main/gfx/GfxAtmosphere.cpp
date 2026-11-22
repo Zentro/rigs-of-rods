@@ -46,6 +46,11 @@ static const float GROUND_ALBEDO = 0.25f;
 static const float SUN_E = Math::PI;
 static const float SUN_DISC_RADIANCE = 40.f; // Capped (real ~46000) - still bright enough to clip under tonemapping
 
+// Auto exposure (see UpdateLighting)
+static const float EXPOSURE_COMPENSATION = 0.7f; // 0 = none, 1 = every light level looks like noon
+static const float EXPOSURE_MIN = 0.5f;
+static const float EXPOSURE_MAX = 8.f;
+
 static float WrapHours(float h) { return std::fmod(std::fmod(h, 24.f) + 24.f, 24.f); }
 static const int LUT_WIDTH = 256;
 static const int LUT_HEIGHT = 128;
@@ -202,7 +207,7 @@ GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light, TerrainSkyDefaults const& 
         Quaternion::IDENTITY, RGN_DEFAULT);
 
     this->Update(0.f);
-    LOG(fmt::format("[RoR|Atmosphere] Created, time of day {:.2f} h", m_time_of_day));
+    LOG(fmt::format("[RoR|Atmosphere] Created, time of day {:.2f} h, light level {:.3f}, auto exposure {:.2f}", m_time_of_day, m_light_level, m_auto_exposure));
 }
 
 GfxAtmosphere::~GfxAtmosphere()
@@ -416,17 +421,24 @@ void GfxAtmosphere::UpdateLighting()
     m_ambient = ColourValue(ambient.x, ambient.y, ambient.z);
 
     // Main light follows the sun, or the moon at night
+    const bool use_moon = sun_elev < -3.f;
+    const Vector3 dir = use_moon ? m_moon_dir : m_sun_dir;
+    ColourValue colour = use_moon ? moon_colour : m_sun_colour;
+    // Fade out below the horizon (terrain would block it anyway, avoids light from below)
+    colour *= Math::Clamp(dir.y * 20.f + 0.2f, 0.f, 1.f);
     if (m_main_light && m_main_light->getParentSceneNode())
     {
-        const bool use_moon = sun_elev < -3.f;
-        const Vector3 dir = use_moon ? m_moon_dir : m_sun_dir;
-        ColourValue colour = use_moon ? moon_colour : m_sun_colour;
-        // Fade out below the horizon (terrain would block it anyway, avoids light from below)
-        colour *= Math::Clamp(dir.y * 20.f + 0.2f, 0.f, 1.f);
         m_main_light->setDiffuseColour(colour);
         m_main_light->setSpecularColour(colour);
         m_main_light->getParentSceneNode()->setDirection(-dir, Node::TS_WORLD);
     }
+
+    // Auto exposure from the light we just computed (no GPU readback): light level on a surface between horizontal
+    // and vertical (a low sun still lights walls), 1 = noon = legacy brightness. Compensated only partly, so dusk
+    // is readable but darker than noon, and capped, so night stays night.
+    auto luminance = [](ColourValue const& c) { return 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b; };
+    m_light_level = luminance(colour) * (0.3f + 0.7f * std::max(dir.y, 0.f)) + luminance(m_ambient);
+    m_auto_exposure = Math::Clamp(std::pow(std::max(m_light_level, 1e-4f), -EXPOSURE_COMPENSATION), EXPOSURE_MIN, EXPOSURE_MAX);
 
     // Haze: colour of the sky at the horizon (1 deg - what is seen behind distant hills), averaged around it, so
     // distant terrain fades into the sky. Long near-horizontal path: 16 steps.

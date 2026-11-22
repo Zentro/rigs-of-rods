@@ -261,6 +261,7 @@ CVar* gfx_sky_time_speed;
 CVar* gfx_sky_latitude;
 CVar* gfx_sky_day_of_year;
 CVar* gfx_exposure;
+CVar* gfx_auto_exposure;
 CVar* gfx_skidmarks_mode;
 CVar* gfx_sight_range;
 CVar* gfx_lod_range;

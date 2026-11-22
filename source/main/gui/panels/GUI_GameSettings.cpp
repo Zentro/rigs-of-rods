@@ -401,6 +401,7 @@ void GameSettings::DrawGraphicsSettings()
     {
         DrawGCombo(App::gfx_tonemap, _LC("GameSettings", "Tonemapping"), m_combo_items_tonemap.c_str());
         DrawGFloatSlider(App::gfx_exposure, _LC("GameSettings", "Exposure"), 0.25f, 4.f);
+        DrawGCheckbox(App::gfx_auto_exposure, _LC("GameSettings", "Auto exposure (time of day)"));
     }
 
     DrawGCombo(App::gfx_flares_mode, _LC("GameSettings", "Light sources"),

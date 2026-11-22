@@ -66,6 +66,8 @@ public:
     static std::string GetPrettyTime(float hours);         //!< "HH:MM:SS"
     Ogre::Vector3 GetSunDirection() const { return m_sun_dir; } //!< Towards the sun
     TerrainSkyDefaults const& GetTerrainSky() const { return m_terrain_sky; }
+    float GetAutoExposure() const { return m_auto_exposure; } //!< Exposure multiplier for the current light level
+    float GetLightLevel() const { return m_light_level; }     //!< Scene light level, 1 = noon (legacy brightness)
 
     /// The atmosphere is the sky of the HDR pipeline; the terrain's sky box (SDR content) stays with the legacy pipeline.
     static bool IsWanted();
@@ -94,6 +96,8 @@ private:
     Ogre::ColourValue  m_ambient;
     Ogre::ColourValue  m_fog_colour;             //!< Average horizon haze colour (linear)
     float              m_night = 0.f;
+    float              m_light_level = 1.f;
+    float              m_auto_exposure = 1.f;
     TerrainSkyDefaults m_terrain_sky;
     Ogre::TexturePtr   m_lut_texture;
     Ogre::SceneManager* m_lut_scene = nullptr;   //!< Private scene with a fullscreen rectangle, renders the LUT
