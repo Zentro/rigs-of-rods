@@ -57,6 +57,7 @@ private:
     void RenderSkyViewLut();
     void UpdateAstronomy();
     void UpdateLighting();
+    void UpdateFog();
     void UpdateSkyMaterial();
 
     // CPU mirror of the shader model
@@ -72,6 +73,7 @@ private:
     float              m_lut_altitude = -1.f;
     Ogre::ColourValue  m_sun_colour;             //!< Sun radiance at the camera (for the disc)
     Ogre::ColourValue  m_ambient;
+    Ogre::ColourValue  m_fog_colour;             //!< Average horizon haze colour (linear)
     float              m_night = 0.f;
     Ogre::TexturePtr   m_lut_texture;
     Ogre::SceneManager* m_lut_scene = nullptr;   //!< Private scene with a fullscreen rectangle, renders the LUT

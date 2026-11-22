@@ -21,6 +21,7 @@
 
 #include "CameraManager.h"
 #include "GfxScene.h"
+#include "Terrain.h"
 
 #include <Ogre.h>
 #include <OgreRectangle2D.h>
@@ -338,6 +339,32 @@ void GfxAtmosphere::UpdateLighting()
         m_main_light->getParentSceneNode()->setDirection(-dir, Node::TS_WORLD);
     }
     App::GetGfxScene()->GetSceneManager()->setAmbientLight(m_ambient);
+
+    // Haze: colour of the sky at the horizon (1 deg - what is seen behind distant hills), averaged around it, so
+    // distant terrain fades into the sky. Long near-horizontal path: 16 steps.
+    Vector3 fog = Vector3::ZERO;
+    const float el = Degree(1.f).valueRadians();
+    for (int s = 0; s < SEGMENTS; s++)
+    {
+        const float phi = (s + 0.5f) / SEGMENTS * Math::TWO_PI;
+        fog += this->SkyRadiance(ro, Vector3(std::cos(el) * std::cos(phi), std::sin(el), std::cos(el) * std::sin(phi)), m_sun_dir, SUN_E, 16);
+    }
+    fog /= (float)SEGMENTS;
+    // At night the scattering model goes to black; keep haze slightly visible against the dark
+    fog += Vector3(0.004f, 0.005f, 0.008f) * m_night;
+    m_fog_colour = ColourValue(fog.x, fog.y, fog.z);
+}
+
+void GfxAtmosphere::UpdateFog()
+{
+    // Visibility from sight range and haze. Exp2 fog: 5% of the original colour is left at `visibility`.
+    // The mode stays FOG_EXP2 (RTSS compiles the mode into its shaders); only colour and density change.
+    const int sight_range = App::gfx_sight_range->getInt();
+    float visibility = (sight_range >= Terrain::UNLIMITED_SIGHTRANGE) ? 20000.f : std::max(sight_range * 1.5f, 500.f);
+    visibility /= std::max(m_haze, 0.1f);
+    const float density = std::sqrt(3.f) / visibility;
+    // Start/end are for shaders that only do linear fog (PagedGeometry)
+    App::GetGfxScene()->GetSceneManager()->setFog(FOG_EXP2, m_fog_colour, density, 0.f, visibility);
 }
 
 void GfxAtmosphere::UpdateSkyMaterial()
@@ -354,6 +381,7 @@ void GfxAtmosphere::UpdateSkyMaterial()
     fp->setNamedConstant("atmoAmbient", Vector4(m_ambient.r, m_ambient.g, m_ambient.b, m_night));
     fp->setNamedConstant("atmoCloudParams", Vector4::ZERO); // No clouds yet (ROADMAP M6.6)
     fp->setNamedConstant("atmoCameraPos", Vector4(cam_pos.x, cam_pos.y, cam_pos.z, m_lut_altitude));
+    fp->setNamedConstant("atmoFogColour", Vector4(m_fog_colour.r, m_fog_colour.g, m_fog_colour.b, 1.f));
 }
 
 void GfxAtmosphere::Update(float dt_sec)
@@ -376,5 +404,6 @@ void GfxAtmosphere::Update(float dt_sec)
         this->RenderSkyViewLut();
     }
 
+    this->UpdateFog(); // Every frame: follows the sight range setting
     this->UpdateSkyMaterial();
 }

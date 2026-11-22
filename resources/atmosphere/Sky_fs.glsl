@@ -11,6 +11,7 @@ uniform vec4 atmoSunColour;   // rgb: sun radiance reaching the camera (transmit
 uniform vec4 atmoAmbient;     // rgb: sky ambient (for cloud lighting), w: night factor (0 day .. 1 night)
 uniform vec4 atmoCloudParams; // x: coverage, y: density, z: wind offset (m), w: time (s)
 uniform vec4 atmoCameraPos;   // xyz: camera world position, w: camera altitude (m)
+uniform vec4 atmoFogColour;   // rgb: scene fog (haze) colour
 // Unit 0 is a dummy cube map (OGRE sky box requirement)
 SAMPLER2D(skyLut, 1);
 SAMPLER2D(noise2D, 2);
@@ -155,6 +156,10 @@ MAIN_DECLARATION
         colour = colour * (1.0 - cloudAlpha * fade) + cloudCol * fade;
     }
 #endif
+
+    // Below the horizon the model shows the planet's ground. In RoR the terrain is there, and where it ends we see
+    // infinitely far ground, which the fog turns into the fog colour: blend to it, the terrain's edge melts into haze.
+    colour = mix(colour, atmoFogColour.rgb, saturate(-dir.y * 20.0));
 
     gl_FragColor = vec4(colour, 1.0);
 }

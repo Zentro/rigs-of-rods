@@ -270,6 +270,9 @@ void RoR::Terrain::initLight()
 
 void RoR::Terrain::initFog()
 {
+    if (m_atmosphere)
+        return; // Its haze is the fog (set when it was created, before the shadow setup regenerates the shaders)
+
     int sight_range = App::gfx_sight_range->getInt();
     if (sight_range >= UNLIMITED_SIGHTRANGE)
         App::GetGfxScene()->GetSceneManager()->setFog(FOG_NONE);
