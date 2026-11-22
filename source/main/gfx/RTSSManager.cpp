@@ -25,6 +25,7 @@
 #include "GfxPbrMaps.h"
 #include "PbsMaterialFactory.h"
 #include "GfxScene.h"
+#include "RTSSGloss.h"
 #include "RTSSNiceMetal.h"
 #include "RTSSPaged.h"
 
@@ -352,6 +353,7 @@ void RTSSManager::InstallSubRenderStates()
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new NiceMetalSubRenderStateFactory());
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new PagedFadeSubRenderStateFactory());
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new GrassSubRenderStateFactory());
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new RTSSGlossFactory()); // PBS materials, ROADMAP M4 A.4
 }
 
 bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, RTShader::SubRenderState* srs)

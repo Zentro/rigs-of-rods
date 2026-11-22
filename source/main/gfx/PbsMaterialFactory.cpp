@@ -22,6 +22,7 @@
 #include "GfxPbrMaps.h"
 #include "GfxPipeline.h"
 #include "GfxScene.h"
+#include "RTSSGloss.h"
 #include "RTSSManager.h"
 
 #include <Ogre.h>
@@ -170,6 +171,17 @@ MaterialPtr PbsMaterialFactory::CreateMaterial(PbsMaterialDef const& def)
         ibl->setParameter("texture", ENV_MAP_NAME);
         ibl->setParameter("luminance", "1.0");
         rs->addTemplateSubRenderState(ibl);
+
+        // Gloss layer: smooth top layer (paint lacquer, glass, lenses); a baked legacy specular map carries the
+        // per-texel mask in alpha (legacy RoR's reflectivity)
+        const bool gloss_mask = def.legacy_specular_map.IsSet() && !def.orm_map.IsSet() && !mr_texture.empty();
+        if (def.gloss > 0.f || gloss_mask)
+        {
+            RTShader::SubRenderState* gloss = shader_gen->createSubRenderState(RTSSGloss::TYPE);
+            gloss->setParameter("texture", ENV_MAP_NAME);
+            gloss->setParameter("mask_from_texture", gloss_mask ? "true" : "false");
+            rs->addTemplateSubRenderState(gloss);
+        }
     }
 
     shader_gen->validateMaterial(scheme, *mat);
