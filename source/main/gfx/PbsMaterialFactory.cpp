@@ -157,7 +157,7 @@ MaterialPtr PbsMaterialFactory::CreateMaterial(PbsMaterialDef const& def)
     else if (def.legacy_specular_map.IsSet())
     {
         if (TexturePtr spec = LoadTexture(def.legacy_specular_map, def.group, /*srgb=*/false))
-            mr_texture = GfxPbrMaps::BakeSpecularMap(spec, def.roughness, std::min(GLOSSY_ROUGHNESS, def.roughness));
+            mr_texture = GfxPbrMaps::BakeSpecularMap(spec, def.roughness, std::min(GLOSSY_ROUGHNESS, def.roughness), def.metallic);
     }
     if (!mr_texture.empty())
     {
@@ -288,5 +288,8 @@ void PbsMaterialFactory::ApplyMaterialClass(PbsMaterialDef& def, PbrMaterialClas
         def.gloss = c.gloss;
     if (c.gloss_roughness >= 0.f)
         def.gloss_roughness = c.gloss_roughness;
-    // c.metal: applied with ROADMAP M4.5, once reflections are in
+    // Metals reflect their surroundings and have no diffuse colour: only with image based lighting (PBS materials
+    // have it; translated legacy materials keep 'metal' as a pass flag only - they'd render almost black)
+    if (c.metal)
+        def.metallic = 1.f;
 }

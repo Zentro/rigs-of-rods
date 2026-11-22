@@ -81,7 +81,7 @@ struct PbrMaterialClass
     float roughness_max = -1.f;    //!< Caps the roughness instead of setting it
     float gloss = -1.f;            //!< Gloss layer strength
     float gloss_roughness = -1.f;
-    bool  metal = false;           //!< Applied once reflections are in (ROADMAP M4.5)
+    bool  metal = false;           //!< Metallic 1 on PBS materials (they have reflections); not on translated legacy ones
 
     bool IsSet() const { return roughness >= 0.f || roughness_max >= 0.f || metal; }
 };
@@ -108,7 +108,7 @@ public:
     /// formats never stored what a surface is made of. Order matters, first match wins.
     static PbrMaterialClass ClassifyMaterial(std::string names, std::string program_names);
 
-    /// Applies a class to a definition (roughness, gloss; metal from M4.5 on).
+    /// Applies a class to a definition (roughness, gloss, metallic).
     static void ApplyMaterialClass(PbsMaterialDef& def, PbrMaterialClass const& c);
 
 private:

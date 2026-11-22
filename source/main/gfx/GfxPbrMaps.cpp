@@ -90,13 +90,13 @@ void GfxPbrMaps::RenderQuad(MaterialPtr const& mat, RenderTarget* rt)
     rt->removeAllViewports();
 }
 
-std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float base_roughness, float glossy_roughness)
+std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float base_roughness, float glossy_roughness, float metallic)
 {
     if (!specular_map)
         return "";
 
-    const std::string key = fmt::format("{}|{}|{:.3f}|{:.3f}", specular_map->getGroup(), specular_map->getName(),
-        base_roughness, glossy_roughness);
+    const std::string key = fmt::format("{}|{}|{:.3f}|{:.3f}|{:.3f}", specular_map->getGroup(), specular_map->getName(),
+        base_roughness, glossy_roughness, metallic);
     auto found = s_baked.find(key);
     if (found != s_baked.end())
         return found->second;
@@ -127,7 +127,7 @@ std::string GfxPbrMaps::BakeSpecularMap(TexturePtr const& specular_map, float ba
     pass->getTextureUnitState("SpecMap")->setTexture(specular_map);
     GpuProgramParametersSharedPtr fp = pass->getFragmentProgramParameters();
     fp->setIgnoreMissingParams(true);
-    fp->setNamedConstant("bakeParams", Vector4(base_roughness, glossy_roughness, 0.f, 0.f));
+    fp->setNamedConstant("bakeParams", Vector4(base_roughness, glossy_roughness, metallic, 0.f));
     GfxPbrMaps::RenderQuad(s_bake_material, rtt->getBuffer()->getRenderTarget());
 
     // Regular texture from the result: its mipmaps are generated on upload like for any image file

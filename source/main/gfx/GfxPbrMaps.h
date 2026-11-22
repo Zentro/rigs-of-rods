@@ -39,11 +39,11 @@ namespace RoR {
 class GfxPbrMaps
 {
 public:
-    /// Metal/roughness texture (glTF layout: R occlusion = 1, G roughness, B metallic = 0, A gloss mask) from a
+    /// Metal/roughness texture (glTF layout: R occlusion = 1, G roughness, B metallic, A gloss mask) from a
     /// legacy specular map, whose rgb is a reflectivity mask: black texels get `base_roughness`, white ones
-    /// `glossy_roughness`.
+    /// `glossy_roughness`; `metallic` is constant (legacy content has no metalness, it comes from the material class).
     /// @return Name of the baked texture (resource group RGN_DEFAULT), or empty if the map can't be loaded.
-    static std::string BakeSpecularMap(Ogre::TexturePtr const& specular_map, float base_roughness, float glossy_roughness);
+    static std::string BakeSpecularMap(Ogre::TexturePtr const& specular_map, float base_roughness, float glossy_roughness, float metallic = 0.f);
 
     /// Cube map for image based lighting (ROADMAP M5): each mip level is one perceptual roughness, the last one 1.
     static Ogre::TexturePtr CreatePrefilteredEnvMap(std::string const& name);
