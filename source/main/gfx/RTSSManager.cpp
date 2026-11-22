@@ -371,6 +371,8 @@ bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short
     return true;
 }
 
+static const float PBR_DEFAULT_ROUGHNESS = 0.7f; //!< Until materials get their own values (ROADMAP M4.3, M4.4)
+
 void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody)
 {
     // Textures are final now. (The material is a copy, and may get its RTSS technique below - then the technique
@@ -379,9 +381,19 @@ void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transpare
 
     Pass* pass = mat->getTechnique("BaseTechnique")->getPass("BaseRender");
 
-    // A plain diffuse-only material needs nothing special - the regular RTSS shading does the right thing.
+    // HDR pipeline: physically based lighting (Cook-Torrance, ROADMAP M4). Roughness and metalness go in the pass
+    // specular colour (x, y), where RTSS reads them - set before RTSS copies the pass into its technique below.
+    // No per-material values yet: dielectric, medium-rough (material classes, specular maps: M4.3, M4.4).
+    const bool pbr = App::GetGfxScene()->GetPipeline().IsActive();
+    if (pbr)
+    {
+        pass->setSpecular(ColourValue(PBR_DEFAULT_ROUGHNESS, /*metallic:*/0.f, 0.f, 1.f));
+    }
+
+    // A plain diffuse-only material needs no vehicle shading - the regular RTSS shading does the right thing.
     const bool has_specular = pass->getTextureUnitState("Specular_Map") != nullptr;
-    if (!has_specular && !pass->getTextureUnitState("Dmg_Diffuse_Map"))
+    const bool nicemetal = has_specular || pass->getTextureUnitState("Dmg_Diffuse_Map");
+    if (!nicemetal && !pbr)
     {
         return;
     }
@@ -397,17 +409,29 @@ void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transpare
         return;
     }
 
-    // The sub render state samples these itself, so keep FFPTexturing off them. This is also what keeps the
-    // vertex colour out of the lighting stage: it carries damage and wetness flags rather than a colour.
-    for (TextureUnitState* tus : pass->getTextureUnitStates())
+    if (nicemetal)
     {
-        RTShader::ShaderGenerator::_markNonFFP(tus);
+        // The sub render state samples these itself, so keep FFPTexturing off them. This is also what keeps the
+        // vertex colour out of the lighting stage: it carries damage and wetness flags rather than a colour.
+        for (TextureUnitState* tus : pass->getTextureUnitStates())
+        {
+            RTShader::ShaderGenerator::_markNonFFP(tus);
+        }
+
+        RTShader::SubRenderState* srs = shadergen.createSubRenderState(NiceMetalSubRenderState::Type);
+        srs->setParameter("transparent", transparent ? "true" : "false");
+        srs->setParameter("is_flexbody", is_flexbody ? "true" : "false");
+        // HDR: only the damage/wetness surface colour, Cook-Torrance does the lighting. The legacy specular-map
+        // reflection comes back physically based (M4.3 specular maps, M5 image based lighting).
+        srs->setParameter("surface_only", pbr ? "true" : "false");
+        render_state->addTemplateSubRenderState(srs);
     }
 
-    RTShader::SubRenderState* srs = shadergen.createSubRenderState(NiceMetalSubRenderState::Type);
-    srs->setParameter("transparent", transparent ? "true" : "false");
-    srs->setParameter("is_flexbody", is_flexbody ? "true" : "false");
-    render_state->addTemplateSubRenderState(srs);
+    if (pbr)
+    {
+        // Same execution order as the fixed-function lighting stage, so it replaces it
+        render_state->addTemplateSubRenderState(shadergen.createSubRenderState(RTShader::SRS_COOK_TORRANCE_LIGHTING));
+    }
 
     shadergen.invalidateMaterial(MSN_SHADERGEN, *mat);
 }

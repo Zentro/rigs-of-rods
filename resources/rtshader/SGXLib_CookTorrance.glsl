@@ -159,7 +159,10 @@ vec3 evaluateLight(
     vec3 Fd = pixel.diffuseColor * Fd_Lambert();
 
     // https://google.github.io/filament/Filament.md.html#materialsystem/improvingthebrdfs/energylossinspecularreflectance
-    vec3 color = NoL * lightColor * (Fr * pixel.energyCompensation + Fd) * atten;
+    // RoR: light colours use legacy (FFP) units, where a white light on a white Lambert surface gives 1.0.
+    // Convert to illuminance (x PI) so metal/roughness surfaces match legacy-lit terrain and objects.
+    // (Patch on the vendored OGRE 14.6.3 file - re-apply when refreshing resources/rtshader.)
+    vec3 color = NoL * (lightColor * M_PI) * (Fr * pixel.energyCompensation + Fd) * atten;
 
     if(spotParams.w != 0.0)
     {
