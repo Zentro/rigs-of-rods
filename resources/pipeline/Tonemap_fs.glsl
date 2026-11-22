@@ -7,7 +7,7 @@ OGRE_NATIVE_GLSL_VERSION_DIRECTIVE
 
 OGRE_UNIFORMS(
     uniform float exposure;
-    uniform float tonemapMode; // 0 = none (clamp), 1 = ACES fitted, 2 = AgX
+    uniform float tonemapMode; // 0 = none (clamp), 1 = ACES fitted, 2 = AgX, 3 = Khronos PBR Neutral
 )
 SAMPLER2D(sceneTex, 0);
 
@@ -73,6 +73,26 @@ vec3 TonemapAgX(vec3 c)
     return pow(max(c, vec3_splat(0.0)), vec3_splat(2.2));
 }
 
+// Khronos PBR Neutral (2024, https://modelviewer.dev/examples/tone-mapping): base colours stay faithful up to
+// ~0.76 (near identity), only brighter values are compressed and slightly desaturated towards white - legacy
+// textures authored for "1.0 = white" keep their whites.
+vec3 TonemapPBRNeutral(vec3 color)
+{
+    const float startCompression = 0.8 - 0.04;
+    const float desaturation = 0.15;
+    float x = min(color.r, min(color.g, color.b));
+    float offset = (x < 0.08) ? x - 6.25 * x * x : 0.04;
+    color -= offset;
+    float peak = max(color.r, max(color.g, color.b));
+    if (peak < startCompression)
+        return color;
+    const float d = 1.0 - startCompression;
+    float newPeak = 1.0 - d * d / (peak + d - startCompression);
+    color *= newPeak / peak;
+    float g = 1.0 - 1.0 / (desaturation * (peak - newPeak) + 1.0);
+    return mix(color, vec3_splat(newPeak), g);
+}
+
 vec3 LinearToSRGB(vec3 c)
 {
     vec3 lo = c * 12.92;
@@ -92,7 +112,9 @@ MAIN_DECLARATION
     vec3 hdr = texture2D(sceneTex, oUv).rgb * exposure;
 
     vec3 ldr;
-    if (tonemapMode > 1.5)
+    if (tonemapMode > 2.5)
+        ldr = TonemapPBRNeutral(hdr); // Near identity below the highlights: no calibration needed
+    else if (tonemapMode > 1.5)
         ldr = TonemapAgX(hdr * CALIBRATION_AGX);
     else if (tonemapMode > 0.5)
         ldr = TonemapACES(hdr * CALIBRATION_ACES);

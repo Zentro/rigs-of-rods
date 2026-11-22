@@ -260,6 +260,7 @@ CVar* gfx_sky_time_cycle;
 CVar* gfx_sky_time_speed;
 CVar* gfx_sky_latitude;
 CVar* gfx_sky_day_of_year;
+CVar* gfx_cloud_coverage;
 CVar* gfx_exposure;
 CVar* gfx_auto_exposure;
 CVar* gfx_skidmarks_mode;
@@ -531,6 +532,7 @@ std::string ToLocalizedString(GfxTonemap e)
     case GfxTonemap::NONE:            return _LC("GfxTonemap", "None (clamp)");
     case GfxTonemap::ACES:            return _LC("GfxTonemap", "ACES");
     case GfxTonemap::AGX:             return _LC("GfxTonemap", "AgX");
+    case GfxTonemap::PBR_NEUTRAL:     return _LC("GfxTonemap", "PBR Neutral");
     default:                          return "";
     }
 }

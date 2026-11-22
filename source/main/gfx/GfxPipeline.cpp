@@ -157,7 +157,7 @@ void GfxPipeline::UpdateFrame()
         exposure *= atmosphere->GetAutoExposure();
     }
     m_tonemap_values.x = Math::Clamp(exposure, 0.01f, 64.f);
-    m_tonemap_values.y = static_cast<float>(Math::Clamp(App::gfx_tonemap->getInt(), 0, 2));
+    m_tonemap_values.y = static_cast<float>(Math::Clamp(App::gfx_tonemap->getInt(), 0, 3));
 }
 
 void GfxPipeline::notifyMaterialRender(Ogre::uint32 pass_id, Ogre::MaterialPtr& mat)

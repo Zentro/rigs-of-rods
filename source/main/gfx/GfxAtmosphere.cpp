@@ -46,6 +46,27 @@ static const float GROUND_ALBEDO = 0.25f;
 static const float SUN_E = Math::PI;
 static const float SUN_DISC_RADIANCE = 40.f; // Capped (real ~46000) - still bright enough to clip under tonemapping
 
+// Tileable value noise for the cloud texture
+
+static float Hash3(int x, int y, int z)
+{
+    uint32_t h = (uint32_t)x * 374761393u + (uint32_t)y * 668265263u + (uint32_t)z * 2147483647u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    return (float)((h ^ (h >> 16)) & 0xffffff) / (float)0xffffff;
+}
+
+static float Smooth(float t) { return t * t * (3.f - 2.f * t); }
+
+static float TileNoise2D(float x, float y, int period)
+{
+    int xi = (int)std::floor(x), yi = (int)std::floor(y);
+    float u = Smooth(x - xi), v = Smooth(y - yi);
+    auto h = [&](int a, int b) { return Hash3(((a % period) + period) % period, ((b % period) + period) % period, 7); };
+    return Math::lerp(Math::lerp(h(xi, yi), h(xi + 1, yi), u), Math::lerp(h(xi, yi + 1), h(xi + 1, yi + 1), u), v);
+}
+
+static const float CLOUD_WIND_SPEED = 10.f; // m/s, cloud drift
+
 // Auto exposure (see UpdateLighting)
 static const float EXPOSURE_COMPENSATION = 0.7f; // 0 = none, 1 = every light level looks like noon
 static const float EXPOSURE_MIN = 0.5f;
@@ -141,6 +162,8 @@ TerrainSkyDefaults TerrainSkyDefaults::LoadCaelumConfig(std::string const& filen
             if (ch == '{') depth++;
             else if (ch == '}') depth--;
         }
+        if (tok.size() >= 2 && tok[0] == "coverage") // In the cloud layer blocks
+            out.cloud_coverage = std::max(out.cloud_coverage, Math::Clamp(StringConverter::parseReal(tok[1]), 0.f, 1.f));
         if (line_depth != 1 || tok.size() < 2)
             continue;
 
@@ -168,9 +191,10 @@ TerrainSkyDefaults TerrainSkyDefaults::LoadCaelumConfig(std::string const& filen
         out.day_of_year = Math::Clamp(static_cast<int>(std::fmod(days + 365.25, 365.25)) + 1, 1, 365);
         out.has_day = true;
     }
-    LOG(fmt::format("[RoR|Atmosphere] Caelum config '{}': time {} latitude {} day {} (longitude {:.1f})", filename,
+    LOG(fmt::format("[RoR|Atmosphere] Caelum config '{}': time {} latitude {} day {} clouds {} (longitude {:.1f})", filename,
         out.has_time ? fmt::format("{:.2f} h", out.time_of_day) : "-", out.has_latitude ? fmt::format("{:.1f}", out.latitude) : "-",
-        out.has_day ? std::to_string(out.day_of_year) : "-", out.longitude));
+        out.has_day ? std::to_string(out.day_of_year) : "-",
+        out.cloud_coverage >= 0.f ? fmt::format("{:.2f}", out.cloud_coverage) : "-", out.longitude));
     return out;
 }
 
@@ -180,7 +204,7 @@ GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light, TerrainSkyDefaults const& 
 {
     m_time_of_day = WrapHours(App::gfx_sky_time->getFloat());
 
-    GfxAtmosphere::EnsureDummyCube();
+    GfxAtmosphere::EnsureTextures();
     this->CreateSkyViewLut();
 
     m_sky_material = MaterialManager::getSingleton().getByName("RoR/Atmosphere/Sky", RGN_DEFAULT);
@@ -190,18 +214,8 @@ GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light, TerrainSkyDefaults const& 
         Pass* pass = m_sky_material->getTechnique(0)->getPass(0);
         pass->getTextureUnitState("DummyCube")->setTexture(TextureManager::getSingleton().getByName("RoR/Atmosphere/DummyCube", RGN_DEFAULT));
         pass->getTextureUnitState("SkyLut")->setTexture(m_lut_texture);
-        m_sky_material->load();
-        if (m_sky_material->getNumSupportedTechniques() == 0)
-        {
-            LOG(fmt::format("[RoR|Atmosphere] ERROR: sky material unsupported: {}", m_sky_material->getUnsupportedTechniquesExplanation()));
-        }
-        else
-        {
-            // Sampler units for render systems without shader-side bindings (legacy GL)
-            GpuProgramParametersSharedPtr fp = m_sky_material->getTechnique(0)->getPass(0)->getFragmentProgramParameters();
-            fp->setIgnoreMissingParams(true);
-            fp->setNamedConstant("skyLut", 1);
-        }
+        pass->getTextureUnitState("Noise2D")->setTexture(TextureManager::getSingleton().getByName("RoR/Atmosphere/Noise2D", RGN_DEFAULT));
+        this->SelectSkyProgram(App::gfx_cloud_coverage->getFloat() > 0.f);
     }
     App::GetGfxScene()->GetSceneManager()->setSkyBox(true, "RoR/Atmosphere/Sky", 5000.f, /*drawFirst=*/true,
         Quaternion::IDENTITY, RGN_DEFAULT);
@@ -225,16 +239,61 @@ GfxAtmosphere::~GfxAtmosphere()
     }
 }
 
-void GfxAtmosphere::EnsureDummyCube()
+void GfxAtmosphere::SelectSkyProgram(bool clouds)
 {
-    // A placeholder may exist (referenced by the sky material script), replace it.
-    TexturePtr existing = TextureManager::getSingleton().getByName("RoR/Atmosphere/DummyCube", RGN_DEFAULT);
-    if (existing && !existing->isManuallyLoaded())
+    Pass* pass = m_sky_material->getTechnique(0)->getPass(0);
+    pass->setFragmentProgram(clouds ? "RoR/Atmosphere/Sky2D_FP" : "RoR/Atmosphere/Sky_FP");
+    m_sky_clouds = clouds;
+    m_sky_material->load();
+    if (m_sky_material->getNumSupportedTechniques() == 0)
     {
-        TextureManager::getSingleton().remove(existing);
-        existing.reset();
+        LOG(fmt::format("[RoR|Atmosphere] ERROR: sky material unsupported: {}", m_sky_material->getUnsupportedTechniquesExplanation()));
+        return;
     }
-    if (!existing)
+    // Sampler units for render systems without shader-side bindings (legacy GL); new program = new parameters
+    GpuProgramParametersSharedPtr fp = pass->getFragmentProgramParameters();
+    fp->setIgnoreMissingParams(true);
+    fp->setNamedConstant("skyLut", 1);
+    fp->setNamedConstant("noise2D", 2);
+}
+
+void GfxAtmosphere::EnsureTextures()
+{
+    // Placeholders may exist (referenced by the sky material script), replace them.
+    for (const char* name: { "RoR/Atmosphere/DummyCube", "RoR/Atmosphere/Noise2D" })
+    {
+        TexturePtr existing = TextureManager::getSingleton().getByName(name, RGN_DEFAULT);
+        if (existing && !existing->isManuallyLoaded())
+            TextureManager::getSingleton().remove(existing);
+    }
+
+    if (!TextureManager::getSingleton().getByName("RoR/Atmosphere/Noise2D", RGN_DEFAULT))
+    {
+        // Cloud shapes: 5 octaves of tileable value noise
+        const int N = 256;
+        std::vector<uint8_t> data(N * N);
+        for (int y = 0; y < N; y++)
+        {
+            for (int x = 0; x < N; x++)
+            {
+                float v = 0.f, amp = 0.5f, total = 0.f;
+                int freq = 8;
+                for (int o = 0; o < 5; o++)
+                {
+                    v += amp * TileNoise2D(x * freq / (float)N, y * freq / (float)N, freq);
+                    total += amp;
+                    amp *= 0.5f;
+                    freq *= 2;
+                }
+                data[y * N + x] = (uint8_t)Math::Clamp(v / total * 255.f, 0.f, 255.f);
+            }
+        }
+        TexturePtr tex = TextureManager::getSingleton().createManual("RoR/Atmosphere/Noise2D", RGN_DEFAULT,
+            TEX_TYPE_2D, N, N, MIP_UNLIMITED, PF_L8, TU_STATIC_WRITE_ONLY | TU_AUTOMIPMAP);
+        tex->getBuffer()->blitFromMemory(PixelBox(N, N, 1, PF_L8, data.data()));
+    }
+
+    if (!TextureManager::getSingleton().getByName("RoR/Atmosphere/DummyCube", RGN_DEFAULT))
     {
         TexturePtr tex = TextureManager::getSingleton().createManual("RoR/Atmosphere/DummyCube", RGN_DEFAULT,
             TEX_TYPE_CUBE_MAP, 1, 1, 0, PF_BYTE_RGBA, TU_STATIC_WRITE_ONLY);
@@ -472,6 +531,12 @@ void GfxAtmosphere::UpdateSkyMaterial()
     if (!m_sky_material)
         return;
 
+    const float coverage = Math::Clamp(App::gfx_cloud_coverage->getFloat(), 0.f, 1.f);
+    if ((coverage > 0.f) != m_sky_clouds)
+    {
+        this->SelectSkyProgram(coverage > 0.f);
+    }
+
     const Vector3 cam_pos = App::GetCameraManager()->GetCamera()->getDerivedPosition();
     GpuProgramParametersSharedPtr fp = m_sky_material->getTechnique(0)->getPass(0)->getFragmentProgramParameters();
     fp->setIgnoreMissingParams(true);
@@ -479,13 +544,16 @@ void GfxAtmosphere::UpdateSkyMaterial()
     fp->setNamedConstant("atmoMoonDir", Vector4(m_moon_dir.x, m_moon_dir.y, m_moon_dir.z, 0.15f * m_night));
     fp->setNamedConstant("atmoSunColour", m_sun_colour);
     fp->setNamedConstant("atmoAmbient", Vector4(m_ambient.r, m_ambient.g, m_ambient.b, m_night));
-    fp->setNamedConstant("atmoCloudParams", Vector4::ZERO); // No clouds yet (ROADMAP M6.6)
+    fp->setNamedConstant("atmoCloudParams", Vector4(coverage, 1.f, m_wind_offset, m_elapsed));
     fp->setNamedConstant("atmoCameraPos", Vector4(cam_pos.x, cam_pos.y, cam_pos.z, m_lut_altitude));
     fp->setNamedConstant("atmoFogColour", Vector4(m_fog_colour.r, m_fog_colour.g, m_fog_colour.b, 1.f));
 }
 
 void GfxAtmosphere::Update(float dt_sec)
 {
+    m_elapsed += dt_sec;
+    m_wind_offset = std::fmod(m_wind_offset + dt_sec * CLOUD_WIND_SPEED, 24000.f * 100.f); // Noise tiles every 24 km
+
     // Time of day lives in `gfx_sky_time` (top menubar, keys, console, savegame and scripts all set it)
     float time = App::gfx_sky_time->getFloat();
     if (App::gfx_sky_time_cycle->getBool())

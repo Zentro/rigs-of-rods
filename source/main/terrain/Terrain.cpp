@@ -157,6 +157,8 @@ bool RoR::Terrain::initialize()
             App::gfx_sky_latitude->setVal(terrain_sky.latitude);
         if (terrain_sky.has_day)
             App::gfx_sky_day_of_year->setVal(terrain_sky.day_of_year);
+        if (terrain_sky.cloud_coverage >= 0.f)
+            App::gfx_cloud_coverage->setVal(terrain_sky.cloud_coverage);
         m_atmosphere = std::unique_ptr<GfxAtmosphere>(new GfxAtmosphere(m_main_light, terrain_sky));
     }
 

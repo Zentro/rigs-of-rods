@@ -653,6 +653,7 @@ void TopMenubar::Draw(float dt)
                 }
                 DrawGFloatSlider(App::gfx_sky_latitude, _LC("TopMenubar", "Latitude"), -80.f, 80.f);
                 DrawGIntSlider(App::gfx_sky_day_of_year, _LC("TopMenubar", "Day of year"), 1, 365);
+                DrawGFloatSlider(App::gfx_cloud_coverage, _LC("TopMenubar", "Clouds"), 0.f, 1.f);
             }
 
             // WATER SETTINGS

@@ -376,6 +376,7 @@ enum class GfxTonemap
     NONE,   //!< Clamp only
     ACES,   //!< ACES fitted (Hill)
     AGX,    //!< AgX (Sobotka)
+    PBR_NEUTRAL, //!< Khronos PBR Neutral: colours faithful up to ~0.76, only highlights rolled off (white stays white)
 };
 std::string ToLocalizedString(GfxTonemap e);
 
@@ -823,6 +824,7 @@ extern CVar* gfx_sky_time_cycle;    //!< Atmosphere: time of day runs
 extern CVar* gfx_sky_time_speed;    //!< Atmosphere: game seconds per real second while cycling (Caelum's time scale)
 extern CVar* gfx_sky_latitude;      //!< Atmosphere: degrees, + = north
 extern CVar* gfx_sky_day_of_year;   //!< Atmosphere: 1-365, sun height through the year
+extern CVar* gfx_cloud_coverage;    //!< Atmosphere: 0 = clear sky (no cloud layer) .. 1 = overcast
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
 extern CVar* gfx_lod_range;

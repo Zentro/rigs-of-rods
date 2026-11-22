@@ -43,6 +43,7 @@ struct TerrainSkyDefaults
     float latitude = 45.f;
     bool  has_day = false;
     int   day_of_year = 172;
+    float cloud_coverage = -1.f; //!< Densest Caelum cloud layer, 0-1; -1 = not specified
     float longitude = 0.f;      //!< Degrees east; converts Caelum's Julian days (UT) to local solar time
     Ogre::ColourValue min_ambient = Ogre::ColourValue::Black; //!< Night ambient floor (legacy light units, sRGB)
 
@@ -73,7 +74,8 @@ public:
     static bool IsWanted();
 
 private:
-    static void EnsureDummyCube();
+    static void EnsureTextures(); //!< Dummy cube map (OGRE sky box requirement), cloud noise
+    void SelectSkyProgram(bool clouds);
     void CreateSkyViewLut();
     void RenderSkyViewLut();
     void UpdateAstronomy();
@@ -98,6 +100,9 @@ private:
     float              m_night = 0.f;
     float              m_light_level = 1.f;
     float              m_auto_exposure = 1.f;
+    bool               m_sky_clouds = false;     //!< Sky program with the cloud layer active
+    float              m_wind_offset = 0.f;      //!< Cloud drift, m
+    float              m_elapsed = 0.f;          //!< Simulation time, s
     TerrainSkyDefaults m_terrain_sky;
     Ogre::TexturePtr   m_lut_texture;
     Ogre::SceneManager* m_lut_scene = nullptr;   //!< Private scene with a fullscreen rectangle, renders the LUT

@@ -599,6 +599,7 @@ void GameSettings::SetVisible(bool v)
         ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::NONE));
         ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::ACES));
         ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::AGX));
+        ImAddItemToComboboxString(m_combo_items_tonemap, ToLocalizedString(GfxTonemap::PBR_NEUTRAL));
         ImTerminateComboboxString(m_combo_items_tonemap);
     }
 
