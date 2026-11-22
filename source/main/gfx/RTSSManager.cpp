@@ -22,6 +22,7 @@
 
 #include "Actor.h"
 #include "CameraManager.h"
+#include "GfxPbrMaps.h"
 #include "GfxScene.h"
 #include "RTSSNiceMetal.h"
 #include "RTSSPaged.h"
@@ -377,7 +378,8 @@ bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short
     return true;
 }
 
-static const float PBR_DEFAULT_ROUGHNESS = 0.7f; //!< Until materials get their own values (ROADMAP M4.3, M4.4)
+static const float PBR_DEFAULT_ROUGHNESS = 0.7f; //!< Until materials get their own values (ROADMAP M4.4)
+static const float PBR_GLOSSY_ROUGHNESS = 0.2f;  //!< Where a legacy specular map is white (full reflection)
 
 void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transparent, bool is_flexbody)
 {
@@ -436,7 +438,19 @@ void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transpare
     if (pbr)
     {
         // Same execution order as the fixed-function lighting stage, so it replaces it
-        render_state->addTemplateSubRenderState(shadergen.createSubRenderState(RTShader::SRS_COOK_TORRANCE_LIGHTING));
+        RTShader::SubRenderState* lighting = shadergen.createSubRenderState(RTShader::SRS_COOK_TORRANCE_LIGHTING);
+
+        // Legacy specular map (a reflectivity mask) -> per-texel roughness, baked once per map (M4.3)
+        if (TextureUnitState* spec_tus = pass->getTextureUnitState("Specular_Map"))
+        {
+            TexturePtr spec_tex = spec_tus->_getTexturePtr();
+            const std::string mr_name = GfxPbrMaps::BakeSpecularMap(spec_tex, PBR_DEFAULT_ROUGHNESS, PBR_GLOSSY_ROUGHNESS);
+            if (!mr_name.empty())
+            {
+                lighting->setParameter("texture", mr_name);
+            }
+        }
+        render_state->addTemplateSubRenderState(lighting);
     }
 
     shadergen.invalidateMaterial(MSN_SHADERGEN, *mat);

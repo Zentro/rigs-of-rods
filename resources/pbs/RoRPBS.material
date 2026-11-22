@@ -1,0 +1,27 @@
+// RoR PBR helper materials (see GfxPbrMaps.cpp).
+
+// Renders a legacy specular map into a metal/roughness texture (fullscreen quad, private scene)
+material RoR/PBS/SpecToMR
+{
+    technique
+    {
+        pass
+        {
+            depth_check off
+            depth_write off
+            cull_hardware none
+            lighting off
+            vertex_program_ref RoR/Pipeline/Quad_VP
+            {
+            }
+            fragment_program_ref RoR/PBS/SpecToMR_FP
+            {
+            }
+            texture_unit SpecMap
+            {
+                tex_address_mode wrap
+                filtering bilinear
+            }
+        }
+    }
+}
