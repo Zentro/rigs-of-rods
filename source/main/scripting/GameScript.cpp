@@ -45,6 +45,7 @@
 #include "CurlHelpers.h"
 #include "Engine.h"
 #include "GameContext.h"
+#include "GfxAtmosphere.h"
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "GUI_TopMenubar.h"
@@ -156,23 +157,24 @@ Radian GameScript::getPersonRotation()
     return result;
 }
 
-// TODO: Remove the 3 Caelum functions below (and their bindings in GameScriptAngelscript.cpp and the
-//       docs in doc/angelscript) once scripts had time to move on, or forward them to the new sky.
-//       Caelum was removed; they're stubs so existing terrain/vehicle scripts still compile.
+// Caelum was removed; the 3 Caelum functions below forward to the atmosphere (HDR pipeline) so scripts keep working.
 
 String GameScript::getCaelumTime()
 {
-    return ""; // Stub: no time of day without Caelum.
+    if (!this->getCaelumAvailable())
+        return "";
+    return GfxAtmosphere::GetPrettyTime(App::gfx_sky_time->getFloat());
 }
 
 void GameScript::setCaelumTime(float value)
 {
-    // Stub: no time of day without Caelum.
+    App::gfx_sky_time_speed->setVal(static_cast<int>(value));
+    App::gfx_sky_time_cycle->setVal(value != 0.f);
 }
 
 bool GameScript::getCaelumAvailable()
 {
-    return false; // Stub: Caelum was removed.
+    return App::GetGameContext()->GetTerrain() && App::GetGameContext()->GetTerrain()->getAtmosphere();
 }
 
 void GameScript::stopTimer()

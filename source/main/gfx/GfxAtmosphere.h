@@ -43,9 +43,10 @@ public:
     GfxAtmosphere(Ogre::Light* main_light);
     ~GfxAtmosphere();
 
-    void Update(float dt_sec);
+    void Update(float dt_sec); //!< `dt_sec` advances the time of day while `gfx_sky_time_cycle` is on (0 when paused)
 
     float GetTimeOfDay() const { return m_time_of_day; } //!< Local solar time, hours [0-24)
+    static std::string GetPrettyTime(float hours);         //!< "HH:MM:SS"
     Ogre::Vector3 GetSunDirection() const { return m_sun_dir; } //!< Towards the sun
 
     /// The atmosphere is the sky of the HDR pipeline; the terrain's sky box (SDR content) stays with the legacy pipeline.

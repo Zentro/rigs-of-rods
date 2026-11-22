@@ -106,9 +106,7 @@ enum events
     EV_BOAT_THROTTLE_AXIS,       //!< throttle axis. Only use this if you have fitting hardware :) (i.e. a Slider)
     EV_BOAT_THROTTLE_DOWN,       //!< decrease throttle
     EV_BOAT_THROTTLE_UP,         //!< increase throttle
-    // TODO: The 4 EV_SKY_* events do nothing since Caelum and SkyX were removed. Kept so key maps and scripts
-    //       (they're registered in InputEngineAngelscript.cpp) keep working. Hook them up to the new sky's
-    //       time of day, or remove them (here, InputEngine.cpp, the script binding and the docs) if it has none.
+    // EV_SKY_*: time of day of the atmosphere (HDR pipeline); no effect with the legacy pipeline's sky box.
     EV_SKY_DECREASE_TIME,        //!< decrease day-time
     EV_SKY_DECREASE_TIME_FAST,   //!< decrease day-time a lot faster
     EV_SKY_INCREASE_TIME,        //!< increase day-time

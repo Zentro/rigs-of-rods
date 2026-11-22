@@ -172,6 +172,7 @@ public:
     void                TeleportPlayer(float x, float z);
     void                UpdateGlobalInputEvents();
     void                UpdateSimInputEvents(float dt);
+    void                UpdateSkyInputEvents(float dt); //!< Time of day keys (atmosphere, HDR pipeline)
     void                UpdateCommonInputEvents(float dt, ActorPtr actor);
     void                UpdateAirplaneInputEvents(float dt, ActorPtr airplane);
     void                UpdateBoatInputEvents(float dt, ActorPtr boat);

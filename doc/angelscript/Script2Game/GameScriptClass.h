@@ -387,17 +387,17 @@ public:
 	TerrainClass@ getTerrain();
     
 	/**
-	 * @deprecated Caelum was removed; always returns false. Will be removed.
+	 * Whether the sky has a time of day (Caelum was replaced by the atmosphere, which runs with the HDR pipeline).
 	 */
 	bool getCaelumAvailable();
     
 	/**
-	 * @deprecated Caelum was removed; always returns an empty string. Will be removed.
+	 * Time of day as "HH:MM:SS", or an empty string if the sky has no time of day.
 	 */
 	string getCaelumTime();
 	
 	/**
-	 * @deprecated Caelum was removed; does nothing. Will be removed.
+	 * Speed of the time of day: game seconds per real second (1 = real time, 0 = stopped).
 	 */
 	void setCaelumTime(float value);
     

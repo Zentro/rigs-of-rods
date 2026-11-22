@@ -46,10 +46,7 @@ static const float GROUND_ALBEDO = 0.25f;
 static const float SUN_E = Math::PI;
 static const float SUN_DISC_RADIANCE = 40.f; // Capped (real ~46000) - still bright enough to clip under tonemapping
 
-// Until time of day / location settings exist (ROADMAP M6.3, M6.4)
-static const float LATITUDE = 45.f;
-static const int DAY_OF_YEAR = 172;
-
+static float WrapHours(float h) { return std::fmod(std::fmod(h, 24.f) + 24.f, 24.f); }
 static const int LUT_WIDTH = 256;
 static const int LUT_HEIGHT = 128;
 
@@ -93,7 +90,7 @@ bool GfxAtmosphere::IsWanted()
 GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light)
     : m_main_light(main_light)
 {
-    m_time_of_day = Math::Clamp(App::gfx_sky_time->getFloat(), 0.f, 24.f);
+    m_time_of_day = WrapHours(App::gfx_sky_time->getFloat());
 
     GfxAtmosphere::EnsureDummyCube();
     this->CreateSkyViewLut();
@@ -208,12 +205,18 @@ void GfxAtmosphere::RenderSkyViewLut()
     m_lut_texture->getBuffer()->getRenderTarget()->update();
 }
 
+std::string GfxAtmosphere::GetPrettyTime(float hours)
+{
+    const int seconds = static_cast<int>(WrapHours(hours) * 3600.f);
+    return fmt::format("{:02d}:{:02d}:{:02d}", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+}
+
 void GfxAtmosphere::UpdateAstronomy()
 {
     // Simple solar position: declination by day of year, hour angle by local solar time.
     // World: +Y up, north = -Z, east = +X.
-    const float lat = Degree(LATITUDE).valueRadians();
-    const float day = static_cast<float>(DAY_OF_YEAR);
+    const float lat = Degree(Math::Clamp(App::gfx_sky_latitude->getFloat(), -89.f, 89.f)).valueRadians();
+    const float day = static_cast<float>(Math::Clamp(App::gfx_sky_day_of_year->getInt(), 1, 365));
     const float decl = Degree(23.44f).valueRadians() * std::sin(2.f * Math::PI * (284.f + day) / 365.f);
 
     auto body_dir = [lat](float decl, float hour_angle) -> Vector3
@@ -338,7 +341,6 @@ void GfxAtmosphere::UpdateLighting()
         m_main_light->setSpecularColour(colour);
         m_main_light->getParentSceneNode()->setDirection(-dir, Node::TS_WORLD);
     }
-    App::GetGfxScene()->GetSceneManager()->setAmbientLight(m_ambient);
 
     // Haze: colour of the sky at the horizon (1 deg - what is seen behind distant hills), averaged around it, so
     // distant terrain fades into the sky. Long near-horizontal path: 16 steps.
@@ -386,9 +388,16 @@ void GfxAtmosphere::UpdateSkyMaterial()
 
 void GfxAtmosphere::Update(float dt_sec)
 {
-    if (std::abs(App::gfx_sky_time->getFloat() - m_time_of_day) > 1e-4f)
+    // Time of day lives in `gfx_sky_time` (top menubar, keys, console, savegame and scripts all set it)
+    float time = App::gfx_sky_time->getFloat();
+    if (App::gfx_sky_time_cycle->getBool())
     {
-        m_time_of_day = std::fmod(std::fmod(App::gfx_sky_time->getFloat(), 24.f) + 24.f, 24.f); // Changed from console
+        time += dt_sec * App::gfx_sky_time_speed->getInt() / 3600.f; // Speed: game seconds per real second
+    }
+    m_time_of_day = WrapHours(time);
+    if (m_time_of_day != App::gfx_sky_time->getFloat())
+    {
+        App::gfx_sky_time->setVal(m_time_of_day);
     }
 
     this->UpdateAstronomy();
@@ -404,6 +413,8 @@ void GfxAtmosphere::Update(float dt_sec)
         this->RenderSkyViewLut();
     }
 
+    // Every frame: the sim start sets its own ambient light after the atmosphere was created (main.cpp)
+    App::GetGfxScene()->GetSceneManager()->setAmbientLight(m_ambient);
     this->UpdateFog(); // Every frame: follows the sight range setting
     this->UpdateSkyMaterial();
 }

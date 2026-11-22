@@ -279,7 +279,16 @@ bool ActorManager::LoadScene(Ogre::String save_filename)
 
     App::GetGameContext()->GetActorManager()->SetSimulationPaused(j_doc["physics_paused"].GetBool());
 
-    // TODO: restore time of day from "daytime" (written by Caelum, which was removed) once the new sky has one.
+    // Time of day: "daytime_24hr" (hours), or "daytime" from older savegames (Caelum's Julian day, its fraction is UT)
+    if (j_doc.HasMember("daytime_24hr") && j_doc["daytime_24hr"].IsNumber())
+    {
+        App::gfx_sky_time->setVal(j_doc["daytime_24hr"].GetFloat());
+    }
+    else if (j_doc.HasMember("daytime") && j_doc["daytime"].IsNumber())
+    {
+        const double julian_day = j_doc["daytime"].GetDouble();
+        App::gfx_sky_time->setVal(static_cast<float>(std::fmod(julian_day + 0.5, 1.0) * 24.0));
+    }
 
     // Character
     auto data = j_doc["player_position"].GetArray();
@@ -434,7 +443,8 @@ bool ActorManager::SaveScene(Ogre::String filename)
     // Terrain
     j_doc.AddMember("terrain_name", rapidjson::StringRef(App::sim_terrain_name->getStr().c_str()), j_doc.GetAllocator());
 
-    // TODO: save the time of day as "daytime" (as Caelum did, before it was removed) once the new sky has one.
+    // Time of day (always saved: the savegame may be loaded with the HDR pipeline)
+    j_doc.AddMember("daytime_24hr", App::gfx_sky_time->getFloat(), j_doc.GetAllocator());
 
     j_doc.AddMember("forced_awake", m_forced_awake, j_doc.GetAllocator());
 

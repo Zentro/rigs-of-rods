@@ -195,7 +195,11 @@ void Console::cVarSetupBuiltins()
     App::gfx_render_pipeline     = this->cVarCreate("gfx_render_pipeline",     "Render pipeline",            CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxRenderPipeline::LEGACY - PBR becomes the default with ROADMAP M3.5*/);
     App::gfx_tonemap             = this->cVarCreate("gfx_tonemap",             "Tonemapping",                CVAR_ARCHIVE | CVAR_TYPE_INT,     "0"/*(int)GfxTonemap::NONE - AgX/ACES need real HDR light (sky M6, materials M4); with today's LDR skybox they look flat*/);
     App::gfx_exposure            = this->cVarCreate("gfx_exposure",            "Exposure",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0"); // 1.6 was tuned for gfx-rtss' atmosphere; 1.0 matches legacy brightness (clamp) - ROADMAP M3.5
-    App::gfx_sky_time            = this->cVarCreate("gfx_sky_time",            "",                           CVAR_TYPE_FLOAT,                  "14.0"); // Session state, not saved
+    App::gfx_sky_time            = this->cVarCreate("gfx_sky_time",            "",                           CVAR_TYPE_FLOAT,                  "14.0"); // Session state, not saved (savegames keep it)
+    App::gfx_sky_time_cycle      = this->cVarCreate("gfx_sky_time_cycle",      "",                           CVAR_TYPE_BOOL,                   "false");
+    App::gfx_sky_time_speed      = this->cVarCreate("gfx_sky_time_speed",      "",                           CVAR_TYPE_INT,                    "300");
+    App::gfx_sky_latitude        = this->cVarCreate("gfx_sky_latitude",        "",                           CVAR_TYPE_FLOAT,                  "45.0"); // Session; terrains may set their own (ROADMAP M6.4)
+    App::gfx_sky_day_of_year     = this->cVarCreate("gfx_sky_day_of_year",     "",                           CVAR_TYPE_INT,                    "172");
     App::gfx_skidmarks_mode      = this->cVarCreate("gfx_skidmarks_mode",      "Skidmarks",                  CVAR_ARCHIVE | CVAR_TYPE_INT,     "0");
     App::gfx_static_objects      = this->cVarCreate("gfx_static_objects",      "StaticTerrainObjects",       CVAR_ARCHIVE | CVAR_TYPE_BOOL,    "true");
     App::gfx_lod_range           = this->cVarCreate("gfx_lod_range",           "LodRange",                   CVAR_ARCHIVE | CVAR_TYPE_FLOAT,   "1.0");

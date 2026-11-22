@@ -303,21 +303,13 @@ public:
      */
     int getLoadedTerrain(Ogre::String& result);
 
-    /// @deprecated Caelum was removed - always returns false. TODO: remove.
+    /// Whether the sky has a time of day (Caelum was replaced by the atmosphere, which runs with the HDR pipeline).
     bool getCaelumAvailable();
 
-    /**
-     * gets the time of the day in seconds
-     * @return string with HH::MM::SS format
-     */
-    /// @deprecated Caelum was removed - always returns "". TODO: remove.
+    /// Time of day as "HH:MM:SS", or "" if the sky has no time of day.
     Ogre::String getCaelumTime();
 
-    /**
-     * sets the time of the day in seconds
-     * @param value day time in seconds
-     */
-    /// @deprecated Caelum was removed - does nothing. TODO: remove.
+    /// Speed of the time of day: game seconds per real second (1 = real time, 0 = stopped), as Caelum's time scale.
     void setCaelumTime(float value);
 
     /**

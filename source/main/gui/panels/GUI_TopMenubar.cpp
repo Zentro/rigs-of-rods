@@ -32,6 +32,7 @@
 #include "DashBoardManager.h"
 #include "FlexBody.h"
 #include "GameContext.h"
+#include "GfxAtmosphere.h"
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "GUIUtils.h"
@@ -633,6 +634,25 @@ void TopMenubar::Draw(float dt)
                 {
                     DrawGCheckbox(App::gfx_fixed_cam_tracking, _LC("TopMenubar", "Tracking"));
                 }
+            }
+
+            // TIME OF DAY (atmosphere, HDR pipeline)
+            if (App::GetGameContext()->GetTerrain()->getAtmosphere())
+            {
+                ImGui::Separator();
+                ImGui::TextColored(GRAY_HINT_TEXT, "%s", _LC("TopMenubar", "Time of day:"));
+                float time = App::gfx_sky_time->getFloat();
+                if (ImGui::SliderFloat(_LC("TopMenubar", "Time"), &time, 0.f, 24.f, GfxAtmosphere::GetPrettyTime(time).c_str()))
+                {
+                    App::gfx_sky_time->setVal(time);
+                }
+                DrawGCheckbox(App::gfx_sky_time_cycle, _LC("TopMenubar", "Cycle"));
+                if (App::gfx_sky_time_cycle->getBool())
+                {
+                    DrawGIntSlider(App::gfx_sky_time_speed, _LC("TopMenubar", "Speed"), 1, 3600);
+                }
+                DrawGFloatSlider(App::gfx_sky_latitude, _LC("TopMenubar", "Latitude"), -80.f, 80.f);
+                DrawGIntSlider(App::gfx_sky_day_of_year, _LC("TopMenubar", "Day of year"), 1, 365);
             }
 
             // WATER SETTINGS

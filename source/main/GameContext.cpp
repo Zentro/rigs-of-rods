@@ -29,6 +29,7 @@
 #include "Console.h"
 #include "DashBoardManager.h"
 #include "Engine.h"
+#include "GfxAtmosphere.h"
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "GUI_FrictionSettings.h"
@@ -1260,6 +1261,26 @@ void GameContext::UpdateSimInputEvents(float dt)
     {
         prev_pos = Ogre::Vector3::ZERO;
     }
+}
+
+void GameContext::UpdateSkyInputEvents(float dt)
+{
+    if (!m_terrain || !m_terrain->getAtmosphere())
+        return;
+
+    // Same rates as with Caelum: game time runs 1000x / 10000x faster while held
+    float time_scale = 0.f;
+    if (App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME))           time_scale = 1000.f;
+    else if (App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME_FAST)) time_scale = 10000.f;
+    else if (App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME))      time_scale = -1000.f;
+    else if (App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME_FAST)) time_scale = -10000.f;
+    if (time_scale == 0.f)
+        return;
+
+    const float time = App::gfx_sky_time->getFloat() + dt * time_scale / 3600.f;
+    App::gfx_sky_time->setVal(std::fmod(std::fmod(time, 24.f) + 24.f, 24.f));
+    Str<200> msg; msg << _L("Time set to ") << GfxAtmosphere::GetPrettyTime(App::gfx_sky_time->getFloat());
+    App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE, msg.ToCStr());
 }
 
 void GameContext::UpdateCommonInputEvents(float dt, ActorPtr actor)

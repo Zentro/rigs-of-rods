@@ -2158,9 +2158,11 @@ int main(int argc, char *argv[])
                         if (App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE)
                         {
                             App::GetGameContext()->GetTerrain()->GetTerrainEditor()->UpdateInputEvents(dt);
+                            App::GetGameContext()->UpdateSkyInputEvents(dt);
                         }
                         else
                         {
+                            App::GetGameContext()->UpdateSkyInputEvents(dt);
                             App::GetGameContext()->GetCharacterFactory()->Update(dt); // Character MUST be updated before CameraManager, otherwise camera position is always 1 frame behind the character position, causing stuttering.
                         }
                         App::GetCameraManager()->UpdateInputEvents(dt);
