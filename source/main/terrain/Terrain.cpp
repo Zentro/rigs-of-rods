@@ -26,6 +26,7 @@
 #include "CacheSystem.h"
 #include "Collisions.h"
 #include "ContentManager.h"
+#include "GfxAtmosphere.h"
 #include "GfxScene.h"
 #include "GUIManager.h"
 #include "GUI_LoadingWindow.h"
@@ -77,6 +78,8 @@ void RoR::Terrain::dispose()
     }
 
     //I think that the order is important
+
+    m_atmosphere.reset(); // Before the main light it drives
 
     if (m_main_light != nullptr)
     {
@@ -142,6 +145,12 @@ bool RoR::Terrain::initialize()
 
     loading_window->SetProgress(27, _L("Initializing Light Subsystem"));
     this->initLight();
+
+    // Physically based sky: drives the main light, so it comes after it (HDR pipeline only, see GfxAtmosphere)
+    if (GfxAtmosphere::IsWanted())
+    {
+        m_atmosphere = std::unique_ptr<GfxAtmosphere>(new GfxAtmosphere(m_main_light));
+    }
 
     // After the light: the loading screen renders the scene between steps, and shadow-receiving materials drawn
     // with shadows enabled but no shadow-casting light make OGRE use stale shadow camera pointers (crash).
@@ -220,6 +229,10 @@ void RoR::Terrain::initSkySubSystem()
         sky_mat->setReceiveShadows(false);
         RTSSManager::RefreshMaterial(*sky_mat); // If RTSS already shaded it
     }
+
+    // HDR pipeline: the atmosphere (created after the light) is the sky. Sky boxes are SDR content.
+    if (GfxAtmosphere::IsWanted())
+        return;
 
     // Static skybox. (Caelum and SkyX were removed; the terrn2 keys `CaelumConfigFile`,
     // `CaelumFogStart/End` and `SkyXConfigFile` are still parsed but unused.)

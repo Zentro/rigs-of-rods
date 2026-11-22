@@ -1,0 +1,53 @@
+// RoR atmosphere materials (see GfxAtmosphere.cpp)
+
+material RoR/Atmosphere/SkyLut
+{
+    technique
+    {
+        pass
+        {
+            depth_check off
+            depth_write off
+            cull_hardware none
+            lighting off
+            vertex_program_ref RoR/Pipeline/Quad_VP
+            {
+            }
+            fragment_program_ref RoR/Atmosphere/SkyLut_FP
+            {
+            }
+        }
+    }
+}
+
+// Sky dome (OGRE sky box). Clouds (and their noise textures) come with ROADMAP M6.6.
+material RoR/Atmosphere/Sky
+{
+    technique
+    {
+        pass
+        {
+            depth_write off
+            cull_hardware none
+            lighting off
+            fog_override true
+            vertex_program_ref RoR/Atmosphere/Sky_VP
+            {
+            }
+            fragment_program_ref RoR/Atmosphere/Sky_FP
+            {
+            }
+            // OGRE requires unit 0 of a sky box material to be a cube map; never sampled.
+            texture_unit DummyCube
+            {
+                texture RoR/Atmosphere/DummyCube cubic
+            }
+            texture_unit SkyLut
+            {
+                texture RoR/Atmosphere/SkyViewLut
+                tex_address_mode wrap clamp
+                filtering bilinear
+            }
+        }
+    }
+}

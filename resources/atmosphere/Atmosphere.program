@@ -1,0 +1,21 @@
+// RoR atmosphere programs (see GfxAtmosphere.cpp)
+
+fragment_program RoR/Atmosphere/SkyLut_FP glsl glsles hlsl
+{
+    source SkyLut_fs.glsl
+}
+
+vertex_program RoR/Atmosphere/Sky_VP glsl glsles hlsl
+{
+    source Sky_vs.glsl
+    default_params
+    {
+        param_named_auto worldViewProj worldviewproj_matrix
+    }
+}
+
+// Sampler units are set by GfxAtmosphere: on GL3+ the shader binds them itself and these parameters don't exist.
+fragment_program RoR/Atmosphere/Sky_FP glsl glsles hlsl
+{
+    source Sky_fs.glsl
+}

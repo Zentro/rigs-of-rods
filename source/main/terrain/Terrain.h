@@ -88,6 +88,7 @@ public:
     /// @name Visuals
     /// @{
     Ogre::Light*            getMainLight()                { return m_main_light; }
+    GfxAtmosphere*          getAtmosphere()               { return m_atmosphere.get(); } //!< Null unless the sky mode is Atmosphere
     float                   getPagedDetailFactor() const  { return m_paged_detail_factor; }
     /// @}
 
@@ -145,6 +146,7 @@ private:
     // Gameplay
 
     Ogre::Light*            m_main_light = nullptr;
+    std::unique_ptr<GfxAtmosphere> m_atmosphere;
     float                   m_cur_gravity = DEFAULT_GRAVITY;
     bool                    m_disposed = false;
 };

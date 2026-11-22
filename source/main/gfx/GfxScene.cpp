@@ -28,6 +28,7 @@
 #include "Console.h"
 #include "DustPool.h"
 #include "GameContext.h"
+#include "GfxAtmosphere.h"
 #include "IGfxWater.h"
 #include "GUIManager.h"
 #include "GUIUtils.h"
@@ -136,6 +137,12 @@ void GfxScene::UpdateScene(float dt)
             itor.second->AdjustDustPoolSpeedFactor();
             itor.second->update();
         }
+    }
+
+    // Sky and sun - before the reflections, so they show the current sky
+    if (GfxAtmosphere* atmosphere = App::GetGameContext()->GetTerrain()->getAtmosphere())
+    {
+        atmosphere->Update(dt);
     }
 
     // Realtime reflections on player vehicle

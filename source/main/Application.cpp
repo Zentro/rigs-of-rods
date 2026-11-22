@@ -255,6 +255,7 @@ CVar* gfx_shadow_quality;
 CVar* gfx_shadow_distance;
 CVar* gfx_render_pipeline;
 CVar* gfx_tonemap;
+CVar* gfx_sky_time;
 CVar* gfx_exposure;
 CVar* gfx_skidmarks_mode;
 CVar* gfx_sight_range;

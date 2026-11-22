@@ -139,6 +139,7 @@ namespace RoR
     struct GenericDocContext;
     struct GfxCharacter;
     class  GfxEnvmap;
+    class  GfxAtmosphere;
     class  GfxScene;
     class  GUIManager;
     struct GuiManagerImpl;

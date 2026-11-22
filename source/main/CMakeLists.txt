@@ -31,6 +31,7 @@ set(SOURCE_FILES
         gfx/DustPool.{h,cpp}
         gfx/EnvironmentMap.{h,cpp}
         gfx/GfxActor.{h,cpp}
+        gfx/GfxAtmosphere.{h,cpp}
         gfx/GfxData.{h,cpp}
         gfx/GfxPipeline.{h,cpp}
         gfx/GfxScene.{h,cpp}

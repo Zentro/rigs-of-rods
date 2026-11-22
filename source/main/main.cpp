@@ -188,6 +188,7 @@ int main(int argc, char *argv[])
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");
         App::GetContentManager()->AddResourcePack("pipeline"); // HDR compositor and tonemapping, see GfxPipeline
+        App::GetContentManager()->AddResourcePack("atmosphere"); // Physically based sky, see GfxAtmosphere
         App::GetContentManager()->AddResourcePack("character");
         
         Ogre::ResourceGroupManager::getSingleton().createResourceGroup(RGN_UI_ICONS, /*inGlobalPool:*/ false); // 'inGlobalPool=false' is default for OGRE_RESOURCEMANAGER_STRICT>0

@@ -817,6 +817,7 @@ extern CVar* gfx_shadow_distance;
 extern CVar* gfx_render_pipeline;   //!< GfxRenderPipeline, requires restart
 extern CVar* gfx_tonemap;           //!< GfxTonemap (PBR pipeline)
 extern CVar* gfx_exposure;          //!< Linear exposure multiplier (PBR pipeline)
+extern CVar* gfx_sky_time;          //!< Atmosphere (HDR pipeline): time of day, hours
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
 extern CVar* gfx_lod_range;
