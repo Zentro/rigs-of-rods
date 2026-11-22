@@ -149,7 +149,15 @@ bool RoR::Terrain::initialize()
     // Physically based sky: drives the main light, so it comes after it (HDR pipeline only, see GfxAtmosphere)
     if (GfxAtmosphere::IsWanted())
     {
-        m_atmosphere = std::unique_ptr<GfxAtmosphere>(new GfxAtmosphere(m_main_light));
+        // The terrain's own time, latitude and day (old terrains: their Caelum config). Not specified = keep the current.
+        const TerrainSkyDefaults terrain_sky = TerrainSkyDefaults::LoadCaelumConfig(m_def->caelum_config, this->getTerrainFileResourceGroup());
+        if (terrain_sky.has_time)
+            App::gfx_sky_time->setVal(terrain_sky.time_of_day);
+        if (terrain_sky.has_latitude)
+            App::gfx_sky_latitude->setVal(terrain_sky.latitude);
+        if (terrain_sky.has_day)
+            App::gfx_sky_day_of_year->setVal(terrain_sky.day_of_year);
+        m_atmosphere = std::unique_ptr<GfxAtmosphere>(new GfxAtmosphere(m_main_light, terrain_sky));
     }
 
     // After the light: the loading screen renders the scene between steps, and shadow-receiving materials drawn
@@ -234,8 +242,8 @@ void RoR::Terrain::initSkySubSystem()
     if (GfxAtmosphere::IsWanted())
         return;
 
-    // Static skybox. (Caelum and SkyX were removed; the terrn2 keys `CaelumConfigFile`,
-    // `CaelumFogStart/End` and `SkyXConfigFile` are still parsed but unused.)
+    // Static skybox. (Caelum and SkyX were removed; with the HDR pipeline the atmosphere reads time, latitude and day
+    // from `CaelumConfigFile`. `CaelumFogStart/End` and `SkyXConfigFile` are still parsed but unused.)
     if (!m_def->cubemap_config.empty())
     {
         // use custom

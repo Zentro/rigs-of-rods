@@ -87,8 +87,91 @@ bool GfxAtmosphere::IsWanted()
     return App::GetGfxScene()->GetPipeline().IsActive();
 }
 
-GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light)
+float TerrainSkyDefaults::JulianDayToLocalHours(double julian_day, float longitude)
+{
+    // Julian days start at noon UT; local solar time = UT + longitude / 15
+    return WrapHours(static_cast<float>(std::fmod(julian_day + 0.5, 1.0) * 24.0) + longitude / 15.f);
+}
+
+TerrainSkyDefaults TerrainSkyDefaults::LoadCaelumConfig(std::string const& filename, std::string const& group)
+{
+    TerrainSkyDefaults out;
+    if (filename.empty())
+        return out;
+    DataStreamPtr stream;
+    try
+    {
+        stream = ResourceGroupManager::getSingleton().openResource(filename, group);
+    }
+    catch (Exception&)
+    {
+        LOG(fmt::format("[RoR|Atmosphere] Caelum config '{}' not found", filename));
+        return out;
+    }
+
+    // Only keys directly inside `caelum_sky_system { }` - nested blocks (sun, clouds...) have their own `latitude` etc.
+    double julian_day = -1.0;
+    int depth = 0;
+    bool in_block_comment = false;
+    while (!stream->eof())
+    {
+        std::string line = stream->getLine();
+        std::string clean;
+        for (size_t i = 0; i < line.size(); i++)
+        {
+            if (in_block_comment)
+            {
+                if (line.compare(i, 2, "*/") == 0) { in_block_comment = false; i++; }
+                continue;
+            }
+            if (line.compare(i, 2, "/*") == 0) { in_block_comment = true; i++; continue; }
+            if (line.compare(i, 2, "//") == 0) break;
+            clean += line[i];
+        }
+
+        StringVector tok = StringUtil::tokenise(clean, " \t\r");
+        const int line_depth = depth;
+        for (char ch: clean)
+        {
+            if (ch == '{') depth++;
+            else if (ch == '}') depth--;
+        }
+        if (line_depth != 1 || tok.size() < 2)
+            continue;
+
+        const std::string& key = tok[0];
+        if (key == "julian_day")
+            julian_day = StringConverter::parseReal(tok[1]);
+        else if (key == "longitude")
+            out.longitude = StringConverter::parseReal(tok[1]);
+        else if (key == "latitude")
+        {
+            out.latitude = Math::Clamp(StringConverter::parseReal(tok[1]), -89.f, 89.f);
+            out.has_latitude = true;
+        }
+        else if (key == "minimum_ambient_light" && tok.size() >= 4)
+            out.min_ambient = ColourValue(StringConverter::parseReal(tok[1]), StringConverter::parseReal(tok[2]), StringConverter::parseReal(tok[3]));
+    }
+
+    if (julian_day >= 0.0)
+    {
+        out.time_of_day = JulianDayToLocalHours(julian_day, out.longitude);
+        out.has_time = true;
+        // Small values count days from Caelum's epoch start (its samples use them as "day of year"),
+        // large ones are real Julian dates (J2000 = 2451545.0 = 1 January 2000, noon)
+        const double days = (julian_day > 3000.0) ? std::fmod(julian_day - 2451544.5, 365.25) : julian_day;
+        out.day_of_year = Math::Clamp(static_cast<int>(std::fmod(days + 365.25, 365.25)) + 1, 1, 365);
+        out.has_day = true;
+    }
+    LOG(fmt::format("[RoR|Atmosphere] Caelum config '{}': time {} latitude {} day {} (longitude {:.1f})", filename,
+        out.has_time ? fmt::format("{:.2f} h", out.time_of_day) : "-", out.has_latitude ? fmt::format("{:.1f}", out.latitude) : "-",
+        out.has_day ? std::to_string(out.day_of_year) : "-", out.longitude));
+    return out;
+}
+
+GfxAtmosphere::GfxAtmosphere(Ogre::Light* main_light, TerrainSkyDefaults const& terrain_sky)
     : m_main_light(main_light)
+    , m_terrain_sky(terrain_sky)
 {
     m_time_of_day = WrapHours(App::gfx_sky_time->getFloat());
 
@@ -327,6 +410,9 @@ void GfxAtmosphere::UpdateLighting()
     m_night = Math::Clamp((-sun_elev - 2.f) / 10.f, 0.f, 1.f);
     const ColourValue moon_colour = ColourValue(0.55f, 0.65f, 0.9f) * 0.04f * std::max(m_moon_dir.y, 0.f) * m_night;
     ambient += Vector3(0.006f, 0.008f, 0.014f) * m_night + Vector3(moon_colour.r, moon_colour.g, moon_colour.b) * 0.3f;
+    // Terrain's Caelum `minimum_ambient_light`: a floor, in legacy light units (/PI like the sky ambient)
+    const ColourValue min_ambient = App::GetGfxScene()->GetPipeline().ToLinear(m_terrain_sky.min_ambient) / Math::PI;
+    ambient.makeCeil(Vector3(min_ambient.r, min_ambient.g, min_ambient.b));
     m_ambient = ColourValue(ambient.x, ambient.y, ambient.z);
 
     // Main light follows the sun, or the moon at night

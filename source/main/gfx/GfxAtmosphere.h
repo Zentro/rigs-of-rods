@@ -33,6 +33,23 @@ namespace RoR {
 /// @addtogroup Gfx
 /// @{
 
+/// Sky settings a terrain asks for, read from its Caelum config (`CaelumConfigFile` in .terrn2). OGRE 14 can't load
+/// these scripts anymore (Caelum was removed); only the `caelum_sky_system` values that map onto the atmosphere are used.
+struct TerrainSkyDefaults
+{
+    bool  has_time = false;
+    float time_of_day = 14.f;   //!< Local solar time, hours
+    bool  has_latitude = false;
+    float latitude = 45.f;
+    bool  has_day = false;
+    int   day_of_year = 172;
+    float longitude = 0.f;      //!< Degrees east; converts Caelum's Julian days (UT) to local solar time
+    Ogre::ColourValue min_ambient = Ogre::ColourValue::Black; //!< Night ambient floor (legacy light units, sRGB)
+
+    static TerrainSkyDefaults LoadCaelumConfig(std::string const& filename, std::string const& group);
+    static float JulianDayToLocalHours(double julian_day, float longitude);
+};
+
 /// Owns the sky dome, the sky-view LUT and the main light's colour and direction with the HDR pipeline.
 /// Sun colour and sky ambient are computed on the CPU from the same model the shaders use
 /// (resources/atmosphere/Atmosphere.glsl), so the lighting matches the visible sky.
@@ -40,7 +57,7 @@ namespace RoR {
 class GfxAtmosphere
 {
 public:
-    GfxAtmosphere(Ogre::Light* main_light);
+    GfxAtmosphere(Ogre::Light* main_light, TerrainSkyDefaults const& terrain_sky = TerrainSkyDefaults());
     ~GfxAtmosphere();
 
     void Update(float dt_sec); //!< `dt_sec` advances the time of day while `gfx_sky_time_cycle` is on (0 when paused)
@@ -48,6 +65,7 @@ public:
     float GetTimeOfDay() const { return m_time_of_day; } //!< Local solar time, hours [0-24)
     static std::string GetPrettyTime(float hours);         //!< "HH:MM:SS"
     Ogre::Vector3 GetSunDirection() const { return m_sun_dir; } //!< Towards the sun
+    TerrainSkyDefaults const& GetTerrainSky() const { return m_terrain_sky; }
 
     /// The atmosphere is the sky of the HDR pipeline; the terrain's sky box (SDR content) stays with the legacy pipeline.
     static bool IsWanted();
@@ -76,6 +94,7 @@ private:
     Ogre::ColourValue  m_ambient;
     Ogre::ColourValue  m_fog_colour;             //!< Average horizon haze colour (linear)
     float              m_night = 0.f;
+    TerrainSkyDefaults m_terrain_sky;
     Ogre::TexturePtr   m_lut_texture;
     Ogre::SceneManager* m_lut_scene = nullptr;   //!< Private scene with a fullscreen rectangle, renders the LUT
     Ogre::Camera*      m_lut_camera = nullptr;

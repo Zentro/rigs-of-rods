@@ -37,6 +37,7 @@
 #include "PlatformUtils.h"
 #include "ScrewProp.h"
 #include "Skidmark.h"
+#include "GfxAtmosphere.h"
 #include "Terrain.h"
 #include "TuneupFileFormat.h"
 #include "Utils.h"
@@ -279,15 +280,17 @@ bool ActorManager::LoadScene(Ogre::String save_filename)
 
     App::GetGameContext()->GetActorManager()->SetSimulationPaused(j_doc["physics_paused"].GetBool());
 
-    // Time of day: "daytime_24hr" (hours), or "daytime" from older savegames (Caelum's Julian day, its fraction is UT)
+    // Time of day: "daytime_24hr" (hours), or "daytime" from older savegames (Caelum's Julian day: UT, plus the
+    // terrain's longitude for the local time Caelum's sun showed)
     if (j_doc.HasMember("daytime_24hr") && j_doc["daytime_24hr"].IsNumber())
     {
         App::gfx_sky_time->setVal(j_doc["daytime_24hr"].GetFloat());
     }
     else if (j_doc.HasMember("daytime") && j_doc["daytime"].IsNumber())
     {
-        const double julian_day = j_doc["daytime"].GetDouble();
-        App::gfx_sky_time->setVal(static_cast<float>(std::fmod(julian_day + 0.5, 1.0) * 24.0));
+        GfxAtmosphere* atmosphere = App::GetGameContext()->GetTerrain()->getAtmosphere();
+        const float longitude = atmosphere ? atmosphere->GetTerrainSky().longitude : 0.f;
+        App::gfx_sky_time->setVal(TerrainSkyDefaults::JulianDayToLocalHours(j_doc["daytime"].GetDouble(), longitude));
     }
 
     // Character
