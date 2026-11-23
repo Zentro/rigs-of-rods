@@ -26,6 +26,7 @@
 #include "PbsMaterialFactory.h"
 #include "GfxScene.h"
 #include "RTSSGloss.h"
+#include "RTSSNormalMap.h"
 #include "RTSSNiceMetal.h"
 #include "RTSSPaged.h"
 
@@ -378,6 +379,7 @@ void RTSSManager::InstallSubRenderStates()
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new PagedFadeSubRenderStateFactory());
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new GrassSubRenderStateFactory());
     RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new RTSSGlossFactory()); // PBS materials, ROADMAP M4 A.4
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new RTSSNormalMapFactory()); // PBS materials, A.5
 }
 
 bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, RTShader::SubRenderState* srs)
@@ -538,6 +540,13 @@ void RTSSManager::ApplyActorShading(const Ogre::MaterialPtr& mat, bool transpare
 
 Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group)
 {
+    // RoR PBS materials: a new one from the same definition (skins, substitutes, character, cab templates; ROADMAP M4 A.2)
+    if (PbsMaterialFactory::Get().FindDef(src))
+    {
+        if (Ogre::MaterialPtr pbs = PbsMaterialFactory::Get().CloneMaterial(src, new_name, new_group.empty() ? src->getGroup() : new_group))
+            return pbs;
+    }
+
     Ogre::MaterialPtr dst = src->clone(new_name, new_group);
     // Removes the RTSS technique `clone()` copied and creates a registered one with the same render state
     // (e.g. the `rtshader_system` block of managed materials). If RTSS doesn't know the source (not drawn

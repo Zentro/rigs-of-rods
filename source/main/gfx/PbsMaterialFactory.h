@@ -61,6 +61,7 @@ struct PbsMaterialDef
 
     PbsTexture        albedo_map;
     PbsTexture        orm_map;                   //!< Authored glTF layout: R occlusion, G roughness, B metallic
+    PbsTexture        normal_map;                //!< Tangent space, OpenGL convention (+Y); no mesh tangents needed (RTSSNormalMap)
     PbsTexture        legacy_specular_map;       //!< RoR specular map (reflectivity mask), baked to roughness + gloss mask
     PbsTexture        emissive_map;
     PbsTexture        damage_map;                //!< Blended over albedo by vertex colour alpha (flexbodies)

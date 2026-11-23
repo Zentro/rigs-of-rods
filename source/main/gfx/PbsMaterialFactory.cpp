@@ -23,6 +23,7 @@
 #include "GfxPipeline.h"
 #include "GfxScene.h"
 #include "RTSSGloss.h"
+#include "RTSSNormalMap.h"
 #include "RTSSManager.h"
 
 #include <Ogre.h>
@@ -165,6 +166,17 @@ MaterialPtr PbsMaterialFactory::CreateMaterial(PbsMaterialDef const& def)
     }
     rs->addTemplateSubRenderState(lighting);
 
+    // Normal map without tangents (flexbodies deform and have none); feeds Cook-Torrance, IBL and the gloss layer
+    if (def.normal_map.IsSet())
+    {
+        if (TexturePtr normal_tex = LoadTexture(def.normal_map, def.group, /*srgb=*/false))
+        {
+            RTShader::SubRenderState* normal_map = shader_gen->createSubRenderState(RTSSNormalMap::TYPE);
+            normal_map->setParameter("texture", normal_tex->getName());
+            rs->addTemplateSubRenderState(normal_map);
+        }
+    }
+
     if (ibl)
     {
         RTShader::SubRenderState* ibl = shader_gen->createSubRenderState(RTShader::SRS_IMAGE_BASED_LIGHTING);
@@ -202,6 +214,7 @@ MaterialPtr PbsMaterialFactory::CloneMaterial(MaterialPtr const& src, std::strin
     auto keep_group = [&](PbsTexture& t) { if (t.IsSet() && t.group.empty()) t.group = src_def->group; };
     keep_group(def.albedo_map);
     keep_group(def.orm_map);
+    keep_group(def.normal_map);
     keep_group(def.legacy_specular_map);
     keep_group(def.emissive_map);
     keep_group(def.damage_map);
@@ -451,9 +464,13 @@ bool PbsMaterialFactory::ConvertLegacyMaterial(MaterialPtr mat, bool colours_lin
                 return false;
             def.albedo_map.name = tus->getTextureName();
         }
-        else if (role == LegacyTexRole::NORMAL || role == LegacyTexRole::IGNORE || rescue)
+        else if (role == LegacyTexRole::NORMAL && !def.normal_map.IsSet())
         {
-            continue; // Normal maps: ROADMAP M4 A.5; extra maps of rescued shaders (lightmaps, noise...) are dropped
+            def.normal_map.name = tus->getTextureName();
+        }
+        else if (role == LegacyTexRole::IGNORE || rescue)
+        {
+            continue; // Extra maps of rescued shaders (lightmaps, noise...) are dropped
         }
         else
         {
@@ -556,6 +573,8 @@ bool PbsMaterialFactory::ConvertLegacyMaterial(MaterialPtr mat, bool colours_lin
         return false;
     if (!exists(def.legacy_specular_map))
         def.legacy_specular_map = PbsTexture();
+    if (!exists(def.normal_map))
+        def.normal_map = PbsTexture();
 
     const std::string prog_names = rescue ? ProgramNames(base) : "";
     PbsMaterialFactory::ApplyMaterialClass(def, PbsMaterialFactory::ClassifyMaterial(def.name + " " + def.albedo_map.name, prog_names));

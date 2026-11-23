@@ -7483,6 +7483,44 @@ void ActorSpawner::CreateCabVisual()
     char transmatname[256];
     static int trans_counter = 0;
     sprintf(transmatname, "%s-trans-%d", m_cab_material_name.c_str(), trans_counter++);
+    //-back
+    char backmatname[256];
+    static int back_counter = 0;
+    sprintf(backmatname, "%s-back-%d", m_cab_material_name.c_str(), back_counter++);
+
+    // RoR PBS cab material (HDR pipeline): the pass tweaks below don't reach its shaders - build proper variants
+    // (ROADMAP M4 A.2, from the gfx-rtss branch)
+    bool pbs_variants = false;
+    if (const PbsMaterialDef* pbs_def = PbsMaterialFactory::Get().FindDef(mat))
+    {
+        PbsMaterialDef trans_def = *pbs_def;
+        trans_def.name = transmatname;
+        trans_def.alpha_test = true;
+        trans_def.alpha_test_invert = true; // Windows: alpha <= 128
+        trans_def.alpha_threshold = 128.f / 255.f;
+        trans_def.alpha_blend = true;
+        trans_def.emissive_map = PbsTexture();
+        trans_def.emissive = Ogre::ColourValue::Black;
+        trans_def.roughness = 0.1f; // Glass
+        trans_def.gloss = 1.f;
+        trans_def.gloss_roughness = 0.03f;
+
+        PbsMaterialDef back_def = *pbs_def;
+        back_def.name = backmatname;
+        back_def.albedo = Ogre::ColourValue(0.f, 0.f, 0.f, 1.f);
+        back_def.emissive_map = PbsTexture();
+        back_def.emissive = Ogre::ColourValue::Black;
+        back_def.legacy_specular_map = PbsTexture();
+        back_def.gloss = 0.f;
+        back_def.roughness = 1.f;
+        back_def.receive_shadows = !App::gfx_reduce_shadows->getBool();
+
+        m_cab_trans_material = PbsMaterialFactory::Get().CreateMaterial(trans_def);
+        pbs_variants = m_cab_trans_material && PbsMaterialFactory::Get().CreateMaterial(back_def);
+    }
+
+    if (!pbs_variants) // Legacy (fixed-function style) cab material
+    {
     Ogre::MaterialPtr transmat = RTSSManager::CloneMaterial(mat, transmatname);
     if (mat->getTechnique(0)->getNumPasses()>1) // If there's the "emissive pass", remove it from the 'transmat'
     {
@@ -7497,10 +7535,6 @@ void ActorSpawner::CreateCabVisual()
     transmat->compile();
     m_cab_trans_material = transmat;
 
-    //-back
-    char backmatname[256];
-    static int back_counter = 0;
-    sprintf(backmatname, "%s-back-%d", m_cab_material_name.c_str(), back_counter++);
     Ogre::MaterialPtr backmat = RTSSManager::CloneMaterial(mat, backmatname);
     if (mat->getTechnique(0)->getNumPasses()>1)// If there's the "emissive pass", remove it from the 'transmat'
     {
@@ -7521,6 +7555,7 @@ void ActorSpawner::CreateCabVisual()
         backmat->setReceiveShadows(false);
     }
     backmat->compile();
+    } // Legacy cab material
 
     m_actor->GetGfxActor()->UpdateSimDataBuffer(); // fill all current nodes - needed to setup flexing meshes
 
