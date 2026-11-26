@@ -54,6 +54,7 @@ void RoR::GfxEnvmap::SetupEnvMap()
         m_cameras[face]->setFarClipDistance(App::GetCameraManager()->GetCamera()->getFarClipDistance());
 
         Ogre::Viewport* v = m_render_targets[face]->addViewport(m_cameras[face]);
+        v->setMaterialScheme(Ogre::MSN_SHADERGEN);
         v->setOverlaysEnabled(false);
         v->setClearEveryFrame(true);
         v->setBackgroundColour(App::GetCameraManager()->GetCamera()->getViewport()->getBackgroundColour());
@@ -229,7 +230,16 @@ void RoR::GfxEnvmap::UpdateEnvMap(Ogre::Vector3 center, GfxActor* gfx_actor, boo
 
     for (int i = 0; i < update_rate; i++)
     {
-        m_render_targets[m_update_round]->update();
+        try
+        {
+            m_render_targets[m_update_round]->update();
+        }
+        catch (Ogre::Exception&)
+        {
+            App::gfx_envmap_enabled->setVal(false);
+            HandleGenericException("GfxEnvmap::UpdateEnvMap()");
+            break;
+        }
         m_update_round = (m_update_round + 1) % NUM_FACES;
     }
 

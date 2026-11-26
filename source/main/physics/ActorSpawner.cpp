@@ -7193,6 +7193,7 @@ void ActorSpawner::CreateVideoCamera(RigDef::VideoCamera* def)
         if (vcam.vcam_render_target)
         {
             Ogre::Viewport* vp = vcam.vcam_render_target->addViewport(vcam.vcam_ogre_camera);
+            vp->setMaterialScheme(Ogre::MSN_SHADERGEN);
             vp->setClearEveryFrame(true);
             vp->setBackgroundColour(App::GetCameraManager()->GetCamera()->getViewport()->getBackgroundColour());
             vp->setVisibilityMask(~HIDE_MIRROR);
@@ -7209,6 +7210,7 @@ void ActorSpawner::CreateVideoCamera(RigDef::VideoCamera* def)
         if (vcam.vcam_render_window)
         {
             Ogre::Viewport* vp = vcam.vcam_render_window->addViewport(vcam.vcam_ogre_camera);
+            vp->setMaterialScheme(Ogre::MSN_SHADERGEN);
             vp->setClearEveryFrame(true);
             vp->setBackgroundColour(App::GetCameraManager()->GetCamera()->getViewport()->getBackgroundColour());
             vp->setVisibilityMask(~HIDE_MIRROR);
@@ -7288,6 +7290,7 @@ void ActorSpawner::CreateMirrorPropVideoCam(
         vcam.vcam_render_target = vcam.vcam_render_tex->getBuffer()->getRenderTarget();
         vcam.vcam_render_target->setActive(true);
         Ogre::Viewport* v = vcam.vcam_render_target->addViewport(vcam.vcam_ogre_camera);
+        v->setMaterialScheme(Ogre::MSN_SHADERGEN);
         v->setClearEveryFrame(true);
         v->setBackgroundColour(App::GetCameraManager()->GetCamera()->getViewport()->getBackgroundColour());
         v->setOverlaysEnabled(false);
