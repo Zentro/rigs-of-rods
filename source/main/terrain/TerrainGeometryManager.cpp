@@ -99,7 +99,7 @@ Ogre::MaterialPtr Terrn2CustomMaterial::generate(const Ogre::Terrain* terrain)
     // Clone material
     if(m_clone_material)
     {
-        mat = mat->clone(matName);
+        mat = RTSSManager::CloneMaterial(mat, matName);
         m_material_name = matName;
     }
 

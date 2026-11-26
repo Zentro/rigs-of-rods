@@ -51,6 +51,10 @@ public:
         if (schemeName != RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
             return nullptr;
 
+        if (m_busy)
+            return nullptr;
+        struct BusyScope { bool& b; BusyScope(bool& x): b(x) { b = true; } ~BusyScope() { b = false; } } busy(m_busy);
+
         if (HasOwnShaders(mat))
             return nullptr;
 
@@ -58,7 +62,7 @@ public:
         if (m_failed.count(key))
             return nullptr;
 
-        if (IsBillboard(rend))
+        if (HasVertexColors(rend))
             UseVertexColorIfUnlit(mat);
 
         Ogre::Technique* tech = SGTechniqueResolverListener::handleSchemeNotFound(schemeIndex, schemeName, mat, lodIndex, rend);
@@ -78,9 +82,25 @@ public:
     }
 
 private:
-    static bool IsBillboard(const Ogre::Renderable* rend)
+    static bool HasVertexColors(const Ogre::Renderable* rend)
     {
-        return dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend);
+        if (!rend)
+            return false;
+        if (dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend))
+            return true;
+        const Ogre::VertexData* vd = nullptr;
+        if (const Ogre::SubEntity* se = dynamic_cast<const Ogre::SubEntity*>(rend))
+        {
+            const Ogre::SubMesh* sm = se->getSubMesh();
+            vd = sm->useSharedVertices ? sm->parent->sharedVertexData : sm->vertexData;
+        }
+        else
+        {
+            Ogre::RenderOperation op;
+            const_cast<Ogre::Renderable*>(rend)->getRenderOperation(op);
+            vd = op.vertexData;
+        }
+        return vd && vd->vertexDeclaration && vd->vertexDeclaration->findElementBySemantic(Ogre::VES_DIFFUSE);
     }
 
     static void UseVertexColorIfUnlit(Ogre::Material* mat)
@@ -113,6 +133,7 @@ private:
     }
 
     std::unordered_set<std::string> m_failed;
+    bool m_busy = false;
 };
 
 }
@@ -121,6 +142,20 @@ void RTSSManager::InstallTechniqueResolver()
 {
     static RoRTechniqueResolver resolver(RTShader::ShaderGenerator::getSingletonPtr());
     Ogre::MaterialManager::getSingleton().addListener(&resolver);
+}
+
+Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group)
+{
+    Ogre::MaterialPtr dst = src->clone(new_name, new_group);
+    RTShader::ShaderGenerator::getSingleton().cloneShaderBasedTechniques(*src, *dst);
+    return dst;
+}
+
+void RTSSManager::RefreshMaterial(Ogre::Material& mat)
+{
+    auto& shader_gen = RTShader::ShaderGenerator::getSingleton();
+    shader_gen.invalidateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, mat);
+    shader_gen.validateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, mat);
 }
 
 

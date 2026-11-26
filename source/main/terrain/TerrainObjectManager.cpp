@@ -689,7 +689,7 @@ bool TerrainObjectManager::LoadTerrainObject(const Ogre::String& name, const Ogr
             SubEntity* se = mo->getEntity()->getSubEntity(i);
             String matname = se->getMaterialName();
             String newmatname = matname + "/" + instancename;
-            se->getMaterial()->clone(newmatname);
+            RTSSManager::CloneMaterial(se->getMaterial(), newmatname);
             se->setMaterialName(newmatname);
         }
     }
@@ -921,7 +921,7 @@ bool TerrainObjectManager::LoadTerrainObject(const Ogre::String& name, const Ogr
         // we can save it to disc for debug purposes:
         //SaveImage(texture, "test.png");
 
-        m->clone(tmpMatName);
+        RTSSManager::CloneMaterial(m, tmpMatName);
         MaterialPtr mNew = MaterialManager::getSingleton().getByName(tmpMatName);
         mNew->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTextureName(tmpTextName);
 

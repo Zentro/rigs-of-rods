@@ -40,6 +40,10 @@ public:
 
     static void InstallTechniqueResolver();
 
+    static Ogre::MaterialPtr CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group = "");
+
+    static void RefreshMaterial(Ogre::Material& mat);
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 

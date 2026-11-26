@@ -60,6 +60,7 @@
 #include "Language.h"
 #include "MeshObject.h"
 #include "PointColDetector.h"
+#include "RTSSManager.h"
 #include "ScrewProp.h"
 #include "ScriptEngine.h"
 #include "Skidmark.h"
@@ -2217,7 +2218,7 @@ void ActorSpawner::ProcessFlare3(RigDef::Flare3 & def)
     if (f.bbs != nullptr)
     {
         ROR_ASSERT(f.bbs->getMaterial());
-        f.bbs->setMaterial(f.bbs->getMaterial()->clone(f.snode->getName() + "_mat"));
+        f.bbs->setMaterial(RTSSManager::CloneMaterial(f.bbs->getMaterial(), f.snode->getName() + "_mat"));
     }
 }
 
@@ -2498,7 +2499,7 @@ Ogre::MaterialPtr ActorSpawner::InstantiateManagedMaterial(const Ogre::String& r
         return Ogre::MaterialPtr();
     }
 
-    return src_mat->clone(clone_name);
+    return RTSSManager::CloneMaterial(src_mat, clone_name);
 }
 
 void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
@@ -2547,7 +2548,7 @@ void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
         if (!Ogre::MaterialManager::getSingleton().getByName(def.name, module_rg))
         {
             LOG(fmt::format("[RoR] DBG ActorSpawner::ProcessManagedMaterial(): Creating placeholder for material '{}' in group '{}'", def.name, module_rg));
-            m_managedmat_placeholder_template->clone(def.name, /*changeGroup=*/true, module_rg);
+            RTSSManager::CloneMaterial(m_managedmat_placeholder_template, def.name, module_rg);
         }
         else
         {
@@ -2560,7 +2561,7 @@ void ActorSpawner::ProcessManagedMaterial(RigDef::ManagedMaterial & def)
     if (TuneupUtil::isManagedMatAnyhowRemoved(m_actor->getWorkingTuneupDef(), def.name))
     {
         // Create a placeholder material
-        material = Ogre::MaterialManager::getSingleton().getByName("tracks/transred")->clone(custom_name, /*changeGroup:*/true, resource_group);
+        material = RTSSManager::CloneMaterial(Ogre::MaterialManager::getSingleton().getByName("tracks/transred"), custom_name, resource_group);
     }
     else if (def.type == RigDef::ManagedMaterialType::FLEXMESH_STANDARD || def.type == RigDef::ManagedMaterialType::FLEXMESH_TRANSPARENT)
     {
@@ -6635,7 +6636,7 @@ Ogre::MaterialPtr ActorSpawner::FindOrCreateCustomizedMaterial(const std::string
             static int mirror_counter = 0;
             const std::string new_mat_name = this->ComposeName("RenderMaterial", mirror_counter);
             ++mirror_counter;
-            lookup_entry.material = Ogre::MaterialManager::getSingleton().getByName("mirror")->clone(new_mat_name, true, mat_lookup_rg);
+            lookup_entry.material = RTSSManager::CloneMaterial(Ogre::MaterialManager::getSingleton().getByName("mirror"), new_mat_name, mat_lookup_rg);
             // Special case - register under generated name. This is because all mirrors use the same material 'mirror'
             m_material_substitutions.insert(std::make_pair(new_mat_name, lookup_entry));
             return lookup_entry.material; // Done!
@@ -6660,7 +6661,7 @@ Ogre::MaterialPtr ActorSpawner::FindOrCreateCustomizedMaterial(const std::string
             {
                 lookup_entry.video_camera_def = videocam_def;
                 const std::string video_mat_name = this->ComposeName(videocam_def->material_name);
-                lookup_entry.material = video_mat_shared->clone(video_mat_name, true, mat_lookup_rg);
+                lookup_entry.material = RTSSManager::CloneMaterial(video_mat_shared, video_mat_name, mat_lookup_rg);
                 m_material_substitutions.insert(std::make_pair(mat_lookup_name, lookup_entry));
                 return lookup_entry.material; // Done!
             }
@@ -6691,7 +6692,7 @@ Ogre::MaterialPtr ActorSpawner::FindOrCreateCustomizedMaterial(const std::string
                     skin_res->second, m_actor->m_used_skin_entry->resource_group);
                 if (skin_mat)
                 {
-                    lookup_entry.material = skin_mat->clone(this->ComposeName(skin_mat->getName()), /*changeGroup=*/true, mat_lookup_rg);
+                    lookup_entry.material = RTSSManager::CloneMaterial(skin_mat, this->ComposeName(skin_mat->getName()), mat_lookup_rg);
                     m_material_substitutions.insert(std::make_pair(mat_lookup_name, lookup_entry));
                     return lookup_entry.material;
                 }
@@ -6726,7 +6727,7 @@ Ogre::MaterialPtr ActorSpawner::FindOrCreateCustomizedMaterial(const std::string
                 return Ogre::MaterialPtr(); // NULL
             }
 
-            lookup_entry.material = orig_mat->clone(this->ComposeName(orig_mat->getName()), true, mat_lookup_rg);
+            lookup_entry.material = RTSSManager::CloneMaterial(orig_mat, this->ComposeName(orig_mat->getName()), mat_lookup_rg);
             /*
             02:53:47: [RoR|Actor|Error] (Keyword: managedmaterials) Ogre::ItemIdentityException::ItemIdentityException: Texture Pointer is empty. in TextureUnitState::setTexture at C:\Users\Petr\.conan2\p\b\ogre3ff3740bbb9785\b\OgreMain\src\OgreTextureUnitState.cpp (line 271)
             02:55:17: [RoR|ContentManager] Skipping resource with duplicate name: 'pushbar1 (gavrilmv4.truck [Instance ID 1])' (origin: '')
@@ -6824,7 +6825,7 @@ Ogre::MaterialPtr ActorSpawner::CreateSimpleMaterial(Ogre::ColourValue color)
     ROR_ASSERT(m_simple_material_base);
 
     static unsigned int simple_mat_counter = 0;
-    Ogre::MaterialPtr newmat = m_simple_material_base->clone(this->ComposeName("simple material", simple_mat_counter++));
+    Ogre::MaterialPtr newmat = RTSSManager::CloneMaterial(m_simple_material_base, this->ComposeName("simple material", simple_mat_counter++));
     newmat->getTechnique(0)->getPass(0)->setAmbient(color);
 
     return newmat;
@@ -7384,7 +7385,7 @@ void ActorSpawner::CreateCabVisual()
     char transmatname[256];
     static int trans_counter = 0;
     sprintf(transmatname, "%s-trans-%d", m_cab_material_name.c_str(), trans_counter++);
-    Ogre::MaterialPtr transmat=mat->clone(transmatname);
+    Ogre::MaterialPtr transmat = RTSSManager::CloneMaterial(mat, transmatname);
     if (mat->getTechnique(0)->getNumPasses()>1) // If there's the "emissive pass", remove it from the 'transmat'
     {
         transmat->getTechnique(0)->removePass(1);
@@ -7402,7 +7403,7 @@ void ActorSpawner::CreateCabVisual()
     char backmatname[256];
     static int back_counter = 0;
     sprintf(backmatname, "%s-back-%d", m_cab_material_name.c_str(), back_counter++);
-    Ogre::MaterialPtr backmat=mat->clone(backmatname);
+    Ogre::MaterialPtr backmat = RTSSManager::CloneMaterial(mat, backmatname);
     if (mat->getTechnique(0)->getNumPasses()>1)// If there's the "emissive pass", remove it from the 'transmat'
     {
         backmat->getTechnique(0)->removePass(1);

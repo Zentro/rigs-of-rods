@@ -43,6 +43,7 @@
 #include "OgreImGui.h"
 #include "RoRnet.h"
 #include "ActorSpawner.h"
+#include "RTSSManager.h"
 #include "SlideNode.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
@@ -407,9 +408,9 @@ void RoR::GfxActor::RegisterCabMaterial(Ogre::MaterialPtr mat, Ogre::MaterialPtr
     if (mat->getTechnique(0)->getNumPasses() == 1)
         return; // No emissive pass -> nothing to do.
 
-    m_cab_mat_template_emissive = mat->clone("CabMaterialEmissive-" + mat->getName(), true, m_custom_resource_group);
+    m_cab_mat_template_emissive = RTSSManager::CloneMaterial(mat, "CabMaterialEmissive-" + mat->getName(), m_custom_resource_group);
 
-    m_cab_mat_template_plain = mat->clone("CabMaterialPlain-" + mat->getName(), true, m_custom_resource_group);
+    m_cab_mat_template_plain = RTSSManager::CloneMaterial(mat, "CabMaterialPlain-" + mat->getName(), m_custom_resource_group);
     m_cab_mat_template_plain->getTechnique(0)->removePass(1);
     m_cab_mat_template_plain->compile();
 }
@@ -433,6 +434,7 @@ void RoR::GfxActor::SetCabLightsActive(bool state_on)
         *dest_pass = *templ_pass; // Copy the pass! Reference: http://www.ogre3d.org/forums/viewtopic.php?f=2&t=83453
     }
     m_cab_mat_visual->compile();
+    RTSSManager::RefreshMaterial(*m_cab_mat_visual);
 }
 
 void RoR::GfxActor::SetVideoCamState(VideoCamState state)
