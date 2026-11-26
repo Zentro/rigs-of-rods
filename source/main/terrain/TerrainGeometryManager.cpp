@@ -30,7 +30,7 @@
 #include "GUI_LoadingWindow.h"
 #include "Terrain.h"
 #include "Terrn2FileFormat.h"
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 #include "OTCFileFormat.h"
 
 #include <OgreLight.h>
@@ -467,7 +467,7 @@ void TerrainGeometryManager::configureTerrainDefaults()
                 matProfile->setLayerSpecularMappingEnabled(m_spec->spec_map_enabled);
             }
 
-            terrainManager->getShadowManager()->applyToTerrain(matProfile);
+            terrainManager->getRTSSManager()->applyToTerrain(matProfile);
         }
     }
 

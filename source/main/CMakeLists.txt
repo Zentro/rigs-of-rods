@@ -35,7 +35,7 @@ set(SOURCE_FILES
         gfx/GfxScene.{h,cpp}
         gfx/IGfxWater.h
         gfx/MovableText.{h,cpp}
-        gfx/ShadowManager.{h,cpp}
+        gfx/RTSSManager.{h,cpp}
         gfx/SimBuffers.{h,cpp}
         gfx/Skidmark.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}

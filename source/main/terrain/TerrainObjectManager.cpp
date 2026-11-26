@@ -46,7 +46,7 @@
 #include "TObjFileFormat.h"
 #include "Utils.h"
 #include "WriteTextToTexture.h"
-#include "ShadowManager.h"
+#include "RTSSManager.h"
 
 // PagedGeometry
 #include "TreeLoader2D.h"

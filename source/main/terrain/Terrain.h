@@ -78,7 +78,7 @@ public:
     float                   getWaterHeight() const;
     TerrainGeometryManager* getGeometryManager()          { return m_geometry_manager; }
     TerrainObjectManager*   getObjectManager()            { return m_object_manager; }
-    ShadowManager*          getShadowManager()            { return m_shadow_manager; }
+    RTSSManager*            getRTSSManager()              { return m_rtss_manager; }
     TerrainEditor*          GetTerrainEditor()            { return &m_terrain_editor; }
     Collisions*             GetCollisions()               { return m_collisions; }
     Wavefield*              getWater()                    { return m_wavefield.get(); }
@@ -134,7 +134,7 @@ private:
     std::unique_ptr<Wavefield> m_wavefield;
     TerrainEditor           m_terrain_editor;
     Collisions*             m_collisions = nullptr;
-    ShadowManager*          m_shadow_manager = nullptr;
+    RTSSManager*            m_rtss_manager = nullptr;
 
     // Properties
 

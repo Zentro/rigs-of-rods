@@ -34,7 +34,7 @@ namespace RoR {
 /// @addtogroup Gfx
 /// @{
 
-class ShadowManager
+class RTSSManager
 {
 public:
 

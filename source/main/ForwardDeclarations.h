@@ -170,12 +170,12 @@ namespace RoR
     class  RailGroup;
     class  Replay;
     class  RigLoadingProfiler;
+    class  RTSSManager;
     class  RTTLayer;
     class  Screwprop;
     class  ScriptEngine;
     class  ServerScriptEngine;
     class  ServerScriptSequencer;
-    class  ShadowManager;
     class  Skidmark;
     class  SkidmarkConfig;
     struct SkinDocument;
