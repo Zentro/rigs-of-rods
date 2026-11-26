@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
         RTSSManager::InstallTechniqueResolver();
         RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
+        RTSSManager::InstallMaterialRules(); // Cg rescue
 
         App::CreateGuiManager(); // Needs scene manager
 

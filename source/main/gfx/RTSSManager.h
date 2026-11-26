@@ -48,6 +48,16 @@ public:
     /// after RTSS is initialized.
     static void LimitLightCount();
 
+    /// Applies RescueMaterial() to every material now and to every resource group parsed later (terrains,
+    /// vehicles, mods). Call once, after the technique resolver is installed.
+    static void InstallMaterialRules();
+
+    /// Cg rescue: if none of a material's techniques can run (shaders in a language without a plugin, e.g. Cg),
+    /// adds a fallback technique - a copy of the first one without shaders, keeping only the color texture
+    /// (searched in all passes). Mod files are not changed; this only adds a technique to the loaded material.
+    /// @return True if a fallback was added.
+    static bool RescueMaterial(Ogre::Material& mat);
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 

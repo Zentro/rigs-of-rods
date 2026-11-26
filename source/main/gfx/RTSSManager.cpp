@@ -33,12 +33,120 @@
 #include <Bites/OgreSGTechniqueResolverListener.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
 
+#include <map>
+#include <regex>
 #include <unordered_set>
 
 using namespace Ogre;
 using namespace RoR;
 
 namespace {
+
+const char* CG_UNRUNNABLE_SCHEME = "RoR/OldCgDead"; //!< Scheme of the dead techniques of rescued materials
+
+/// Applies the material rules (Cg rescue) to all materials of a group, or all materials if empty
+void ApplyMaterialRules(const Ogre::String& groupName, const std::string& what)
+{
+    int rescued = 0;
+    auto it = Ogre::MaterialManager::getSingleton().getResourceIterator();
+    while (it.hasMoreElements())
+    {
+        Ogre::MaterialPtr mat = Ogre::static_pointer_cast<Ogre::Material>(it.getNext());
+        if (!groupName.empty() && mat->getGroup() != groupName)
+            continue;
+        if (RTSSManager::RescueMaterial(*mat))
+            rescued++;
+    }
+    if (rescued > 0)
+        LOG(fmt::format("[RoR|OldCg] {} materials in {} have no runnable shaders, using fallbacks", rescued, what));
+}
+
+//TODO: Maybe the cg rescue to its own CgRescue.h/cpp
+
+/// Resource group listener: applies the material rules to every material of a newly parsed group
+class MaterialRulesListener: public Ogre::ResourceGroupListener
+{
+public:
+    void resourceGroupScriptingEnded(const Ogre::String& groupName) override
+    {
+        ApplyMaterialRules(groupName, fmt::format("group '{}'", groupName));
+    }
+};
+
+/// Whether any pass of the technique has a shader that can't run (unsupported language, e.g. Cg without plugin)
+bool HasUnrunnableShaders(const Ogre::Technique* tech)
+{
+    const Ogre::GpuProgramType types[] = { Ogre::GPT_VERTEX_PROGRAM, Ogre::GPT_FRAGMENT_PROGRAM,
+        Ogre::GPT_GEOMETRY_PROGRAM, Ogre::GPT_DOMAIN_PROGRAM, Ogre::GPT_HULL_PROGRAM };
+    for (const Ogre::Pass* pass : tech->getPasses())
+    {
+        for (Ogre::GpuProgramType type : types)
+        {
+            if (!pass->hasGpuProgram(type))
+                continue;
+            // A program only knows it can't compile (e.g. Cg on Mesa, `vertex.weight` in arbvp1) once it was loaded
+            const Ogre::GpuProgramPtr& prog = pass->getGpuProgram(type);
+            if (!prog->isLoaded())
+            {
+                try { prog->load(); }
+                catch (Ogre::Exception&) {}
+            }
+            // Cg compiles to an assembly program (the binding delegate); that one can fail while the Cg program is fine
+            Ogre::GpuProgram* bound = prog->_getBindingDelegate();
+            if (!prog->isSupported() || !bound || !bound->isSupported())
+                return true;
+        }
+    }
+    return false;
+}
+
+/// Picks the texture unit most likely to hold the color (diffuse) texture, searching all passes of the technique:
+/// * the texture named in the material name by the Blender exporter (.../SOLID/TEX/<texture>);
+/// * the first 2D texture whose name doesn't suggest data (specular, normal, environment, damage, masks...),
+///    skipping textures used by more than one unit (placeholders, e.g. ET coverage maps);
+/// * the first such unique 2D texture, then the first 2D texture at all.
+Ogre::TextureUnitState* FindDiffuseUnit(const Ogre::Material& mat, Ogre::Technique* tech)
+{
+    std::vector<Ogre::TextureUnitState*> units;
+    std::map<std::string, int> uses;
+    for (Ogre::Pass* pass : tech->getPasses())
+    {
+        for (Ogre::TextureUnitState* tus : pass->getTextureUnitStates())
+        {
+            if (tus->getTextureType() != Ogre::TEX_TYPE_2D || tus->getTextureName().empty())
+                continue;
+            units.push_back(tus);
+            uses[tus->getTextureName()]++;
+        }
+    }
+    if (units.empty())
+        return nullptr;
+
+    const size_t tex_pos = mat.getName().rfind("/TEX/");
+    if (tex_pos != std::string::npos)
+    {
+        const std::string tex_name = mat.getName().substr(tex_pos + 5);
+        for (Ogre::TextureUnitState* tus : units)
+        {
+            if (Ogre::StringUtil::match(tus->getTextureName(), tex_name, /*caseSensitive=*/false))
+                return tus;
+        }
+    }
+
+    static const std::regex data_hint("spec|[-_]s\\.|normal|nrm|[-_]n\\.|_nm|bump|env|cube|refl|dmg|damage|mask|_ao|occl|noise",
+        std::regex::icase);
+    Ogre::TextureUnitState* first_unique = nullptr;
+    for (Ogre::TextureUnitState* tus : units)
+    {
+        if (uses[tus->getTextureName()] > 1)
+            continue;
+        if (!first_unique)
+            first_unique = tus;
+        if (!std::regex_search(tus->getTextureName(), data_hint))
+            return tus;
+    }
+    return first_unique ? first_unique : units.front();
+}
 
 class RoRTechniqueResolver: public OgreBites::SGTechniqueResolverListener
 {
@@ -149,6 +257,74 @@ Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const
     Ogre::MaterialPtr dst = src->clone(new_name, new_group);
     RTShader::ShaderGenerator::getSingleton().cloneShaderBasedTechniques(*src, *dst);
     return dst;
+}
+
+void RTSSManager::InstallMaterialRules()
+{
+    static MaterialRulesListener listener;
+    Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener(&listener);
+
+    // Groups parsed before this point (RoR's own resource packs)
+    ApplyMaterialRules("", "RoR's resource packs");
+}
+
+bool RTSSManager::RescueMaterial(Ogre::Material& mat)
+{
+    Ogre::Technique* src = nullptr;
+    for (Ogre::Technique* tech : mat.getTechniques())
+    {
+        if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME || tech->getNumPasses() == 0)
+            continue;
+        if (!HasUnrunnableShaders(tech))
+            return false; // Something can run, nothing to rescue
+        if (!src)
+            src = tech;
+    }
+    if (!src)
+        return false;
+
+    // The color texture may be in any pass (e.g. ET materials: pass 1 Ambient has none, it's in Splatting)
+    Ogre::TextureUnitState* diffuse_src = FindDiffuseUnit(mat, src);
+
+    // Copy of the first technique, without shaders. Extra passes (specular/reflection passes written for the
+    // shaders) would only add odd layers without them - keep the first.
+    Ogre::Technique* tech = mat.createTechnique();
+    *tech = *src;
+    tech->setName("RoR/OldCg");
+
+    // OGRE only checks the high level program, so a Cg technique whose compiled assembly fails still counts as
+    // supported and would be drawn (as nothing). Move the dead techniques out of the default scheme and kept for
+    // reading their inputs later and drop RTSS techniques generated from them; the resolver shades the rescue.
+    for (Ogre::Technique* dead : mat.getTechniques())
+    {
+        if (dead != tech && dead->getSchemeName() == Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+            dead->setSchemeName(CG_UNRUNNABLE_SCHEME);
+    }
+    RTShader::ShaderGenerator::getSingleton().removeAllShaderBasedTechniques(mat);
+    while (tech->getNumPasses() > 1)
+        tech->removePass(1);
+    Ogre::Pass* pass = tech->getPass(0);
+    const Ogre::GpuProgramType types[] = { Ogre::GPT_VERTEX_PROGRAM, Ogre::GPT_FRAGMENT_PROGRAM,
+        Ogre::GPT_GEOMETRY_PROGRAM, Ogre::GPT_DOMAIN_PROGRAM, Ogre::GPT_HULL_PROGRAM };
+    for (Ogre::GpuProgramType type : types)
+    {
+        if (pass->hasGpuProgram(type))
+            pass->setGpuProgram(type, Ogre::GpuProgramPtr());
+    }
+
+    // Keep only the color texture; the others (specular, normal, environment...) were inputs for the shaders
+    pass->removeAllTextureUnitStates();
+    if (diffuse_src)
+    {
+        Ogre::TextureUnitState* diffuse = OGRE_NEW Ogre::TextureUnitState(pass, *diffuse_src);
+        pass->addTextureUnitState(diffuse);
+        diffuse->setColourOperation(Ogre::LBO_MODULATE);
+        diffuse->setTextureCoordSet(0);
+    }
+
+    LOG(fmt::format("[RoR|OldCg] Material '{}' (group '{}'): no runnable shaders, using its texture '{}'",
+        mat.getName(), mat.getGroup(), diffuse_src ? diffuse_src->getTextureName() : "(none)"));
+    return true;
 }
 
 void RTSSManager::RefreshMaterial(Ogre::Material& mat)
