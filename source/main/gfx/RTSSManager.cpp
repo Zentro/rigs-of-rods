@@ -30,10 +30,98 @@
 #include <Overlay/OgreOverlayContainer.h>
 #include <Overlay/OgreOverlay.h>
 #include <OgreMaterialManager.h>
+#include <Bites/OgreSGTechniqueResolverListener.h>
 #include <RTShaderSystem/OgreRTShaderSystem.h>
+
+#include <unordered_set>
 
 using namespace Ogre;
 using namespace RoR;
+
+namespace {
+
+class RoRTechniqueResolver: public OgreBites::SGTechniqueResolverListener
+{
+public:
+    using SGTechniqueResolverListener::SGTechniqueResolverListener;
+
+    Ogre::Technique* handleSchemeNotFound(unsigned short schemeIndex, const Ogre::String& schemeName,
+        Ogre::Material* mat, unsigned short lodIndex, const Ogre::Renderable* rend) override
+    {
+        if (schemeName != RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+            return nullptr;
+
+        if (HasOwnShaders(mat))
+            return nullptr;
+
+        const std::string key = mat->getGroup() + "/" + mat->getName();
+        if (m_failed.count(key))
+            return nullptr;
+
+        if (IsBillboard(rend))
+            UseVertexColorIfUnlit(mat);
+
+        Ogre::Technique* tech = SGTechniqueResolverListener::handleSchemeNotFound(schemeIndex, schemeName, mat, lodIndex, rend);
+
+        if (tech && (tech->getNumPasses() == 0 || !tech->getPass(0)->isProgrammable()))
+        {
+            RTShader::ShaderGenerator::getSingleton().removeAllShaderBasedTechniques(*mat);
+            tech = nullptr;
+        }
+        if (!tech)
+        {
+            m_failed.insert(key);
+            LOG(fmt::format("[RoR|RTSS] Could not generate a technique for material '{}' (group '{}'), using its own",
+                mat->getName(), mat->getGroup()));
+        }
+        return tech;
+    }
+
+private:
+    static bool IsBillboard(const Ogre::Renderable* rend)
+    {
+        return dynamic_cast<const Ogre::BillboardSet*>(rend) || dynamic_cast<const Ogre::BillboardChain*>(rend);
+    }
+
+    static void UseVertexColorIfUnlit(Ogre::Material* mat)
+    {
+        for (Ogre::Technique* tech : mat->getTechniques())
+        {
+            if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+                continue;
+            for (Ogre::Pass* pass : tech->getPasses())
+            {
+                if (!pass->getLightingEnabled() && pass->getVertexColourTracking() == Ogre::TVC_NONE)
+                    pass->setVertexColourTracking(Ogre::TVC_DIFFUSE);
+            }
+        }
+    }
+
+    static bool HasOwnShaders(const Ogre::Material* mat)
+    {
+        for (const Ogre::Technique* tech : mat->getTechniques())
+        {
+            if (tech->getSchemeName() != Ogre::MaterialManager::DEFAULT_SCHEME_NAME)
+                continue;
+            for (const Ogre::Pass* pass : tech->getPasses())
+            {
+                if (pass->isProgrammable())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    std::unordered_set<std::string> m_failed;
+};
+
+}
+
+void RTSSManager::InstallTechniqueResolver()
+{
+    static RoRTechniqueResolver resolver(RTShader::ShaderGenerator::getSingletonPtr());
+    Ogre::MaterialManager::getSingleton().addListener(&resolver);
+}
 
 
 void RTSSManager::setupShadows()

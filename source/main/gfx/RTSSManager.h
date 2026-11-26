@@ -38,6 +38,8 @@ class RTSSManager
 {
 public:
 
+    static void InstallTechniqueResolver();
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 

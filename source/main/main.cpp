@@ -52,6 +52,7 @@
 #include "OverlayWrapper.h"
 #include "PlatformUtils.h"
 #include "RoRVersion.h"
+#include "RTSSManager.h"
 #include "ScriptEngine.h"
 #include "ServerScriptEngine.h"
 #include "Skidmark.h"
@@ -218,6 +219,9 @@ int main(int argc, char *argv[])
         auto mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
         mShaderGenerator->setShaderCachePath(App::sys_cache_dir->getStr());
         mShaderGenerator->addSceneManager(App::GetGfxScene()->GetSceneManager());
+
+        App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+        RTSSManager::InstallTechniqueResolver();
 
         App::CreateGuiManager(); // Needs scene manager
 
