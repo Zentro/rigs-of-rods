@@ -238,9 +238,6 @@ CVar* gfx_flares_mode;
 CVar* gfx_polygon_mode;
 CVar* gfx_shadow_type;
 CVar* gfx_extcam_mode;
-CVar* gfx_sky_mode;
-CVar* gfx_sky_time_cycle;
-CVar* gfx_sky_time_speed;
 CVar* gfx_texture_filter;
 CVar* gfx_vegetation_mode;
 CVar* gfx_water_mode;
@@ -513,17 +510,6 @@ std::string ToLocalizedString(GfxShadowType e)
     }
 }
 
-std::string ToLocalizedString(GfxSkyMode e)
-{
-    switch (e)
-    {
-    case GfxSkyMode::SANDSTORM: return _LC("GfxSkyMode", "Sandstorm (fastest)");
-    case GfxSkyMode::CAELUM:    return _LC("GfxSkyMode", "Caelum (best looking, slower)");
-    case GfxSkyMode::SKYX:      return _LC("GfxSkyMode", "SkyX (best looking, slower)");
-    default:                    return "";
-    }
-}
-
 std::string ToLocalizedString(GfxTexFilter e)
 {
     switch (e)
@@ -557,7 +543,6 @@ std::string ToLocalizedString(GfxWaterMode e)
     case GfxWaterMode::REFLECT:   return _LC("GfxWaterMode", "Reflection");
     case GfxWaterMode::FULL_FAST: return _LC("GfxWaterMode", "Reflection + refraction (speed optimized)");
     case GfxWaterMode::FULL_HQ:   return _LC("GfxWaterMode", "Reflection + refraction (quality optimized)");
-    case GfxWaterMode::HYDRAX:    return _LC("GfxWaterMode", "HydraX");
     default:                      return "";
     }
 }

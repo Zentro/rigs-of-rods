@@ -145,12 +145,6 @@ int main(int argc, char *argv[])
             return -1; // Error already displayed
         }
 
-#ifdef USE_CAELUM
-        // Initialize CaelumPlugin, must happen before initialising resource groups
-        new Caelum::CaelumPlugin();
-        Caelum::CaelumPlugin::getSingleton().initialise();
-#endif //USE_CAELUM
-
         Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
         // Deploy base config files from 'skeleton.zip'
@@ -187,9 +181,6 @@ int main(int argc, char *argv[])
         // Use 'General' group (aka RGN_DEFAULT)
         App::GetContentManager()->AddResourcePack("fonts");
         App::GetContentManager()->AddResourcePack("OgreCore");
-        App::GetContentManager()->AddResourcePack("caelum");
-        App::GetContentManager()->AddResourcePack("hydrax");
-        App::GetContentManager()->AddResourcePack("SkyX");
         App::GetContentManager()->AddResourcePack("paged");
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");
@@ -1098,14 +1089,7 @@ int main(int argc, char *argv[])
                             {
                                 SOUND_KILL(-1, SS_TRIG_MAIN_MENU);
                             }
-                            if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SANDSTORM)
-                            {
-                                App::GetGfxScene()->GetSceneManager()->setAmbientLight(Ogre::ColourValue(0.7f, 0.7f, 0.7f));
-                            }
-                            else
-                            {
-                                App::GetGfxScene()->GetSceneManager()->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f));
-                            }
+                            App::GetGfxScene()->GetSceneManager()->setAmbientLight(Ogre::ColourValue(0.7f, 0.7f, 0.7f));
                             App::GetDiscordRpc()->UpdatePresence();
                             App::sim_state->setVal((int)SimState::RUNNING);
                             App::app_state->setVal((int)AppState::SIMULATION);
@@ -2164,7 +2148,6 @@ int main(int argc, char *argv[])
                 {
                     if (App::sim_state->getEnum<SimState>() == SimState::EDITOR_MODE)
                     {
-                        App::GetGameContext()->UpdateSkyInputEvents(dt);
                         App::GetGameContext()->GetTerrain()->GetTerrainEditor()->UpdateInputEvents(dt);
                     }
                     else
@@ -2182,7 +2165,6 @@ int main(int argc, char *argv[])
                             App::GetGameContext()->UpdateSimInputEvents(dt);
                         }
 
-                        App::GetGameContext()->UpdateSkyInputEvents(dt);
                         for (ActorPtr actor : App::GetGameContext()->GetActorManager()->GetActors())
                         {
                             if (actor->ar_state != ActorState::NETWORKED_OK)

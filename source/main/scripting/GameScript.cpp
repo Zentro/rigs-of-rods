@@ -55,7 +55,6 @@
 #include "ScriptEngine.h"
 #include "ServerScriptEngine.h"
 #include "ScriptUtils.h"
-#include "SkyManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "TerrainGeometryManager.h"
@@ -157,36 +156,23 @@ Radian GameScript::getPersonRotation()
     return result;
 }
 
+// TODO: Remove the 3 Caelum functions below (and their bindings in GameScriptAngelscript.cpp and the
+//       docs in doc/angelscript) once scripts had time to move on, or forward them to the new sky.
+//       Caelum was removed; they're stubs so existing terrain/vehicle scripts still compile.
+
 String GameScript::getCaelumTime()
 {
-    String result = "";
-#ifdef USE_CAELUM
-    if (App::GetGameContext()->GetTerrain())
-    {
-        result = App::GetGameContext()->GetTerrain()->getSkyManager()->GetPrettyTime();
-    }
-#endif // USE_CAELUM
-    return result;
+    return ""; // Stub: no time of day without Caelum.
 }
 
 void GameScript::setCaelumTime(float value)
 {
-#ifdef USE_CAELUM
-    if (!this->HaveSimTerrain(__FUNCTION__))
-        return;
-
-    App::GetGameContext()->GetTerrain()->getSkyManager()->SetSkyTimeFactor(value);
-#endif // USE_CAELUM
+    // Stub: no time of day without Caelum.
 }
 
 bool GameScript::getCaelumAvailable()
 {
-    bool result = false;
-#ifdef USE_CAELUM
-    if (App::GetGameContext()->GetTerrain())
-        result = App::GetGameContext()->GetTerrain()->getSkyManager() != 0;
-#endif // USE_CAELUM
-    return result;
+    return false; // Stub: Caelum was removed.
 }
 
 void GameScript::stopTimer()

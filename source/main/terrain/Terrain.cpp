@@ -30,12 +30,9 @@
 #include "GUIManager.h"
 #include "GUI_LoadingWindow.h"
 #include "GUI_SurveyMap.h"
-#include "HydraxWater.h"
 #include "Language.h"
 #include "ScriptEngine.h"
 #include "ShadowManager.h"
-#include "SkyManager.h"
-#include "SkyXManager.h"
 #include "TerrainGeometryManager.h"
 #include "TerrainObjectManager.h"
 #include "Terrn2FileFormat.h"
@@ -55,12 +52,9 @@ RoR::Terrain::Terrain(CacheEntryPtr entry, Terrn2DocumentPtr def)
     , m_geometry_manager(0)
     , m_object_manager(0)
     , m_shadow_manager(0)
-    , m_sky_manager(0)
-    , SkyX_manager(0)
     , m_main_light(0)
     , m_paged_detail_factor(0.0f)
     , m_cur_gravity(DEFAULT_GRAVITY)
-    , m_hydrax_water(nullptr)
     , m_cache_entry(entry)
     , m_def(def)
 {
@@ -84,29 +78,10 @@ void RoR::Terrain::dispose()
 
     //I think that the order is important
 
-#ifdef USE_CAELUM
-    if (m_sky_manager != nullptr)
-    {
-        delete(m_sky_manager);
-        m_sky_manager = nullptr;
-    }
-#endif // USE_CAELUM
-
-    if (SkyX_manager != nullptr)
-    {
-        delete(SkyX_manager);
-        SkyX_manager = nullptr;
-    }
-
     if (m_main_light != nullptr)
     {
         App::GetGfxScene()->GetSceneManager()->destroyAllLights();
         m_main_light = nullptr;
-    }
-
-    if (m_hydrax_water != nullptr)
-    {
-        m_gfx_water.reset(); // TODO: Currently needed - research and get rid of this ~ only_a_ptr, 08/2018
     }
 
     if (m_object_manager != nullptr)
@@ -171,11 +146,8 @@ bool RoR::Terrain::initialize()
     loading_window->SetProgress(27, _L("Initializing Light Subsystem"));
     this->initLight();
 
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() != GfxSkyMode::CAELUM) //Caelum has its own fog management
-    {
-        loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
-        this->initFog();
-    }
+    loading_window->SetProgress(29, _L("Initializing Fog Subsystem"));
+    this->initFog();
 
     loading_window->SetProgress(31, _L("Initializing Vegetation Subsystem"));
     this->initVegetation();
@@ -237,82 +209,37 @@ void RoR::Terrain::initCamera()
 
 void RoR::Terrain::initSkySubSystem()
 {
-#ifdef USE_CAELUM
-    // Caelum skies
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
+    // Static skybox. (Caelum and SkyX were removed; the terrn2 keys `CaelumConfigFile`,
+    // `CaelumFogStart/End` and `SkyXConfigFile` are still parsed but unused.)
+    if (!m_def->cubemap_config.empty())
     {
-        m_sky_manager = new SkyManager();
-
-        // try to load caelum config
-        if (!m_def->caelum_config.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def->caelum_config))
-        {
-            // config provided and existing, use it :)
-            m_sky_manager->LoadCaelumScript(m_def->caelum_config, m_def->caelum_fog_start, m_def->caelum_fog_end);
-        }
-        else
-        {
-            // no config provided, fall back to the default one
-            m_sky_manager->LoadCaelumScript("ror_default_sky");
-        }
-    }
-    else
-#endif //USE_CAELUM
-    // SkyX skies
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
-    {
-         // try to load SkyX config
-         if (!m_def->skyx_config.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def->skyx_config))
-            SkyX_manager = new SkyXManager(m_def->skyx_config);
-         else
-            SkyX_manager = new SkyXManager("SkyXDefault.skx");
+        // use custom
+        App::GetGfxScene()->GetSceneManager()->setSkyBox(true, m_def->cubemap_config, 100, true);
     }
     else
     {
-        if (!m_def->cubemap_config.empty())
-        {
-            // use custom
-            App::GetGfxScene()->GetSceneManager()->setSkyBox(true, m_def->cubemap_config, 100, true);
-        }
-        else
-        {
-            // use default
-            App::GetGfxScene()->GetSceneManager()->setSkyBox(true, "tracks/skyboxcol", 100, true);
-        }
+        // use default
+        App::GetGfxScene()->GetSceneManager()->setSkyBox(true, "tracks/skyboxcol", 100, true);
     }
 }
 
 void RoR::Terrain::initLight()
 {
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-    {
-#ifdef USE_CAELUM
-        m_main_light = m_sky_manager->GetSkyMainLight();
-#endif
-    }
-    else if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX)
-    {
-        m_main_light = SkyX_manager->getMainLight();
-    }
-    else
-    {
-        // screw caelum, we will roll our own light
+    // Create a light
+    m_main_light = App::GetGfxScene()->GetSceneManager()->createLight("MainLight");
+    //directional light for shadow
+    m_main_light->setType(Light::LT_DIRECTIONAL);
 
-        // Create a light
-        m_main_light = App::GetGfxScene()->GetSceneManager()->createLight("MainLight");
-        //directional light for shadow
-        m_main_light->setType(Light::LT_DIRECTIONAL);
+    m_main_light->setDiffuseColour(m_def->ambient_color);
+    m_main_light->setSpecularColour(m_def->ambient_color);
+    m_main_light->setCastShadows(true);
+    m_main_light->setShadowFarDistance(1000.0f);
+    m_main_light->setShadowNearClipDistance(-1);
 
-        m_main_light->setDiffuseColour(m_def->ambient_color);
-        m_main_light->setSpecularColour(m_def->ambient_color);
-        m_main_light->setCastShadows(true);
-        m_main_light->setShadowFarDistance(1000.0f);
-        m_main_light->setShadowNearClipDistance(-1);
-
-        // attach to scene node (can be retrieved by Ogre::Light::getParentSceneNode())
-        Ogre::SceneNode* snode = App::GetGfxScene()->GetSceneManager()->getRootSceneNode()->createChildSceneNode();
-        snode->attachObject(m_main_light);
-        snode->setDirection(Ogre::Vector3(0.785, -0.423, 0.453).normalisedCopy());
-    }
+    // attach to scene node (can be retrieved by Ogre::Light::getParentSceneNode())
+    Ogre::SceneNode* snode = App::GetGfxScene()->GetSceneManager()->getRootSceneNode()->createChildSceneNode();
+    snode->attachObject(m_main_light);
+    snode->setDirection(Ogre::Vector3(0.785, -0.423, 0.453).normalisedCopy());
 }
 
 void RoR::Terrain::initFog()
@@ -385,35 +312,9 @@ void RoR::Terrain::initWater()
     m_wavefield = std::unique_ptr<Wavefield>(new Wavefield(this->getMaxTerrainSize()));
     m_wavefield->SetStaticWaterHeight(m_def->water_height);
 
-    if (App::gfx_water_mode->getEnum<GfxWaterMode>() == GfxWaterMode::HYDRAX)
-    {
-        // try to load hydrax config
-        if (!m_def->hydrax_conf_file.empty() && ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(m_def->hydrax_conf_file))
-        {
-            m_hydrax_water = new HydraxWater(m_def->water_height, m_def->hydrax_conf_file);
-        }
-        else
-        {
-            // no config provided, fall back to the default one
-            m_hydrax_water = new HydraxWater(m_def->water_height);
-        }
-
-        m_gfx_water = std::unique_ptr<IGfxWater>(m_hydrax_water);
-
-        //Apply depth technique to the terrain
-        TerrainGroup::TerrainIterator ti = m_geometry_manager->getTerrainGroup()->getTerrainIterator();
-        while (ti.hasMoreElements())
-        {
-            Ogre::Terrain* t = ti.getNext()->instance;
-            MaterialPtr ptr = t->getMaterial();
-            m_hydrax_water->GetHydrax()->getMaterialManager()->addDepthTechnique(ptr->createTechnique());
-        }
-    }
-    else
-    {
-        m_gfx_water = std::unique_ptr<IGfxWater>(new GfxWater(this->getMaxTerrainSize(), m_def->water_height));
-        m_gfx_water->SetWaterBottomHeight(m_def->water_bottom_height);
-    }
+    // Hydrax was removed; the terrn2 key `HydraxConfigFile` is still parsed but unused.
+    m_gfx_water = std::unique_ptr<IGfxWater>(new GfxWater(this->getMaxTerrainSize(), m_def->water_height));
+    m_gfx_water->SetWaterBottomHeight(m_def->water_bottom_height);
 }
 
 void RoR::Terrain::initShadows()
@@ -500,11 +401,6 @@ float RoR::Terrain::getHeightAt(float x, float z)
 Ogre::Vector3 RoR::Terrain::GetNormalAt(float x, float y, float z)
 {
     return m_geometry_manager->getNormalAt(x, y, z);
-}
-
-SkyManager* RoR::Terrain::getSkyManager()
-{
-    return m_sky_manager;
 }
 
 bool RoR::Terrain::isFlat()

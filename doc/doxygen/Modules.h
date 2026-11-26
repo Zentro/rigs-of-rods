@@ -56,9 +56,6 @@
 /// @defgroup Gfx Gfx
 /// Visual-only objects or visual couterparts to @ref Gameplay objects.
 
-    /// @defgroup Hydrax Hydrax
-    /// Nice looking water, originally a 3rd party component.
-    
     /// @defgroup Flex Flex
     /// Meshes deforming in real time: flexbodies, wings, wheels, cab mesh.
     

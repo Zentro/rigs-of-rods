@@ -41,7 +41,6 @@
 #include "Network.h"
 #include "PlatformUtils.h"
 #include "Replay.h"
-#include "SkyManager.h"
 #include "Terrain.h"
 #include "Terrn2FileFormat.h"
 #include "TuneupFileFormat.h"
@@ -294,10 +293,6 @@ void TopMenubar::Draw(float dt)
     if ((m_open_menu != TopMenu::TOPMENU_SETTINGS) && ImGui::IsItemHovered())
     {
         m_open_menu = TopMenu::TOPMENU_SETTINGS;
-#ifdef USE_CAELUM
-        if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-            m_daytime = App::GetGameContext()->GetTerrain()->getSkyManager()->GetTime();
-#endif // USE_CAELUM
     }
 
     ImGui::SameLine();
@@ -640,30 +635,10 @@ void TopMenubar::Draw(float dt)
                 }
             }
 
-            // SKY SETTINGS
-#ifdef USE_CAELUM
-            if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM)
-            {
-                ImGui::Separator();
-                ImGui::TextColored(GRAY_HINT_TEXT, "%s", _LC("TopMenubar", "Time of day:"));
-                float time = App::GetGameContext()->GetTerrain()->getSkyManager()->GetTime();
-                if (ImGui::SliderFloat("", &time, m_daytime - 0.5f, m_daytime + 0.5f, ""))
-                {
-                    App::GetGameContext()->GetTerrain()->getSkyManager()->SetTime(time);
-                }
-                ImGui::SameLine();
-                DrawGCheckbox(App::gfx_sky_time_cycle, _LC("TopMenubar", "Cycle"));
-                if (App::gfx_sky_time_cycle->getBool())
-                {
-                    DrawGIntSlider(App::gfx_sky_time_speed, _LC("TopMenubar", "Speed"), 10, 2000);
-                }
-            }       
-#endif // USE_CAELUM
-
             // WATER SETTINGS
             if (RoR::App::gfx_water_waves->getBool() && App::mp_state->getEnum<MpState>() != MpState::CONNECTED && App::GetGameContext()->GetTerrain()->getWater())
             {
-                if (App::gfx_water_mode->getEnum<GfxWaterMode>() != GfxWaterMode::HYDRAX && App::gfx_water_mode->getEnum<GfxWaterMode>() != GfxWaterMode::NONE)
+                if (App::gfx_water_mode->getEnum<GfxWaterMode>() != GfxWaterMode::NONE)
                 {
                     ImGui::PushID("waves");
                     ImGui::TextColored(GRAY_HINT_TEXT, "%s", _LC("TopMenubar", "Waves Height:"));

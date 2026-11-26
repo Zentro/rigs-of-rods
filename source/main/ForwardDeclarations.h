@@ -146,7 +146,6 @@ namespace RoR
     class  GfxScene;
     class  GUIManager;
     struct GuiManagerImpl;
-    class  HydraxWater;
     class  InputEngine;
     class  IGfxWater;
     class  Landusemap;
@@ -181,8 +180,6 @@ namespace RoR
     class  SkidmarkConfig;
     struct SkinDocument;
     class  SkinManager;
-    class  SkyManager;
-    class  SkyXManager;
     class  SlideNode;
     class  Sound;
     class  SoundManager;

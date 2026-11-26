@@ -481,7 +481,8 @@ void TerrainGeometryManager::configureTerrainDefaults()
     terrainOptions->setLightMapSize        (m_spec->lightmap_size);
     terrainOptions->setUseRayBoxDistanceCalculation(false);
 
-    //TODO: Make this only when hydrax is enabled.
+    // TODO: Hydrax needed vertex compression off. Hydrax was removed - try turning it back on
+    //       (check the RTSS terrain shaders, shadows and normals still look right).
     terrainOptions->setUseVertexCompressionWhenAvailable(false);
 
     // HACK: Load the single page config now

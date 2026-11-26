@@ -39,8 +39,6 @@
 #include "Replay.h"
 #include "ScrewProp.h"
 #include "ScriptEngine.h"
-#include "SkyManager.h"
-#include "SkyXManager.h"
 #include "SoundScriptManager.h"
 #include "Terrain.h"
 #include "Terrn2FileFormat.h"
@@ -1283,70 +1281,6 @@ void GameContext::UpdateSimInputEvents(float dt)
     else
     {
         prev_pos = Ogre::Vector3::ZERO;
-    }
-}
-
-void GameContext::UpdateSkyInputEvents(float dt)
-{
-#ifdef USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::CAELUM &&
-        m_terrain->getSkyManager())
-    {
-        float time_factor = 1.0f;
-
-        if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME))
-        {
-            time_factor = 1000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME_FAST))
-        {
-            time_factor = 10000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME))
-        {
-            time_factor = -1000.0f;
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME_FAST))
-        {
-            time_factor = -10000.0f;
-        }
-        else if (App::gfx_sky_time_cycle->getBool())
-        {
-            time_factor = App::gfx_sky_time_speed->getInt();
-        }
-
-        if (m_terrain->getSkyManager()->GetSkyTimeFactor() != time_factor)
-        {
-            m_terrain->getSkyManager()->SetSkyTimeFactor(time_factor);
-            Str<200> msg; msg << _L("Time set to ") << m_terrain->getSkyManager()->GetPrettyTime();
-            RoR::App::GetConsole()->putMessage(Console::CONSOLE_MSGTYPE_INFO, Console::CONSOLE_SYSTEM_NOTICE, msg.ToCStr());
-        }
-    }
-
-#endif // USE_CAELUM
-    if (App::gfx_sky_mode->getEnum<GfxSkyMode>() == GfxSkyMode::SKYX &&
-        m_terrain->getSkyXManager())
-    {
-        if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME))
-        {
-            m_terrain->getSkyXManager()->GetSkyX()->setTimeMultiplier(1.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_INCREASE_TIME_FAST))
-        {
-            m_terrain->getSkyXManager()->GetSkyX()->setTimeMultiplier(2.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME))
-        {
-            m_terrain->getSkyXManager()->GetSkyX()->setTimeMultiplier(-1.0f);
-        }
-        else if (RoR::App::GetInputEngine()->getEventBoolValue(EV_SKY_DECREASE_TIME_FAST))
-        {
-            m_terrain->getSkyXManager()->GetSkyX()->setTimeMultiplier(-2.0f);
-        }
-        else
-        {
-            m_terrain->getSkyXManager()->GetSkyX()->setTimeMultiplier(0.01f);
-        }
     }
 }
 
