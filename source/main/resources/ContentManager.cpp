@@ -29,6 +29,7 @@
 #include "Application.h"
 #include "ErrorUtils.h"
 #include "SoundScriptManager.h"
+#include "OgreScriptCompat.h"
 #include "SkinFileFormat.h"
 #include "Language.h"
 #include "PlatformUtils.h"
@@ -113,6 +114,7 @@ void ContentManager::InitContentManager()
     // set listener if none has already been set
     if (!Ogre::ResourceGroupManager::getSingleton().getLoadingListener())
         Ogre::ResourceGroupManager::getSingleton().setLoadingListener(this);
+    Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener(this);
 
     // by default, display everything in the depth map
     Ogre::MovableObject::setDefaultVisibilityFlags(DEPTHMAP_ENABLED);
@@ -272,6 +274,35 @@ Ogre::DataStreamPtr ContentManager::resourceLoading(const Ogre::String& name, co
 
 void ContentManager::resourceStreamOpened(const Ogre::String& name, const Ogre::String& group, Ogre::Resource* resource, Ogre::DataStreamPtr& dataStream)
 {
+    if (!m_parsing_script || resource || !dataStream)
+        return;
+
+    bool is_script = Ogre::StringUtil::match(name, "*.overlay", false);
+    for (const Ogre::String& pattern : Ogre::ScriptCompilerManager::getSingleton().getScriptPatterns())
+        is_script = is_script || Ogre::StringUtil::match(name, pattern, false);
+    if (!is_script)
+        return;
+
+    std::string text = dataStream->getAsString();
+    std::vector<std::string> messages;
+    // Apply a compatibility fix for scripts with old (and now unsupported) syntax, replace the
+    // stream with a MemoryDataStream holding a fixed copy.
+    if (ApplyOgre111ScriptCompat(text, messages))
+    {
+        // Maybe "deprecated" is too strong of a word, but we really want to communicate that...
+        // 1. This isn't valid modern syntax for OGRE 12+
+        // 2. We're being lenient for backwards compatibility (the old mods are always right)
+        // 3. At some point, this won't exist forever and you should really fix your mods
+        for (const std::string& msg : messages)
+            LOG(fmt::format("[RoR|ContentManager] Script with deprecated syntax '{}' (group '{}'), {}", name, group, msg));
+        Ogre::MemoryDataStream* fixed = OGRE_NEW Ogre::MemoryDataStream(dataStream->getName(), text.size());
+        std::memcpy(fixed->getPtr(), text.data(), text.size());
+        dataStream = Ogre::DataStreamPtr(fixed);
+    }
+    else
+    {
+        dataStream->seek(0);
+    }
 }
 
 bool ContentManager::resourceCollision(Ogre::Resource* resource, Ogre::ResourceManager* resourceManager)
@@ -286,9 +317,23 @@ bool ContentManager::resourceCollision(Ogre::Resource* resource, Ogre::ResourceM
     return false; // Instruct OGRE to drop the new resource and keep the original.
 }
 
+bool ContentManager::postConversion(ScriptCompiler *compiler, const AbstractNodeListPtr& nodes)
+{
+    // old mods break with OGRE 14 reading them as the short form (see OgreScriptCompat.h)
+    std::vector<std::string> messages;
+    ApplyOgre111AnimTextureCompat(nodes, messages);
+    for (const std::string& msg : messages)
+        LOG(fmt::format("[RoR|ContentManager] Script fix (OGRE 1.11 compat): {}", msg));
+    return true; // false would skip translating the script
+}
+
 bool ContentManager::handleEvent(ScriptCompiler *compiler, ScriptCompilerEvent *evt, void *retval)
 {
-    if (evt->mType == CreateMaterialScriptCompilerEvent::eventType)
+    if (evt->mType == ProcessResourceNameScriptCompilerEvent::eventType)
+    {
+        RemoveFramePrefix(static_cast<ProcessResourceNameScriptCompilerEvent*>(evt)->mName); // See OgreScriptCompat.h
+    }
+    else if (evt->mType == CreateMaterialScriptCompilerEvent::eventType)
     {
         // Workaround for OGRE script compiler not properly checking that material name is not empty.
         // See https://github.com/RigsOfRods/rigs-of-rods/issues/2349

@@ -35,7 +35,8 @@ namespace RoR {
 /// Manages game files (under 'GAMEDIR/resources/')
 class ContentManager:
     public Ogre::ResourceLoadingListener, // Ogre::ResourceGroupManager::getSingleton().setLoadingListener()
-    public Ogre::ScriptCompilerListener   // Ogre::ScriptCompilerManager::getSingleton().setListener()
+    public Ogre::ScriptCompilerListener,  // Ogre::ScriptCompilerManager::getSingleton().setListener()
+    public Ogre::ResourceGroupListener    // Ogre::ResourceGroupManager::getSingleton().addResourceGroupListener()
 {
 public:
 
@@ -62,6 +63,13 @@ private:
 
     // Ogre::ScriptCompilerListener
     bool handleEvent(Ogre::ScriptCompiler *compiler, Ogre::ScriptCompilerEvent *evt, void *retval) override;
+    bool postConversion(Ogre::ScriptCompiler *compiler, const Ogre::AbstractNodeListPtr& nodes) override;
+
+    // Ogre::ResourceGroupListener
+    void scriptParseStarted(const Ogre::String& name, bool& skip) override { m_parsing_script = true; }
+    void scriptParseEnded(const Ogre::String& name, bool skipped) override { m_parsing_script = false; }
+
+    bool m_parsing_script = false; //!< Scripts are repaired only for OGRE's parser (see OgreScriptCompat.h), not for file copies (projects).
 };
 
 } // namespace RoR

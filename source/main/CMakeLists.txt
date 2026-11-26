@@ -130,6 +130,7 @@ set(SOURCE_FILES
         physics/water/Wavefield.{h,cpp}
         resources/CacheSystem.{h,cpp}
         resources/ContentManager.{h,cpp}
+        resources/OgreScriptCompat.{h,cpp}
         resources/addonpart_fileformat/AddonPartFileFormat.{h,cpp}
         resources/otc_fileformat/OTCFileFormat.{h,cpp}
         resources/odef_fileformat/ODefFileFormat.{h,cpp}
