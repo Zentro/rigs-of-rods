@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
         App::GetContentManager()->AddResourcePack("OgreCore");
         App::GetContentManager()->AddResourcePack("caelum");
         App::GetContentManager()->AddResourcePack("hydrax");
-        App::GetContentManager()->AddResourcePack("skyx");
+        App::GetContentManager()->AddResourcePack("SkyX");
         App::GetContentManager()->AddResourcePack("paged");
         App::GetContentManager()->AddResourcePack("overlays");
         App::GetContentManager()->AddResourcePack("rtshader");

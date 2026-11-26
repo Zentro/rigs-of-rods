@@ -259,23 +259,11 @@ ColorMap::ColorMap(TexturePtr map, MapChannel channel)
 	HardwarePixelBufferSharedPtr buff = map->getBuffer();
 
 	//Prepare a PixelBox (24-bit RGB) to receive the color values
-	VertexElementType format = Root::getSingleton().getRenderSystem()->getColourVertexElementType();
-	switch (format){
-		case VET_COLOUR_ARGB:
-			//DirectX9
-			pixels = new PixelBox(Box(0, 0, buff->getWidth(), buff->getHeight()), PF_A8R8G8B8);
-			break;
-		case VET_COLOUR_ABGR:
-			//OpenGL
-			pixels = new PixelBox(Box(0, 0, buff->getWidth(), buff->getHeight()), PF_A8B8G8R8);
-			//Patch for Ogre's incorrect blitToMemory() when copying from PF_L8 in OpenGL
-			if (buff->getFormat() == PF_L8)
-				channel = CHANNEL_RED;
-			break;
-		default:
-			OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Unknown RenderSystem color format", "GrassLayer::setColorMap()");
-			break;
-	}
+	// OGRE 14: every render system uses VET_UBYTE4_NORM (the former ABGR layout) for vertex colours
+	pixels = new PixelBox(Box(0, 0, buff->getWidth(), buff->getHeight()), PF_A8B8G8R8);
+	//Patch for Ogre's incorrect blitToMemory() when copying from PF_L8 in OpenGL
+	if (buff->getFormat() == PF_L8)
+		channel = CHANNEL_RED;
 
 	pixels->data = new uint8[pixels->getConsecutiveSize()];
 

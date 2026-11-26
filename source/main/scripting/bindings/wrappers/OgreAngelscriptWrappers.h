@@ -1035,16 +1035,13 @@ static AngelScript::CScriptArray* get2DElementsHelper(Ogre::Overlay* self)
 /***OVERLAYMANAGER***/
 static AngelScript::CScriptArray* getElementTemplatesHelper(Ogre::OverlayManager* self)
 {
+    // OGRE 14 keeps templates in the same (private) map as instances and has no way to list them.
+    // Kept so existing scripts still compile; always returns an empty array.
     try {
-        auto iterable = self->getTemplateIterator();
-        // we must cast on the go (unlike get2DElements() this actually returns list of Ogre::OverlayElement*), see ATTENTION! below.
+        static bool warned = false;
+        if (!warned) { warned = true; RoR::LogFormat("[RoR|Scripting] Ogre::OverlayManager::getTemplates() is not supported with OGRE 14 - returning empty array"); }
         AngelScript::asITypeInfo* typeinfo = App::GetScriptEngine()->getEngine()->GetTypeInfoByDecl("array<Ogre::OverlayElement@>");
-        AngelScript::CScriptArray* arr = AngelScript::CScriptArray::Create(typeinfo);
-        for (auto& elem_pair: iterable) {
-            OverlayElement* elem = static_cast<Ogre::OverlayElement*>(elem_pair.second);
-            arr->InsertLast(&elem);  // TORN HAIR HERE!! Don't forget to pass ref-types as pointer-to-pointer!!
-        }
-        return arr; }
+        return AngelScript::CScriptArray::Create(typeinfo); }
     catch (...) { App::GetScriptEngine()->forwardExceptionAsScriptEvent("Ogre::OverlayManager::getTemplates()"); return (CScriptArray*)nullptr; }
 }
 
@@ -1130,7 +1127,8 @@ static Ogre::OverlayElement* OverlayManagerCloneOverlayElementFromTemplate(Ogre:
 
 static bool OverlayManagerIsTemplate(Ogre::OverlayManager* self, const std::string& name)
 {
-    try {return self->isTemplate(name);}
+    // OGRE 14: no separate template list - any named element can be used as a template
+    try {return self->hasOverlayElement(name);}
     catch(...) {App::GetScriptEngine()->forwardExceptionAsScriptEvent("Ogre::OverlayManager::isTemplate()"); return false;}
 }
 

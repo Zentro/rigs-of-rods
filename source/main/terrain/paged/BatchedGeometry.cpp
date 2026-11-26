@@ -551,18 +551,8 @@ void BatchedGeometry::SubBatch::addSubEntity(SubEntity *ent, const Vector3 &posi
    if (color != ColourValue::White)
    {
       m_RequireVertexColors = true;
-      VertexElementType format = Root::getSingleton().getRenderSystem()->getColourVertexElementType();
-      switch (format)
-      {
-      case VET_COLOUR_ARGB:
-         std::swap(newMesh.color.r, newMesh.color.b);
-         break;
-      case VET_COLOUR_ABGR:
-         break;
-      default:
-         OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS, "Unknown RenderSystem color format");
-         break;
-      }
+      //OGRE 14: every render system uses VET_UBYTE4_NORM (the former ABGR layout) for vertex colours
+      //so no R/B swap (VET_COLOUR_ARGB/ABGR are both deprecated aliases of it).
    }
 
    m_queueMesh.push_back(newMesh);
