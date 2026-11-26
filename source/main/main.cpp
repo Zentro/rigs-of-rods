@@ -222,6 +222,7 @@ int main(int argc, char *argv[])
 
         App::GetAppContext()->GetViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
         RTSSManager::InstallTechniqueResolver();
+        RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
 
         App::CreateGuiManager(); // Needs scene manager
 
@@ -2311,10 +2312,20 @@ int main(int argc, char *argv[])
             }
             else
             {
-                App::GetAppContext()->GetOgreRoot()->renderOneFrame();
-                if (!render_window->isActive() && render_window->isVisible())
+                try
                 {
-                    render_window->update(); // update even when in background !
+                    App::GetAppContext()->GetOgreRoot()->renderOneFrame();
+                    if (!render_window->isActive() && render_window->isVisible())
+                    {
+                        render_window->update(); // update even when in background !
+                    }
+                }
+                catch (...)
+                {
+                    // e.g. a shader that fails to compile on this GPU
+                    // instead of just crashing, we log it so we get something useful
+                    HandleGenericException("Main: rendering a frame");
+                    App::GetGameContext()->PushMessage(Message(MSG_APP_SHUTDOWN_REQUESTED));
                 }
             } // Render block
 

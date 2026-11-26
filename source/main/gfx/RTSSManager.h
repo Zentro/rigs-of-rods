@@ -44,6 +44,10 @@ public:
 
     static void RefreshMaterial(Ogre::Material& mat);
 
+    /// Caps the number of lights RTSS generates shader code for at OGRE_MAX_SIMULTANEOUS_LIGHTS (8). Call once,
+    /// after RTSS is initialized.
+    static void LimitLightCount();
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 
