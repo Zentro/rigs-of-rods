@@ -136,10 +136,20 @@ Ogre::TextureUnitState* FindDiffuseUnit(const Ogre::Material& mat, Ogre::Techniq
 
     static const std::regex data_hint("spec|[-_]s\\.|normal|nrm|[-_]n\\.|_nm|bump|env|cube|refl|dmg|damage|mask|_ao|occl|noise",
         std::regex::icase);
+
+    // The texture unit's own name, e.g. 'diffusetex' or 'Diffuse_Map' (but not 'diffusedmgtex')
+    static const std::regex diffuse_name("diffuse|albedo|basecolou?r", std::regex::icase);
+    for (Ogre::TextureUnitState* tus : units)
+    {
+        if (std::regex_search(tus->getName(), diffuse_name) && !std::regex_search(tus->getName(), data_hint))
+            return tus;
+    }
+
+    // A texture used more than twice is a placeholder (e.g. ET coverage maps); twice is common (diffuse + damage)
     Ogre::TextureUnitState* first_unique = nullptr;
     for (Ogre::TextureUnitState* tus : units)
     {
-        if (uses[tus->getTextureName()] > 1)
+        if (uses[tus->getTextureName()] > 2)
             continue;
         if (!first_unique)
             first_unique = tus;
