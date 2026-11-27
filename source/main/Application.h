@@ -798,7 +798,6 @@ extern CVar* gfx_declutter_map;
 extern CVar* gfx_envmap_enabled;
 extern CVar* gfx_envmap_rate;
 extern CVar* gfx_shadow_quality;
-extern CVar* gfx_shadow_distance;
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
 extern CVar* gfx_lod_range;

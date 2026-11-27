@@ -551,7 +551,24 @@ void RTSSManager::setupShadows()
 
 namespace {
 
-/// Limits grass and batched trees to the nearer shadow cascades, see NUM_NEAR_CASCADES/NUM_MID_CASCADES.
+/// Shadow quality presets (`gfx_shadow_quality`)
+struct ShadowPreset
+{
+    int sizes[RTSSManager::NUM_CASCADES]; //!< Shadow map size per cascade
+    float distance;                       //!< Meters, sun shadows end here
+    int grass_cascades;                   //!< Cascades grass casts into (NEAR_SHADOW_CASTER)
+    int tree_cascades;                    //!< Cascades batched trees cast into (MID_SHADOW_CASTER)
+    const char* filter;                   //!< RTSS PCF filter
+};
+
+const ShadowPreset SHADOW_PRESETS[] = {
+    { { 1024, 1024,  512,  512 }, 150.f, 1, 2, "pcf4"  }, // Low
+    { { 2048, 1024, 1024, 1024 }, 250.f, 2, 3, "pcf4"  }, // Medium
+    { { 2048, 2048, 2048, 1024 }, 400.f, 2, 3, "pcf16" }, // High
+    { { 4096, 4096, 2048, 2048 }, 600.f, 2, 4, "pcf16" }, // Ultra
+};
+
+/// Limits grass and batched trees to the nearer shadow cascades (see ShadowPreset)
 class VegetationShadowCasterListener: public Ogre::ShadowTextureListener
 {
 public:
@@ -559,13 +576,16 @@ public:
     {
         // iteration = cascade index (only the sun casts shadows)
         Ogre::uint32 mask = 0xFFFFFFFF;
-        if (iteration >= (size_t)RTSSManager::NUM_NEAR_CASCADES)
+        if (iteration >= (size_t)grass_cascades)
             mask &= ~(Ogre::uint32)NEAR_SHADOW_CASTER;
-        if (iteration >= (size_t)RTSSManager::NUM_MID_CASCADES)
+        if (iteration >= (size_t)tree_cascades)
             mask &= ~(Ogre::uint32)MID_SHADOW_CASTER;
         if (Ogre::Viewport* vp = cam->getViewport())
             vp->setVisibilityMask(mask);
     }
+
+    int grass_cascades = 2;
+    int tree_cascades = 3;
 };
 
 VegetationShadowCasterListener g_vegetation_caster_listener;
@@ -597,8 +617,8 @@ RTSSManager::~RTSSManager()
 void RTSSManager::processPSSM()
 {
     Ogre::SceneManager* sm = App::GetGfxScene()->GetSceneManager();
-    // Shorter distance = the cascades cover less ground = sharper shadows
-    const float shadow_distance = std::max(50.f, App::gfx_shadow_distance->getFloat());
+    const ShadowPreset& preset = SHADOW_PRESETS[Ogre::Math::Clamp(App::gfx_shadow_quality->getInt(), 0, 3)];
+    const float shadow_distance = preset.distance;
 
     sm->setShadowTechnique(Ogre::SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
     sm->setShadowDirLightTextureOffset(0);
@@ -621,17 +641,9 @@ void RTSSManager::processPSSM()
     // OGRE silently replaces other depth formats with a color format. So we force PF_DEPTH16 here.
     // might be worth investigating PF_DEPTH24 later, but our current older render systems may not support it.
 
-    // Resolution per cascade (`gfx_shadow_quality`), the nearest cascade gets the most.
-    const int sizes[4][NUM_CASCADES] = {
-        { 1024, 1024, 1024,  512 }, // Low
-        { 2048, 1024, 1024, 1024 }, // Mid
-        { 2048, 2048, 2048, 1024 }, // HQ
-        { 4096, 4096, 2048, 2048 }, // Ultra
-    };
-    const int quality = Ogre::Math::Clamp(App::gfx_shadow_quality->getInt(), 0, 3);
     for (int i = 0; i < NUM_CASCADES; i++)
     {
-        sm->setShadowTextureConfig(i, sizes[quality][i], sizes[quality][i], PF_DEPTH16);
+        sm->setShadowTextureConfig(i, preset.sizes[i], preset.sizes[i], PF_DEPTH16);
     }
 
     // Split distances: mostly logarithmic (lambda 0.9 = more resolution near the camera). Starts at 1 m rather than
@@ -648,10 +660,12 @@ void RTSSManager::processPSSM()
     RTShader::RenderState* scheme_rs = shader_gen->getRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
     m_shadow_srs = shader_gen->createSubRenderState(RTShader::SRS_SHADOW_MAPPING);
     m_shadow_srs->setParameter("split_points", Ogre::Any(pssmSetup->getSplitPoints()));
-    m_shadow_srs->setParameter("filter", (quality >= 2) ? "pcf16" : "pcf4");
+    m_shadow_srs->setParameter("filter", preset.filter);
     scheme_rs->addTemplateSubRenderState(m_shadow_srs);
     shader_gen->invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 
+    g_vegetation_caster_listener.grass_cascades = preset.grass_cascades;
+    g_vegetation_caster_listener.tree_cascades = preset.tree_cascades;
     sm->removeShadowTextureListener(&g_vegetation_caster_listener); // Not twice
     sm->addShadowTextureListener(&g_vegetation_caster_listener);
 

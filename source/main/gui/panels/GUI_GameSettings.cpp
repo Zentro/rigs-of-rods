@@ -398,16 +398,17 @@ void GameSettings::DrawGraphicsSettings()
     DrawGCombo(App::gfx_flares_mode, _LC("GameSettings", "Light sources"),
         m_combo_items_light_sources.c_str());
 
-    DrawGCombo(App::gfx_shadow_type, _LC("GameSettings", "Shadow type (requires restart)"),
-        m_combo_items_shadow_type.c_str());
+    bool shadows = App::gfx_shadow_type->getEnum<GfxShadowType>() != GfxShadowType::NONE;
+    if (ImGui::Checkbox(_LC("GameSettings", "Shadows (requires restart)"), &shadows))
+    {
+        App::gfx_shadow_type->setVal((int)(shadows ? GfxShadowType::PSSM : GfxShadowType::NONE));
+    }
 
-    if (App::gfx_shadow_type->getEnum<GfxShadowType>() != GfxShadowType::NONE)
+    if (shadows)
     {
         DrawGCheckbox(App::gfx_reduce_shadows, _LC("GameSettings", "Shadow optimizations"));
-        if (App::gfx_shadow_type->getEnum<GfxShadowType>() == GfxShadowType::PSSM)
-        {
-            DrawGIntSlider(App::gfx_shadow_quality, _LC("GameSettings", "Shadow quality"), 0, 3);
-        }
+        DrawGCombo(App::gfx_shadow_quality, _LC("GameSettings", "Shadow quality (next terrain load)"),
+            m_combo_items_shadow_quality.c_str());
     }
 
     DrawGIntSlider(App::gfx_sight_range, _LC("GameSettings", "Sight range (meters)"), 100, 5000);
@@ -577,11 +578,13 @@ void GameSettings::SetVisible(bool v)
         ImTerminateComboboxString(m_combo_items_light_sources);
     }
 
-    if (m_combo_items_shadow_type == "")
+    if (m_combo_items_shadow_quality == "")
     {
-        ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::NONE));
-        ImAddItemToComboboxString(m_combo_items_shadow_type, ToLocalizedString(GfxShadowType::PSSM));
-        ImTerminateComboboxString(m_combo_items_shadow_type);
+        ImAddItemToComboboxString(m_combo_items_shadow_quality, _LC("GameSettings", "Low"));
+        ImAddItemToComboboxString(m_combo_items_shadow_quality, _LC("GameSettings", "Medium"));
+        ImAddItemToComboboxString(m_combo_items_shadow_quality, _LC("GameSettings", "High"));
+        ImAddItemToComboboxString(m_combo_items_shadow_quality, _LC("GameSettings", "Ultra"));
+        ImTerminateComboboxString(m_combo_items_shadow_quality);
     }
 
     if (m_combo_items_tex_filter == "")
