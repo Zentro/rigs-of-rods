@@ -549,8 +549,34 @@ void RTSSManager::setupShadows()
     this->processPSSM();
 }
 
+namespace {
+
+/// Limits grass and batched trees to the nearer shadow cascades, see NUM_NEAR_CASCADES/NUM_MID_CASCADES.
+class VegetationShadowCasterListener: public Ogre::ShadowTextureListener
+{
+public:
+    void shadowTextureCasterPreViewProj(Ogre::Light*, Ogre::Camera* cam, size_t iteration) override
+    {
+        // iteration = cascade index (only the sun casts shadows)
+        Ogre::uint32 mask = 0xFFFFFFFF;
+        if (iteration >= (size_t)RTSSManager::NUM_NEAR_CASCADES)
+            mask &= ~(Ogre::uint32)NEAR_SHADOW_CASTER;
+        if (iteration >= (size_t)RTSSManager::NUM_MID_CASCADES)
+            mask &= ~(Ogre::uint32)MID_SHADOW_CASTER;
+        if (Ogre::Viewport* vp = cam->getViewport())
+            vp->setVisibilityMask(mask);
+    }
+};
+
+VegetationShadowCasterListener g_vegetation_caster_listener;
+
+} // namespace
+
 RTSSManager::~RTSSManager()
 {
+    if (App::GetGfxScene()->GetSceneManager())
+        App::GetGfxScene()->GetSceneManager()->removeShadowTextureListener(&g_vegetation_caster_listener);
+
     // Remove the shadow stage from the RTSS scheme again, otherwise every terrain load adds another one
     auto* shader_gen = RTShader::ShaderGenerator::getSingletonPtr();
     if (m_shadow_srs && shader_gen)
@@ -625,6 +651,9 @@ void RTSSManager::processPSSM()
     m_shadow_srs->setParameter("filter", (quality >= 2) ? "pcf16" : "pcf4");
     scheme_rs->addTemplateSubRenderState(m_shadow_srs);
     shader_gen->invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+
+    sm->removeShadowTextureListener(&g_vegetation_caster_listener); // Not twice
+    sm->addShadowTextureListener(&g_vegetation_caster_listener);
 
     // Log what OGRE actually created. It will fall back to other formats silently.
     std::string splits;

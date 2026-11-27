@@ -73,6 +73,7 @@ void BatchPage::init(PagedGeometry *geom_, const Any &data)
    m_pPagedGeom   = geom_;
 	m_pSceneMgr    = m_pPagedGeom->getSceneManager();
    m_pBatchGeom   = new BatchedGeometry(m_pSceneMgr, m_pPagedGeom->getSceneNode());
+   m_pBatchGeom->setVisibilityFlags(RoR::MID_SHADOW_CASTER); // RoR: no tree shadows in the far cascade
    m_nLODLevel    = datacast;
 	m_bFadeEnabled = false;
 

@@ -89,6 +89,8 @@ public:
     static bool AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, Ogre::RTShader::SubRenderState* srs);
 
     static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
+    static const int NUM_NEAR_CASCADES = 2; //!< Grass casts into these (NEAR_SHADOW_CASTER)
+    static const int NUM_MID_CASCADES = 3;  //!< Batched trees cast into these (MID_SHADOW_CASTER)
 
     /// Depth bias of the shadow casters (constant, slope scaled). Without it, 16-bit shadow depth (PF_DEPTH16) on large
     /// gently curved surfaces flickers around the surface's own depth: striped self-shadowing ("acne"). Negative: OGRE's

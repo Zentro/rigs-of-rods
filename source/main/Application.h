@@ -457,6 +457,7 @@ enum VisibilityMasks
     DEPTHMAP_DISABLED = BITMASK(2),
     HIDE_MIRROR       = BITMASK(3),
     NEAR_SHADOW_CASTER = BITMASK(4), //!< Use as the object's only flag: drawn in every view, but casts shadows only into the near cascades (grass) - see RTSSManager
+    MID_SHADOW_CASTER  = BITMASK(5), //!< Only flag: casts into the near and middle cascades (batched trees)
 };
 
 enum LoaderType //!< Search mode for `ModCache::Query()` & Operation mode for `GUI::MainSelector`
