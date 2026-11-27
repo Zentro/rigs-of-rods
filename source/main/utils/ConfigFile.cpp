@@ -37,15 +37,25 @@
 
 using namespace RoR;
 
+Ogre::String ConfigFile::GetSettingExact(Ogre::String const& key, Ogre::String const& section) const
+{
+    const auto& sections = this->getSettingsBySection();
+    auto sec = sections.find(section);
+    if (sec == sections.end())
+        return "";
+    auto setting = sec->second.find(key);
+    return (setting == sec->second.end()) ? "" : setting->second;
+}
+
 float ConfigFile::getFloat(Ogre::String const& key, Ogre::String const& section, float defaultValue)
 {
-    return Ogre::StringConverter::parseReal(Ogre::ConfigFile::getSetting(key, section), defaultValue);
+    return Ogre::StringConverter::parseReal(this->GetSettingExact(key, section), defaultValue);
 }
 
 Ogre::ColourValue ConfigFile::getColourValue(Ogre::String const& key, Ogre::String const& section, Ogre::ColourValue const& defaultValue)
 {
     Ogre::ColourValue result;
-    Ogre::String value = Ogre::ConfigFile::getSetting(key, section);
+    Ogre::String value = this->GetSettingExact(key, section);
     if (Ogre::StringConverter::parse(value, result))
     {
         return result;
@@ -62,7 +72,7 @@ Ogre::ColourValue ConfigFile::getColourValue(Ogre::String const& key, Ogre::Stri
 Ogre::Vector3 ConfigFile::getVector3(Ogre::String const& key, Ogre::String const& section, Ogre::Vector3 const& defaultValue)
 {
     Ogre::Vector3 result;
-    Ogre::String value = Ogre::ConfigFile::getSetting(key, section);
+    Ogre::String value = this->GetSettingExact(key, section);
     if (Ogre::StringConverter::parse(value, result))
     {
         return result;
@@ -78,17 +88,17 @@ Ogre::Vector3 ConfigFile::getVector3(Ogre::String const& key, Ogre::String const
 
 int ConfigFile::getInt(Ogre::String const& key, Ogre::String const& section, int defaultValue)
 {
-    return Ogre::StringConverter::parseInt(Ogre::ConfigFile::getSetting(key, section), defaultValue);
+    return Ogre::StringConverter::parseInt(this->GetSettingExact(key, section), defaultValue);
 }
 
 bool ConfigFile::getBool(Ogre::String const& key, Ogre::String const& section, bool defaultValue)
 {
-    return Ogre::StringConverter::parseBool(Ogre::ConfigFile::getSetting(key, section), defaultValue);
+    return Ogre::StringConverter::parseBool(this->GetSettingExact(key, section), defaultValue);
 }
 
 Ogre::String ConfigFile::getString(Ogre::String const& key, Ogre::String const& section, Ogre::String const& defaultValue)
 {
-    auto setting = Ogre::ConfigFile::getSetting(key, section);
+    auto setting = this->GetSettingExact(key, section);
     if (setting.empty())
     {
         return defaultValue;

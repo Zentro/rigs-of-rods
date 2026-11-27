@@ -230,6 +230,12 @@ bool AppContext::SetUpRendering()
     LOG(fmt::format("[RoR|Startup|Rendering] Creating OGRE renderer Root object, config='{}'", cfg_filepath));
     m_ogre_root = new Ogre::Root("", cfg_filepath, log_filepath);
 
+#if OGRE_VERSION >= ((14 << 16) | (6 << 8) | 0)
+    // OGRE 14.6 only loads mesh format 1.8+ by default; many mods still ship older meshes
+    // (e.g. "[MeshSerializer_v1.30]") which earlier versions accepted. (From Speciesx/rigs-of-rods@38485bdbb)
+    Ogre::MeshSerializer::enablePre1_8Formats(true);
+#endif
+
     // load OGRE plugins manually
     std::string plugins_path = PathCombine(RoR::App::sys_process_dir->getStr(), "plugins.cfg");
 

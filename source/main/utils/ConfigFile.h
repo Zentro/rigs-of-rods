@@ -86,6 +86,10 @@ private:
     Ogre::String getSetting(Ogre::String, Ogre::String);
     Ogre::String getSetting(Ogre::String, Ogre::String, Ogre::String);
 
+    /// Value of exactly "key" in "section", or empty if missing. OGRE 14.6's getSetting() returns the next key's
+    /// value for a missing key (it only does lower_bound), e.g. a terrain size from a neighboring .otc line.
+    Ogre::String GetSettingExact(Ogre::String const& key, Ogre::String const& section) const;
+
     void logMessage(std::string const & msg);
 
     // Logging info.

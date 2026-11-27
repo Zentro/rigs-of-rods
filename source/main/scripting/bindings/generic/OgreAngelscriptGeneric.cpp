@@ -447,8 +447,7 @@ static void registerOgreRadianGeneric(AngelScript::asIScriptEngine* engine)
 
     r = engine->RegisterObjectMethod("radian", "radian opDiv(float) const", WRAP_MFN_PR(Radian, operator/,(float) const, Radian), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 
-    // NOTE: mirrors the native binding, which maps opDivAssign to operator*= (!)
-    r = engine->RegisterObjectMethod("radian", "radian &opDivAssign(float)", WRAP_MFN_PR(Radian,operator*=,(float),Radian&), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
+    r = engine->RegisterObjectMethod("radian", "radian &opDivAssign(float)", WRAP_MFN_PR(Radian,operator/=,(float),Radian&), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 
     r = engine->RegisterObjectMethod("radian", "int opCmp(const radian &in) const", WRAP_OBJ_FIRST(RadianCmp), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 
@@ -495,8 +494,7 @@ static void registerOgreDegreeGeneric(AngelScript::asIScriptEngine* engine)
 
     r = engine->RegisterObjectMethod("degree", "degree opDiv(float) const", WRAP_MFN_PR(Degree, operator/,(float) const, Degree), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 
-    // NOTE: mirrors the native binding, which maps opDivAssign to operator*= (!)
-    r = engine->RegisterObjectMethod("degree", "degree &opDivAssign(float)", WRAP_MFN_PR(Degree,operator*=,(float),Degree&), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
+    r = engine->RegisterObjectMethod("degree", "degree &opDivAssign(float)", WRAP_MFN_PR(Degree,operator/=,(float),Degree&), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 
     r = engine->RegisterObjectMethod("degree", "int opCmp(const degree &in) const", WRAP_OBJ_FIRST(DegreeCmp), asCALL_GENERIC); ROR_ASSERT( r >= 0 );
 

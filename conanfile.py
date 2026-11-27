@@ -20,7 +20,7 @@ class RoR(ConanFile):
         self.requires("libcurl/8.2.1")
         self.requires("fmt/12.2.0")
         self.requires("mygui/3.4.3@anotherfoxguy/stable")
-        self.requires("ogre3d/14.6.1@anotherfoxguy/stable", force=True)
+        self.requires("ogre3d/14.6.3@anotherfoxguy/stable", force=True)
         self.requires("ois/1.4.1@rigsofrods/custom")
         self.requires("openal-soft/1.24.3")
         self.requires("openssl/3.6.3", force=True)
