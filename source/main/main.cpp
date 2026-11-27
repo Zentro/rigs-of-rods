@@ -225,6 +225,7 @@ int main(int argc, char *argv[])
         RTSSManager::InstallTechniqueResolver();
         RTSSManager::LimitLightCount(); // Shaders handle at most OGRE_MAX_SIMULTANEOUS_LIGHTS
         RTSSManager::InstallMaterialRules(); // Cg rescue
+        RTSSManager::InstallSubRenderStates(); // RTSS subrender states
 
         App::CreateGuiManager(); // Needs scene manager
 

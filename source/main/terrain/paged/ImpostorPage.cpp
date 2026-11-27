@@ -64,22 +64,15 @@ ImpostorPage::~ImpostorPage()
       ++iter;
    }
 
-   if (--s_nSelfInstances == 0 && m_pPagedGeom)
+   if (--s_nSelfInstances == 0 && m_pSceneMgr)
    {
-      if (m_pPagedGeom->getSceneNode())
-      {
-         m_pPagedGeom->getSceneNode()->removeAndDestroyChild("ImpostorPage::renderNode");
-         m_pPagedGeom->getSceneNode()->removeAndDestroyChild("ImpostorPage::cameraNode");
-      }
-      else if (m_pSceneMgr)
-      {
+      // RoR: the shared nodes belong to the scene root (see init()), not to the PagedGeometry of the
+      // last impostor page - with several tree layers that one never had them (exception on unload).
+      // They may also be gone already (scene cleared).
+      if (m_pSceneMgr->hasSceneNode("ImpostorPage::renderNode"))
          m_pSceneMgr->destroySceneNode("ImpostorPage::renderNode");
+      if (m_pSceneMgr->hasSceneNode("ImpostorPage::cameraNode"))
          m_pSceneMgr->destroySceneNode("ImpostorPage::cameraNode");
-      }
-      else
-      {
-         assert(false && "Who must delete scene node???");
-      }
 
       ResourceGroupManager::getSingleton().destroyResourceGroup("Impostors");
    }
@@ -97,8 +90,9 @@ void ImpostorPage::init(PagedGeometry *geom, const Ogre::Any &data)
 	if (s_nSelfInstances == 1)  // first instance
    {
 		// Set up a single instance of a scene node which will be used when rendering impostor textures
-		geom->getSceneNode()->createChildSceneNode("ImpostorPage::renderNode");
-		geom->getSceneNode()->createChildSceneNode("ImpostorPage::cameraNode");
+		// RoR: under the scene root, so they don't die with the first PagedGeometry (several tree layers)
+		m_pSceneMgr->getRootSceneNode()->createChildSceneNode("ImpostorPage::renderNode");
+		m_pSceneMgr->getRootSceneNode()->createChildSceneNode("ImpostorPage::cameraNode");
       ResourceGroupManager::getSingleton().createResourceGroup("Impostors");
 	}
 }
@@ -512,6 +506,7 @@ void ImpostorTexture::renderTextures(bool force)
 	camNode->attachObject(renderCamera);
 	renderCamera->setLodBias(1000.0f);
 	renderViewport = renderTarget->addViewport(renderCamera);
+	renderViewport->setMaterialScheme(MSN_SHADERGEN); // RoR: render impostors through RTSS, like the main view
 	renderViewport->setOverlaysEnabled(false);
 	renderViewport->setClearEveryFrame(true);
 	renderViewport->setShadowsEnabled(false);
@@ -571,7 +566,11 @@ void ImpostorTexture::renderTextures(bool force)
 	//Calculate the filename hash used to uniquely identity this render
 	uint32 key = FastHash(entityKey.c_str(), entityKey.size(), 0);
 	String tempdir = this->group->getParentPagedGeometry()->getTempdir();
-	ResourceGroupManager::getSingleton().addResourceLocation(tempdir, "FileSystem", "Impostors");
+	// Add the location only once: every addResourceLocation() appends another entry for the *same* Archive object,
+	// and removeResourceLocation() below destroys that archive while the other entries still point to it ->
+	// the next resource lookup in any group (e.g. a sound file) crashes in OgreMain.
+	if (!ResourceGroupManager::getSingleton().resourceLocationExists(tempdir, "Impostors"))
+		ResourceGroupManager::getSingleton().addResourceLocation(tempdir, "FileSystem", "Impostors");
 
 	String fileName = StringUtil::format("Impostor.%08X.%d", key, textureSize);
 
@@ -620,8 +619,9 @@ void ImpostorTexture::renderTextures(bool force)
 #ifdef IMPOSTOR_FILE_SAVE
 		//Save RTT to file with respecting the temp dir
 		renderTarget->writeContentsToFile(tempdir + fileName+".png");
-        // force re-index
-        ResourceGroupManager::getSingleton().removeResourceLocation(tempdir, "Impostors");
+        // force re-index (safe: the location exists exactly once, see above)
+        if (ResourceGroupManager::getSingleton().resourceLocationExists(tempdir, "Impostors"))
+            ResourceGroupManager::getSingleton().removeResourceLocation(tempdir, "Impostors");
         ResourceGroupManager::getSingleton().addResourceLocation(tempdir, "FileSystem", "Impostors");
 
 		//Load the render into the appropriate texture view

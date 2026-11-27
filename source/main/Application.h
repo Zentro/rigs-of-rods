@@ -456,6 +456,7 @@ enum VisibilityMasks
     DEPTHMAP_ENABLED  = BITMASK(1),
     DEPTHMAP_DISABLED = BITMASK(2),
     HIDE_MIRROR       = BITMASK(3),
+    NEAR_SHADOW_CASTER = BITMASK(4), //!< Use as the object's only flag: drawn in every view, but casts shadows only into the near cascades (grass) - see RTSSManager
 };
 
 enum LoaderType //!< Search mode for `ModCache::Query()` & Operation mode for `GUI::MainSelector`
@@ -798,6 +799,7 @@ extern CVar* gfx_envmap_rate;
 extern CVar* gfx_shadow_quality;
 extern CVar* gfx_skidmarks_mode;
 extern CVar* gfx_sight_range;
+extern CVar* gfx_lod_range;
 extern CVar* gfx_camera_height;
 extern CVar* gfx_fov_external;
 extern CVar* gfx_fov_external_default;

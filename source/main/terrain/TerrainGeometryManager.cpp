@@ -426,7 +426,9 @@ void TerrainGeometryManager::configureTerrainDefaults()
     }
 
     // Configure global
-    terrainOptions->setMaxPixelError(m_spec->max_pixel_error);
+    // lower pixel error = full terrain detail reaches farther
+    const float lod_range = Ogre::Math::Clamp(App::gfx_lod_range->getFloat(), 0.1f, 10.f);
+    terrainOptions->setMaxPixelError(std::max(1.f, m_spec->max_pixel_error / lod_range));
 
     // Important to set these so that the terrain knows what to use for derived (non-realtime) data
     Light* light = terrainManager->getMainLight();
@@ -476,7 +478,7 @@ void TerrainGeometryManager::configureTerrainDefaults()
     static_cast<TerrainMaterialGeneratorA*>(terrainOptions->getDefaultMaterialGenerator().get())->getMainRenderState()->setLightCount(16);
     terrainOptions->setLayerBlendMapSize   (m_spec->layer_blendmap_size);
     terrainOptions->setCompositeMapSize    (m_spec->composite_map_size);
-    terrainOptions->setCompositeMapDistance(m_spec->composite_map_distance);
+    terrainOptions->setCompositeMapDistance(m_spec->composite_map_distance * lod_range); // gfx_lod_range
     terrainOptions->setSkirtSize           (m_spec->skirt_size);
     terrainOptions->setLightMapSize        (m_spec->lightmap_size);
     terrainOptions->setUseRayBoxDistanceCalculation(false);

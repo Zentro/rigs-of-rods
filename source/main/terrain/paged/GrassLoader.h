@@ -20,6 +20,11 @@ Permission is granted to anyone to use this software for any purpose, including 
 #include "OgrePixelFormat.h"
 #include "OgreStringConverter.h"
 
+#include <memory>
+#include <vector>
+
+namespace RoR { struct GrassShaderState; } // RoR: RTSS grass shading, see RTSSPaged.h
+
 
 namespace Forests {
 
@@ -491,6 +496,10 @@ private:
 	//Updates the vertex shader used by this layer based on the animate enable status
 	void _updateShaders();
 
+	// RoR: shades the layer with RTSS ('RoR/Grass' sub render state) instead of PagedGeometry's own vertex shader.
+	// Also creates a shadow caster material. Returns false if RTSS can't be used (no RTSS, or the material has its own shaders).
+	bool _updateShadersRTSS(const Ogre::String &vsName, float fadeRange);
+
 	//Used by GrassLoader::loadPage() - populates an array with a uniform distribution of grass
 	//Returns the final number of grasses, which will always be <= grassCount
 	unsigned int _populateGrassList_Uniform(PageInfo page, float *posBuff, unsigned int grassCount);
@@ -533,6 +542,11 @@ private:
 
 	//Current frame of animation for this layer
 	Ogre::Real waveCount;
+
+	// RoR: RTSS grass shading (see _updateShadersRTSS())
+	std::shared_ptr<RoR::GrassShaderState> shaderState; //!< Updated every frame by GrassLoader::frameUpdate()
+	std::vector<Ogre::MaterialPtr> rtssMaterials;       //!< Created by this layer, removed with it
+	bool castShadows = false;
 
 	PagedGeometry *geom;
 };

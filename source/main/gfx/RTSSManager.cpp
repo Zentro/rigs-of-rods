@@ -19,6 +19,7 @@
 */
 
 #include "RTSSManager.h"
+#include "RTSSPaged.h"
 
 #include "Actor.h"
 #include "CameraManager.h"
@@ -255,6 +256,14 @@ void RTSSManager::InstallTechniqueResolver()
 Ogre::MaterialPtr RTSSManager::CloneMaterial(const Ogre::MaterialPtr& src, const std::string& new_name, const std::string& new_group)
 {
     Ogre::MaterialPtr dst = src->clone(new_name, new_group);
+    // clone() also copies RTSS techniques, but RTSS only removes them again if the source still carries its pass
+    // tag - not when the source was itself a plain clone (e.g. PagedGeometry's '_Batched'). Such a stale technique
+    // never gets its uniforms (lights, alpha test function 0 = always fail: invisible alpha-tested leaves).
+    for (int i = (int)dst->getNumTechniques() - 1; i >= 0; i--)
+    {
+        if (dst->getTechnique(i)->getSchemeName() == RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME)
+            dst->removeTechnique(i);
+    }
     RTShader::ShaderGenerator::getSingleton().cloneShaderBasedTechniques(*src, *dst);
     return dst;
 }
@@ -344,6 +353,38 @@ void RTSSManager::LimitLightCount()
     RTShader::RenderState* scheme_render_state = RTShader::ShaderGenerator::getSingleton().getRenderState(MSN_SHADERGEN);
     scheme_render_state->setLightCountAutoUpdate(false);
     scheme_render_state->setLightCount(OGRE_MAX_SIMULTANEOUS_LIGHTS);
+}
+
+void RTSSManager::InstallSubRenderStates()
+{
+    // RTSS keeps the factory for the rest of the process, and RoR never shuts
+    // RTSS down. A static object would be destroyed at exit while materials still hold its
+    // sub render states since OGRE asserts on that and the game aborts.
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new PagedFadeSubRenderStateFactory());
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new GrassSubRenderStateFactory());
+    RTShader::ShaderGenerator::getSingleton().addSubRenderStateFactory(new SpriteSubRenderStateFactory());
+}
+
+bool RTSSManager::AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, RTShader::SubRenderState* srs)
+{
+    RTShader::ShaderGenerator& shadergen = RTShader::ShaderGenerator::getSingleton();
+    // RTSS only considers supported techniques such as compile() is what finds them.
+    if (mat->getSupportedTechniques().empty())
+    {
+        mat->compile();
+    }
+    shadergen.createShaderBasedTechnique(*mat, MaterialManager::DEFAULT_SCHEME_NAME, MSN_SHADERGEN);
+    RTShader::RenderState* render_state = shadergen.getRenderState(MSN_SHADERGEN, *mat, pass_index);
+    if (!render_state)
+    {
+        LOG(fmt::format("[RoR|RTSS] No shader render state for material '{}' pass {}, can't add '{}'",
+            mat->getName(), pass_index, srs->getType()));
+        shadergen.destroySubRenderState(srs);
+        return false;
+    }
+    render_state->addTemplateSubRenderState(srs);
+    shadergen.invalidateMaterial(MSN_SHADERGEN, *mat);
+    return true;
 }
 
 

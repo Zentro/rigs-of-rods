@@ -36,6 +36,7 @@ set(SOURCE_FILES
         gfx/IGfxWater.h
         gfx/MovableText.{h,cpp}
         gfx/RTSSManager.{h,cpp}
+        gfx/RTSSPaged.{h,cpp}
         gfx/SimBuffers.{h,cpp}
         gfx/Skidmark.{h,cpp}
         gfx/SurveyMapTextureCreator.{h,cpp}

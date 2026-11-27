@@ -29,6 +29,8 @@
 #include <OgreTerrainMaterialGeneratorA.h>
 #include "Application.h"
 
+#include <RTShaderSystem/OgreShaderSubRenderState.h>
+
 namespace RoR {
 
 /// @addtogroup Gfx
@@ -57,6 +59,14 @@ public:
     /// (searched in all passes). Mod files are not changed; this only adds a technique to the loaded material.
     /// @return True if a fallback was added.
     static bool RescueMaterial(Ogre::Material& mat);
+
+    /// Registers RoR's own RTSS sub render states. Call once, after RTSS is initialized.
+    static void InstallSubRenderStates();
+
+    /// Gives the material an RTSS technique now (instead of at its first draw) and adds "srs" to the render state
+    /// of pass "pass_index". The material must not have its own shaders.
+    /// @return False if RTSS can't shade the material and "srs" is destroyed then
+    static bool AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, Ogre::RTShader::SubRenderState* srs);
 
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);

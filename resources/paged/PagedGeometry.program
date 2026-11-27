@@ -32,6 +32,19 @@ fragment_program Default_AlphaTest glsl glsles hlsl
     }
 }
 
+// Impostors (StaticBillboardSet, Sprite_vp/SpriteFade_vp): texture cut-out, vertex alpha fade, fog.
+// Without a fragment program they only worked with fixed function render systems (not GL3+).
+fragment_program Default_Sprite glsl glsles hlsl
+{
+    source Default_fp.glsl
+    preprocessor_defines USE_FOG,TEX_ALPHA_TEST
+    default_params
+    {
+        param_named_auto fogColour fog_colour
+        param_named_auto fogParams fog_params
+    }
+}
+
 fragment_program Default_AlphaTest_NoFog glsl glsles hlsl
 {
     source Default_fp.glsl

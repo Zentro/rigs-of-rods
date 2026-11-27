@@ -978,6 +978,15 @@ void BatchedGeometry::SubBatch::addSelfToRenderQueue(RenderQueueGroup *rqg)
    //Update material technique based on camera distance
    m_pBestTechnique = m_ptrMaterial->getBestTechnique(m_ptrMaterial->getLodIndex(
       m_pParentGeom->m_fMinDistanceSquared * m_pParentGeom->m_fMinDistanceSquared));
+   if (!m_pBestTechnique)
+   {
+      // RoR: a material with no compiled technique (not loaded (yet), or reloading) so OGRE would crash on a null
+      // technique (RenderPriorityGroup::addRenderable). Load it! if there's still nothing to draw with, skip a frame.
+      m_ptrMaterial->load();
+      m_pBestTechnique = m_ptrMaterial->getBestTechnique();
+      if (!m_pBestTechnique)
+         return;
+   }
    rqg->addRenderable(this, m_pBestTechnique, OGRE_RENDERABLE_DEFAULT_PRIORITY);
 }
 
