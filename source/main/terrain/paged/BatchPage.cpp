@@ -241,6 +241,7 @@ void BatchPage::_updateShaders()
 			if (!rtssMaterial)
 			{
 				rtssMaterial = RoR::RTSSManager::CloneMaterial(ptrMat, signature.str());
+				rtssMaterial->setReceiveShadows(true);
 				for (Technique* tech : rtssMaterial->getTechniques())
 				{
 					for (Pass* pass : tech->getPasses())
