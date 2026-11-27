@@ -144,9 +144,12 @@ void GfxWater::PrepareWater()
         }
         else
         {
-            if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
-                !GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0") &&
-                !GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4")
+            // The water shaders (fresnel.material) are GLSL, GLSL ES and HLSL. (This used to ask for assembly
+            // profiles - arbfp1, ps_2_0, ps_1_4 - which the GL3+ and D3D11 render systems don't have.)
+            Ogre::HighLevelGpuProgramManager& hlgpm = Ogre::HighLevelGpuProgramManager::getSingleton();
+            if (!hlgpm.isLanguageSupported("glsl") &&
+                !hlgpm.isLanguageSupported("glsles") &&
+                !hlgpm.isLanguageSupported("hlsl")
             )
             {
                 OGRE_EXCEPT(Exception::ERR_RENDERINGAPI_ERROR, "Your card does not support advanced fragment programs, "
@@ -251,6 +254,16 @@ void GfxWater::PrepareWater()
             ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
             m_water_plane,
             m_map_size.x * m_waterplane_mesh_scale, m_map_size.z * m_waterplane_mesh_scale, WAVEREZ, WAVEREZ, true, 1, 50, 50, Vector3::UNIT_Z, HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+
+        // The Fresnel shaders (OGRE 14.6 sample) project the reflection/refraction textures with texture unit 0's
+        // projector (`texture_worldviewproj_matrix 0`), which is the main camera
+        for (const char* mat_name : { "Examples/FresnelReflectionRefraction", "Examples/FresnelReflectionRefractioninverted",
+                                      "Examples/FresnelReflection", "Examples/FresnelReflectioninverted" })
+        {
+            MaterialPtr mat = MaterialManager::getSingleton().getByName(mat_name);
+            if (mat)
+                mat->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setProjectiveTexturing(true, App::GetCameraManager()->GetCamera());
+        }
 
         m_waterplane_entity = App::GetGfxScene()->GetSceneManager()->createEntity("plane", "ReflectPlane");
         if (full_gfx)
