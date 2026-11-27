@@ -77,6 +77,13 @@ public:
 
     static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
 
+    /// Depth bias of the shadow casters (constant, slope scaled). Without it, 16-bit shadow depth (PF_DEPTH16) on large
+    /// gently curved surfaces flickers around the surface's own depth: striped self-shadowing ("acne"). Negative: OGRE's
+    /// positive bias pulls depth towards the (shadow) camera - meant for decals; on casters it put vehicles' sunlit tops
+    /// into their own shadow.
+    static constexpr float CASTER_DEPTH_BIAS = -3.f;
+    static constexpr float CASTER_SLOPE_SCALE_BIAS = -6.f;
+
     ~RTSSManager();
 
     void setupShadows();

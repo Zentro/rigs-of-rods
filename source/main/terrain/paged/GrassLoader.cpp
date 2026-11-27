@@ -1510,6 +1510,7 @@ bool GrassLayer::_updateShadersRTSS(const String &vsName, float fadeRange)
 	caster->setReceiveShadows(false);
 	Pass* casterPass = caster->getTechnique(0)->getPass(0);
 	casterPass->setLightingEnabled(false);
+	casterPass->setDepthBias(RoR::RTSSManager::CASTER_DEPTH_BIAS, RoR::RTSSManager::CASTER_SLOPE_SCALE_BIAS); // RoR: no shadow acne, see RTSSManager
 	casterPass->setCullingMode(srcPass->getCullingMode());
 	casterPass->setManualCullingMode(srcPass->getManualCullingMode());
 	if (srcPass->getAlphaRejectFunction() != CMPF_ALWAYS_PASS)

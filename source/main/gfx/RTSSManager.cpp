@@ -444,6 +444,9 @@ void RTSSManager::processPSSM()
 
     //Caster is set via materials
     MaterialPtr shadowMat = MaterialManager::getSingleton().getByName("Ogre/TextureShadowCaster");
+    shadowMat->getTechnique(0)->getPass(0)->setDepthBias(CASTER_DEPTH_BIAS, CASTER_SLOPE_SCALE_BIAS);
+    // RTSS may already have built the caster's technique from the unbiased pass (earlier terrain)
+    RTShader::ShaderGenerator::getSingleton().invalidateMaterial(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME, *shadowMat);
     sm->setShadowTextureCasterMaterial(shadowMat);
 
     // The way I understood this is that the shadow cameras only render depth, which receivers
