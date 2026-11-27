@@ -116,8 +116,15 @@ CameraManager::CameraManager() :
     m_staticcam_update_timer.reset();
 
     m_camera = App::GetGfxScene()->GetSceneManager()->createCamera("PlayerCam");
-    m_camera->setNearClipDistance(0.01);
-    m_camera->setFarClipDistance(100000.0); // Value of 0.0 means 'infinite' in Ogre, but causes glitches with HydraX and SkyX.
+    // tags for searching: "reverse depth buffer", "legacy GL", "z-fighting"
+    // because this WILL come up in the future, and we need to remove this when we move away from legacy
+    // GL and DirectX.
+    // With a reversed depth buffer, 1cm is fine. Without one (like on legacy DL and DirectX) depth precision far
+    // away depends on the near clip ~1cm made rocks z-fight with the terrain, 10cm is 10x better and still fine in cockpits.
+    const bool reverse_depth = App::GetAppContext()->GetOgreRoot()->getRenderSystem()->isReverseDepthBufferEnabled();
+    m_camera->setNearClipDistance(reverse_depth ? 0.01 : 0.1);
+    // not a solution, but a compromise as 10km is enough for most cases and 20km is enough for all cases
+    m_camera->setFarClipDistance(20000.0); // Value of 0.0 means infinite in ogre, but causes glitches
     m_camera->setAutoAspectRatio(true);
     this->CreateCameraNode();
 

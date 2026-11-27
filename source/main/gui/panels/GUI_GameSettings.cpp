@@ -158,7 +158,7 @@ void GameSettings::DrawRenderSystemSettings()
 
     const auto config_options = ogre_root->getRenderSystem()->getConfigOptions();
     std::set<std::string> filter = {"Allow NVPerfHUD", "Colour Depth", "Fixed Pipeline Enabled",
-        "Floating-point mode", "Resource Creation Policy", "VSync Interval", "sRGB Gamma Conversion"};
+        "Floating-point mode", "Resource Creation Policy", "VSync Interval", "sRGB Gamma Conversion", "Reversed Z-Buffer"};
     for (auto opt : config_options)
     {
         auto co = opt.second;

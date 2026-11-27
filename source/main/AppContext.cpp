@@ -301,6 +301,13 @@ bool AppContext::SetUpRendering()
     }
     App::app_rendersys_override->setStr("");
 
+    // GL3+, DrectX11 and Vulkan offer it; GL3+ turns it off again without GL 4.5/ARB_clip_control.
+    // Should not be a user choice (hidden in the settings): it has no downside.
+    // See CameraManager.cpp, but fixes z-fighting on terrains.
+    Ogre::RenderSystem* render_sys = m_ogre_root->getRenderSystem();
+    if (render_sys->getConfigOptions().count("Reversed Z-Buffer"))
+        render_sys->setConfigOption("Reversed Z-Buffer", "Yes");
+
     // Start the renderer
     LOG(fmt::format("[RoR|Startup|Rendering] Starting renderer '{}' (without auto-creating render window)", m_ogre_root->getRenderSystem()->getName()));
     m_ogre_root->initialise(/*createWindow=*/false);
