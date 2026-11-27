@@ -36,6 +36,13 @@ namespace RoR {
 /// @addtogroup Gfx
 /// @{
 
+class StableCSMShadowCameraSetup: public Ogre::PSSMShadowCameraSetup
+{
+public:
+    void getShadowCamera(const Ogre::SceneManager* sm, const Ogre::Camera* cam, const Ogre::Viewport* vp,
+                         const Ogre::Light* light, Ogre::Camera* texCam, size_t iteration) const override;
+};
+
 class RTSSManager
 {
 public:
