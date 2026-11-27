@@ -419,33 +419,45 @@ void RTSSManager::processPSSM()
     App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, NUM_SHADOW_TEXTURES);
     App::GetGfxScene()->GetSceneManager()->setShadowTextureCount(NUM_SHADOW_TEXTURES);
 
+    // Casters may shadow themselves (vehicle roof onto trunk, mirrors, wheel arches ...)
+    App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(true);
+
     //Caster is set via materials
     MaterialPtr shadowMat = MaterialManager::getSingleton().getByName("Ogre/TextureShadowCaster");
     App::GetGfxScene()->GetSceneManager()->setShadowTextureCasterMaterial(shadowMat);
 
-    if (App::gfx_shadow_quality->getInt() == 3) // Ultra
+
+    // The way I understood this is that the shadow cameras only render depth, which receivers
+    // compare against their own depth. With color textures the caster material writes a color,
+    // which is meaningless for the receivers' comparison, so shadows pop in and out with the camera and casters
+    // can't shadow themselves. PF_DEPTH16 is the only depth render target our GL render system accepts
+    // OGRE silently replaces other depth formats with a color format. So we force PF_DEPTH16 here.
+    const Ogre::PixelFormat SHADOW_FORMAT = PF_DEPTH16; // 16 bit depth is enough for shadows
+    // might be worth investigating PF_DEPTH24 later, but our current older render systems may not support it.
+
+    if (App::gfx_shadow_quality->getInt() == 3) // "Ultra" 
     {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 4096, 4096, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 3072, 3072, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, PF_X8B8G8R8);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 4096, 4096, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 3072, 3072, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, SHADOW_FORMAT);
     }
-    else if (App::gfx_shadow_quality->getInt() == 2) // HQ
+    else if (App::gfx_shadow_quality->getInt() == 2) // "High"
     {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 3072, 3072, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 2048, 2048, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, PF_X8B8G8R8);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 3072, 3072, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 2048, 2048, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, SHADOW_FORMAT);
     }
-    else if (App::gfx_shadow_quality->getInt() == 1) // Mid
+    else if (App::gfx_shadow_quality->getInt() == 1) // "Medium"
     {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 2048, 2048, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 1024, 1024, PF_X8B8G8R8);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 2048, 2048, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 1024, 1024, SHADOW_FORMAT);
     }
-    else // Low
+    else // "   "
     {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 1024, 1024, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, PF_X8B8G8R8);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 512, 512, PF_X8B8G8R8);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 1024, 1024, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, SHADOW_FORMAT);
+        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 512, 512, SHADOW_FORMAT);
     }
 
     // shadow camera setup
@@ -457,6 +469,13 @@ void RTSSManager::processPSSM()
     pssmSetup->setOptimalAdjustFactor(2, 0.5);
     App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(pssmSetup));
 
+    // Log what OGRE actually created. It will fall back to other formats silently.
+    for (size_t i = 0; i < NUM_SHADOW_TEXTURES; i++)
+    {
+        const Ogre::TexturePtr& tex = App::GetGfxScene()->GetSceneManager()->getShadowTexture(i);
+        LOG(fmt::format("[RoR|RTSS] Shadow texture {}: {}x{} {}", i, tex->getWidth(), tex->getHeight(),
+            Ogre::PixelUtil::getFormatName(tex->getFormat())));
+    }
 }
 
 void RTSSManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile)
@@ -467,7 +486,6 @@ void RTSSManager::applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* ma
         matProfile->setReceiveDynamicShadowsEnabled(true);
         matProfile->setReceiveDynamicShadowsPSSM(pssmSetup);
         matProfile->setLightmapEnabled(false);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(false);
 
         App::GetGameContext()->GetTerrain()->getMainLight()->setCastShadows(true);
 
