@@ -1,11 +1,12 @@
-varying vec2 uv;
+attribute vec4 vertex;
+uniform mat4 worldViewProj;
 
-void main()                    
+varying vec2 oUv0;
+
+void main()
 {
-	gl_Position = ftransform();
-	
-	vec2 inPos = sign(gl_Vertex.xy);
-	
-	uv = (vec2(inPos.x, -inPos.y) + 1.0)/2.0;
-}
+    gl_Position = worldViewProj * vertex;
 
+    vec2 inPos = sign(vertex.xy);
+    oUv0 = (vec2(inPos.x, -inPos.y) + 1.0) * 0.5;
+}
