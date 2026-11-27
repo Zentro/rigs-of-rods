@@ -406,70 +406,92 @@ void RTSSManager::setupShadows()
     this->processPSSM();
 }
 
+RTSSManager::~RTSSManager()
+{
+    // Remove the shadow stage from the RTSS scheme again, otherwise every terrain load adds another one
+    auto* shader_gen = RTShader::ShaderGenerator::getSingletonPtr();
+    if (m_shadow_srs && shader_gen)
+    {
+        RTShader::RenderState* scheme_rs = shader_gen->getRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+        scheme_rs->removeSubRenderState(m_shadow_srs);
+        shader_gen->invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+        m_shadow_srs = nullptr;
+    }
+    if (pssmSetup && App::GetGfxScene()->GetSceneManager())
+    {
+        App::GetGfxScene()->GetSceneManager()->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
+        App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr()); // Deletes `pssmSetup`
+        pssmSetup = nullptr;
+    }
+}
+
 void RTSSManager::processPSSM()
 {
-    const int NUM_SHADOW_TEXTURES = 3;
-    const int NUM_SPLITS = 3;
+    Ogre::SceneManager* sm = App::GetGfxScene()->GetSceneManager();
+    // Shorter distance = the cascades cover less ground = sharper shadows
+    const float shadow_distance = std::max(50.f, App::gfx_shadow_distance->getFloat());
 
-    App::GetGfxScene()->GetSceneManager()->setShadowTechnique(Ogre::SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
-    App::GetGfxScene()->GetSceneManager()->setShadowDirLightTextureOffset(0);
-    App::GetGfxScene()->GetSceneManager()->setShadowFarDistance(3000.0f);
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, NUM_SHADOW_TEXTURES);
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, NUM_SHADOW_TEXTURES);
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, NUM_SHADOW_TEXTURES);
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureCount(NUM_SHADOW_TEXTURES);
+    sm->setShadowTechnique(Ogre::SHADOWTYPE_TEXTURE_MODULATIVE_INTEGRATED);
+    sm->setShadowDirLightTextureOffset(0);
+    sm->setShadowFarDistance(shadow_distance);
+    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_DIRECTIONAL, NUM_CASCADES);
+    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_SPOTLIGHT, NUM_CASCADES);
+    sm->setShadowTextureCountPerLightType(Ogre::Light::LT_POINT, NUM_CASCADES);
+    sm->setShadowTextureCount(NUM_CASCADES);
 
     // Casters may shadow themselves (vehicle roof onto trunk, mirrors, wheel arches ...)
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureSelfShadow(true);
+    sm->setShadowTextureSelfShadow(true);
 
     //Caster is set via materials
     MaterialPtr shadowMat = MaterialManager::getSingleton().getByName("Ogre/TextureShadowCaster");
-    App::GetGfxScene()->GetSceneManager()->setShadowTextureCasterMaterial(shadowMat);
-
+    sm->setShadowTextureCasterMaterial(shadowMat);
 
     // The way I understood this is that the shadow cameras only render depth, which receivers
     // compare against their own depth. With color textures the caster material writes a color,
     // which is meaningless for the receivers' comparison, so shadows pop in and out with the camera and casters
     // can't shadow themselves. PF_DEPTH16 is the only depth render target our GL render system accepts
     // OGRE silently replaces other depth formats with a color format. So we force PF_DEPTH16 here.
-    const Ogre::PixelFormat SHADOW_FORMAT = PF_DEPTH16; // 16 bit depth is enough for shadows
     // might be worth investigating PF_DEPTH24 later, but our current older render systems may not support it.
 
-    if (App::gfx_shadow_quality->getInt() == 3) // "Ultra" 
+    // Resolution per cascade (`gfx_shadow_quality`), the nearest cascade gets the most.
+    const int sizes[4][NUM_CASCADES] = {
+        { 1024, 1024, 1024,  512 }, // Low
+        { 2048, 1024, 1024, 1024 }, // Mid
+        { 2048, 2048, 2048, 1024 }, // HQ
+        { 4096, 4096, 2048, 2048 }, // Ultra
+    };
+    const int quality = Ogre::Math::Clamp(App::gfx_shadow_quality->getInt(), 0, 3);
+    for (int i = 0; i < NUM_CASCADES; i++)
     {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 4096, 4096, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 3072, 3072, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, SHADOW_FORMAT);
-    }
-    else if (App::gfx_shadow_quality->getInt() == 2) // "High"
-    {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 3072, 3072, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 2048, 2048, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 2048, 2048, SHADOW_FORMAT);
-    }
-    else if (App::gfx_shadow_quality->getInt() == 1) // "Medium"
-    {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 2048, 2048, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 1024, 1024, SHADOW_FORMAT);
-    }
-    else // "Low"
-    {
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(0, 1024, 1024, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(1, 1024, 1024, SHADOW_FORMAT);
-        App::GetGfxScene()->GetSceneManager()->setShadowTextureConfig(2, 512, 512, SHADOW_FORMAT);
+        sm->setShadowTextureConfig(i, sizes[quality][i], sizes[quality][i], PF_DEPTH16);
     }
 
-    // shadow camera setup
+    // Split distances: mostly logarithmic (lambda 0.9 = more resolution near the camera). Starts at 1 m rather than
+    // the camera's near clip (0.01 m), which would make the first cascade uselessly small.
     pssmSetup = new StableCSMShadowCameraSetup(); // our own PSSM with stable cascades, see RTSSManager.h
-    pssmSetup->calculateSplitPoints(NUM_SPLITS, App::GetCameraManager()->GetCamera()->getNearClipDistance(), App::GetGfxScene()->GetSceneManager()->getShadowFarDistance());
-    pssmSetup->setSplitPadding(App::GetCameraManager()->GetCamera()->getNearClipDistance() * 2);
-    App::GetGfxScene()->GetSceneManager()->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(pssmSetup));
+    pssmSetup->calculateSplitPoints(NUM_CASCADES, /*nearDist=*/1.0f, shadow_distance, /*lambda=*/0.9f);
+    pssmSetup->setSplitPadding(1.0f);
+    sm->setShadowCameraSetup(Ogre::ShadowCameraSetupPtr(pssmSetup));
+
+    // Shadow receiving for every material RTSS shades: one stage in the RTSS scheme's render state, with the real
+    // split distances. (Before, only materials derived from RoR's managed bases received shadows, through an
+    // `rtshader_system { shadow_mapping light_count 4 }` block that treated the cascades as 4 separate lights.)
+    auto* shader_gen = RTShader::ShaderGenerator::getSingletonPtr();
+    RTShader::RenderState* scheme_rs = shader_gen->getRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+    m_shadow_srs = shader_gen->createSubRenderState(RTShader::SRS_SHADOW_MAPPING);
+    m_shadow_srs->setParameter("split_points", Ogre::Any(pssmSetup->getSplitPoints()));
+    m_shadow_srs->setParameter("filter", (quality >= 2) ? "pcf16" : "pcf4");
+    scheme_rs->addTemplateSubRenderState(m_shadow_srs);
+    shader_gen->invalidateScheme(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 
     // Log what OGRE actually created. It will fall back to other formats silently.
-    for (size_t i = 0; i < NUM_SHADOW_TEXTURES; i++)
+    std::string splits;
+    for (Ogre::Real d : pssmSetup->getSplitPoints())
+        splits += fmt::format(" {:.1f}", d);
+    LOG(fmt::format("[RoR|RTSS] {} cascades, distance {:.0f} m, splits (m):{}", NUM_CASCADES, shadow_distance, splits));
+    for (size_t i = 0; i < NUM_CASCADES; i++)
     {
-        const Ogre::TexturePtr& tex = App::GetGfxScene()->GetSceneManager()->getShadowTexture(i);
+        const Ogre::TexturePtr& tex = sm->getShadowTexture(i);
         LOG(fmt::format("[RoR|RTSS] Shadow texture {}: {}x{} {}", i, tex->getWidth(), tex->getHeight(),
             Ogre::PixelUtil::getFormatName(tex->getFormat())));
     }

@@ -75,6 +75,10 @@ public:
     /// @return False if RTSS can't shade the material and "srs" is destroyed then
     static bool AddSubRenderState(const Ogre::MaterialPtr& mat, unsigned short pass_index, Ogre::RTShader::SubRenderState* srs);
 
+    static const int NUM_CASCADES = 4; //!< Sun shadow cascades (RTSS supports up to 4)
+
+    ~RTSSManager();
+
     void setupShadows();
     void applyToTerrain(Ogre::TerrainMaterialGeneratorA::SM2Profile* matProfile);
 
@@ -83,6 +87,9 @@ public:
 protected:
 
     void processPSSM();
+
+    /// Shadow receiving stage in the RTSS scheme's render state - applies to every material RTSS shades
+    Ogre::RTShader::SubRenderState* m_shadow_srs = nullptr;
 };
 
 /// @} // addtogroup Gfx
