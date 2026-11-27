@@ -67,6 +67,19 @@ public:
     /// @return True if a fallback was added.
     static bool RescueMaterial(Ogre::Material& mat);
 
+    /// Shadow caster rules: invisible materials (`colour_write off`) and see-through ones (blended, no depth write -
+    /// e.g. headlight beam cones) cast no shadow; alpha-tested materials get an own caster (texture + alpha test,
+    /// shaded by RTSS) so their shadows keep the cut-out shapes. Applied by the material rules (see
+    /// InstallMaterialRules()), the technique resolver and AddSubRenderState(). Call again when textures change.
+
+    /// Shadow caster rules:
+    /// * Invisible materials and see through ones (blended, no depth write such as headlight beam cones) cast no shadow.
+    /// * Alpha tested materials get an own caster (texture + alpha test, shaded by RTSS) so their shadows keep the cut-out shapes.
+    /// Applied by the material rules (see InstallMaterialRules()), the technique resolver and AddSubRenderState().
+    ///Call again when textures change.
+    /// @return True if the material was set to cast no shadow.
+    static bool SetupShadowCaster(Ogre::Material& mat);
+
     /// Registers RoR's own RTSS sub render states. Call once, after RTSS is initialized.
     static void InstallSubRenderStates();
 
